@@ -1,0 +1,114 @@
+using UnityEngine;
+
+namespace DeadAcres.Player
+{
+    /// <summary>Movimiento y cámara en primera persona sobre CharacterController.</summary>
+    [RequireComponent(typeof(CharacterController))]
+    public sealed class FirstPersonController : MonoBehaviour
+    {
+        [SerializeField] private PlayerInputReader input;
+
+        [Tooltip("Hijo que rota en pitch (lleva la cámara). El root rota solo en yaw.")]
+        [SerializeField] private Transform cameraPivot;
+
+        [Header("Movimiento")]
+        [SerializeField, Min(0f)] private float walkSpeed = 4.5f;
+        [SerializeField, Min(0f)] private float sprintSpeed = 7f;
+        [SerializeField, Min(0f)] private float jumpHeight = 1.1f;
+        [SerializeField] private float gravity = -20f;
+
+        [Header("Cámara")]
+        [SerializeField, Min(0.001f)] private float mouseSensitivity = 0.12f;
+        [SerializeField, Min(1f)] private float stickDegreesPerSecond = 180f;
+        [SerializeField, Range(10f, 89f)] private float maxPitch = 85f;
+        [SerializeField] private bool invertY;
+
+        private CharacterController controller;
+        private float pitch;
+        private float verticalVelocity;
+        private bool jumpRequested;
+
+        public float MouseSensitivity
+        {
+            get => mouseSensitivity;
+            set => mouseSensitivity = Mathf.Max(0.001f, value);
+        }
+
+        public bool InvertY
+        {
+            get => invertY;
+            set => invertY = value;
+        }
+
+        private void Awake()
+        {
+            controller = GetComponent<CharacterController>();
+        }
+
+        private void OnEnable()
+        {
+            input.JumpPressed += OnJumpPressed;
+            SetCursorLocked(true);
+        }
+
+        private void OnDisable()
+        {
+            input.JumpPressed -= OnJumpPressed;
+            SetCursorLocked(false);
+        }
+
+        private void Update()
+        {
+            float dt = Time.deltaTime;
+            Look(dt);
+            Move(dt);
+        }
+
+        /// <summary>Al abrir tienda o inventario: libera el ratón y deja de girar la cámara.</summary>
+        public static void SetCursorLocked(bool locked)
+        {
+            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+            Cursor.visible = !locked;
+        }
+
+        private void Look(float dt)
+        {
+            if (Cursor.lockState != CursorLockMode.Locked)
+            {
+                return;
+            }
+
+            Vector2 delta = input.LookMouseDelta * mouseSensitivity + input.LookStick * (stickDegreesPerSecond * dt);
+            float ySign = invertY ? 1f : -1f;
+
+            pitch = Mathf.Clamp(pitch + delta.y * ySign, -maxPitch, maxPitch);
+            cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
+            transform.Rotate(0f, delta.x, 0f, Space.Self);
+        }
+
+        private void Move(float dt)
+        {
+            Vector2 axis = Vector2.ClampMagnitude(input.Move, 1f);
+            float speed = input.IsSprinting ? sprintSpeed : walkSpeed;
+            Vector3 horizontal = (transform.right * axis.x + transform.forward * axis.y) * speed;
+
+            if (controller.isGrounded)
+            {
+                // Pequeña fuerza hacia abajo para que isGrounded no parpadee en pendientes.
+                verticalVelocity = -2f;
+
+                if (jumpRequested)
+                {
+                    verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+                }
+            }
+
+            jumpRequested = false;
+            verticalVelocity += gravity * dt;
+
+            controller.Move((horizontal + Vector3.up * verticalVelocity) * dt);
+        }
+
+        private void OnJumpPressed() => jumpRequested = true;
+    }
+}
