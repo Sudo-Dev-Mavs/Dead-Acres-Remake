@@ -9,21 +9,24 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 ## Puesta en marcha
 
 1. En Unity Hub: **Add → Add project from disk** y elige la carpeta del repo. Ábrelo con 6000.3.25f1. La primera apertura tarda: Unity genera `Library/` y los `.meta`.
-2. Menú **Dead Acres → Crear escena greybox**. Genera los datos en `Assets/_Project/Data/`, los materiales y `Assets/_Project/Scenes/Greybox.unity`, ya cableada.
+2. Menú **Dead Acres → Crear escena greybox**. Genera los datos en `Assets/_Project/Data/`, los materiales, un prefab de muro y `Assets/_Project/Scenes/Greybox.unity`, ya cableada.
 3. Pulsa **Play**.
 4. **Window → General → Test Runner → EditMode → Run All**.
 5. Haz commit de lo que Unity haya generado, **incluidos todos los `.meta`**. Los GUID de los `.meta` son los que enlazan escenas y assets con los scripts: deben generarse en una sola máquina y subirse.
 
-### Controles (escena greybox)
+### Controles
 
-| Acción | Tecla |
-|---|---|
-| Moverse / correr / saltar | WASD / Shift / Espacio |
-| Elegir casilla de la hotbar | 1–0 o rueda del ratón |
-| Usar lo que llevas (arar con la azada, plantar con semillas) | Clic izquierdo |
-| Cosechar | E |
-| "Listo": terminar el día | Enter |
-| Soltar el cursor (clic para recuperarlo) | Esc |
+| Acción | Teclado/ratón | Mando |
+|---|---|---|
+| Moverse / mirar | WASD / ratón | stick izq. / stick der. |
+| Saltar / correr | Espacio / Shift | A / L3 |
+| Usar (arar con la azada, plantar con semillas) o colocar | Clic izq. | RT |
+| Rotar al colocar | Q / E | cruceta izq./der. |
+| Cosechar / interactuar | F | X |
+| "Listo" (terminar el día) | R | Start |
+| Hotbar | 1-9 y rueda | LB / RB |
+
+En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
 
 ## Estructura
 
@@ -34,15 +37,16 @@ Assets/_Project/
     Core/Session     GameSession: dificultad y modo elegidos
     DayNight         DayNightClock (lógica pura) + DayNightCycle (adaptador) + hora de reloj + iluminación
     Difficulty       DifficultyProfile (Easy/Medium/Hard/Hell)
-    GameMode         GameModeRules, PlacementLimiter (puro) + PlacementLimits (adaptador)
+    GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad)
-    Items            ItemDefinition, ItemStack, Inventory (puro)
+    Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
+    Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
-    Player           input, movimiento, cámara, inventario del jugador, interacción
+    Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerInteractor
     UI               HudView
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
-  Data/, Scenes/, Art/   generados desde el menú Dead Acres
+  Data/, Scenes/, Art/, Prefabs/   generados desde el menú Dead Acres
 Assets/Settings/     assets de URP de la plantilla oficial
 ```
 
@@ -56,6 +60,7 @@ Assets/Settings/     assets de URP de la plantilla oficial
 ### Preparado para co-op (sin implementarlo todavía)
 
 - Todo cambio de estado pasa por las clases puras (`FarmField`, `FarmCommands`, `Inventory`, `DayNightClock`). Los componentes del jugador solo expresan intenciones; en co-op esas llamadas serán peticiones al host.
-- No hay singletons ni "el jugador": cada jugador tiene su `PlayerInventory` y su `PlayerInteractor`; solo el local tiene `PlayerInputHandler`.
+- No hay singletons ni "el jugador": cada jugador tiene su `PlayerInventory` y su `PlayerInteractor`; solo el local tiene `PlayerInputReader`.
+- Cultivos y objetos comparten una sola rejilla (`FarmWorld.Grid`) y un solo contador de límites.
 - Ítems y cultivos tienen un `Id` de texto estable. Es lo que se guardará y lo que viajará por red, nunca la referencia al asset.
 - Las vistas (`FarmAreaView`, `HudView`) solo escuchan eventos.

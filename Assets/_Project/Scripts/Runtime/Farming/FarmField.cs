@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DeadAcres.Building;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
 using UnityEngine;
@@ -27,10 +28,14 @@ namespace DeadAcres.Farming
 
             /// <summary>True tras la primera cosecha: la planta ya tiene su tamaño final.</summary>
             public bool Regrowing;
+
+            /// <summary>Id con el que la planta ocupa su celda en la rejilla de colocación.</summary>
+            public int OccupantId;
         }
 
         private readonly RectInt bounds;
         private readonly PlacementLimiter limiter;
+        private readonly PlacementGrid grid;
         private readonly System.Random random;
         private readonly Dictionary<Vector2Int, Plot> plots = new Dictionary<Vector2Int, Plot>();
         private readonly List<Plot> growing = new List<Plot>();
@@ -39,10 +44,16 @@ namespace DeadAcres.Farming
         /// <param name="bounds">Celdas en las que se puede arar.</param>
         /// <param name="limiter">Límite de plantas del modo de juego. Null = sin límite.</param>
         /// <param name="random">Para el rendimiento de cada cosecha. Inyectable en tests.</param>
-        public FarmField(RectInt bounds, PlacementLimiter limiter = null, System.Random random = null)
+        /// <param name="grid">
+        /// Rejilla de colocación compartida con los objetos. Con ella, una planta ocupa su celda
+        /// (no se puede poner un muro encima) y no se ara ni se planta donde ya hay un objeto.
+        /// </param>
+        public FarmField(RectInt bounds, PlacementLimiter limiter = null, System.Random random = null,
+            PlacementGrid grid = null)
         {
             this.bounds = bounds;
             this.limiter = limiter;
+            this.grid = grid;
             this.random = random ?? new System.Random();
         }
 
@@ -80,6 +91,7 @@ namespace DeadAcres.Farming
         {
             if (!bounds.Contains(cell)) return FarmActionResult.OutOfBounds;
             if (plots.ContainsKey(cell)) return FarmActionResult.AlreadyTilled;
+            if (IsBlocked(cell)) return FarmActionResult.Blocked;
             return FarmActionResult.Ok;
         }
 
@@ -102,6 +114,7 @@ namespace DeadAcres.Farming
             if (!bounds.Contains(cell)) return FarmActionResult.OutOfBounds;
             if (!plots.TryGetValue(cell, out Plot plot)) return FarmActionResult.NotTilled;
             if (plot.Crop != null) return FarmActionResult.Occupied;
+            if (IsBlocked(cell)) return FarmActionResult.Blocked;
             if (limiter != null && !limiter.CanPlace(PlaceableCategory.Plant)) return FarmActionResult.PlantLimitReached;
             return FarmActionResult.Ok;
         }
@@ -122,6 +135,7 @@ namespace DeadAcres.Farming
             Plot plot = plots[cell];
             plot.Crop = crop;
             plot.Regrowing = false;
+            plot.OccupantId = grid != null ? grid.Occupy(new RectInt(cell, Vector2Int.one)) : PlacementGrid.NoOccupant;
             StartGrowing(plot, crop.GrowSeconds);
             PlotChanged?.Invoke(cell);
             return FarmActionResult.Ok;
@@ -250,7 +264,17 @@ namespace DeadAcres.Farming
             plot.Step = 0;
             plot.Regrowing = false;
             limiter?.Unregister(PlaceableCategory.Plant);
+
+            if (grid != null && plot.OccupantId != PlacementGrid.NoOccupant)
+            {
+                grid.Release(plot.OccupantId);
+            }
+
+            plot.OccupantId = PlacementGrid.NoOccupant;
         }
+
+        private bool IsBlocked(Vector2Int cell) =>
+            grid != null && grid.GetOccupant(cell) != PlacementGrid.NoOccupant;
 
         private static float GetProgress(Plot plot)
         {

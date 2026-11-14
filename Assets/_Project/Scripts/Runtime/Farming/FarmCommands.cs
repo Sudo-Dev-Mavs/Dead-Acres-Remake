@@ -10,7 +10,7 @@ namespace DeadAcres.Farming
     /// </summary>
     public static class FarmCommands
     {
-        /// <summary>Planta gastando una semilla de la casilla indicada (la seleccionada en la hotbar).</summary>
+        /// <summary>Planta gastando una semilla de la ranura indicada (la seleccionada en la hotbar).</summary>
         public static FarmActionResult PlantFromSlot(FarmField field, Vector2Int cell, CropDefinition crop,
             Inventory inventory, int slotIndex)
         {
@@ -24,7 +24,7 @@ namespace DeadAcres.Farming
                 return FarmActionResult.MissingSeed;
             }
 
-            ItemStack stack = inventory.GetSlot(slotIndex);
+            ItemStack stack = inventory[slotIndex];
             if (stack.IsEmpty || stack.Item != crop.SeedItem)
             {
                 return FarmActionResult.MissingSeed;
@@ -36,7 +36,7 @@ namespace DeadAcres.Farming
                 return result;
             }
 
-            inventory.TryRemoveAt(slotIndex, 1);
+            inventory.RemoveAt(slotIndex, 1);
             return field.Plant(cell, crop);
         }
 

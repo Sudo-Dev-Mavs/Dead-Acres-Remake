@@ -3,50 +3,86 @@ using System;
 namespace DeadAcres.Items
 {
     /// <summary>
-    /// Inventario de casillas en C# puro (sin MonoBehaviour): testeable y, en co-op,
-    /// modificado solo por el host. Las vistas escuchan <see cref="SlotChanged"/>.
+    /// Hotbar de 9 ranuras (teclas 1-9) + mochila. Lo que se recibe va primero a la hotbar,
+    /// y a la mochila cuando la hotbar está llena (GDD sección 6).
+    /// C# puro: en co-op cada jugador tiene el suyo y el host valida las operaciones.
     /// </summary>
     public sealed class Inventory
     {
+        public const int HotbarSize = 9;
+        public const int DefaultBackpackSize = 24;
+
         private readonly ItemStack[] slots;
 
-        public Inventory(int slotCount)
+        public Inventory(int backpackSize = DefaultBackpackSize)
         {
-            if (slotCount <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(slotCount));
-            }
-
-            slots = new ItemStack[slotCount];
+            slots = new ItemStack[HotbarSize + Math.Max(0, backpackSize)];
         }
 
-        /// <summary>Índice de la casilla que cambió.</summary>
+        /// <summary>Índice de la ranura que cambió.</summary>
         public event Action<int> SlotChanged;
 
+        /// <summary>Nuevo índice seleccionado de la hotbar (0-8).</summary>
+        public event Action<int> SelectionChanged;
+
         public int SlotCount => slots.Length;
+        public int SelectedIndex { get; private set; }
+        public ItemStack Selected => slots[SelectedIndex];
 
-        public ItemStack GetSlot(int index) => slots[index];
+        public ItemStack this[int index] => slots[index];
 
-        public int CountOf(ItemDefinition item)
+        public static bool IsHotbar(int index) => index >= 0 && index < HotbarSize;
+
+        public void Select(int hotbarIndex)
         {
-            if (item == null)
+            if (!IsHotbar(hotbarIndex) || hotbarIndex == SelectedIndex)
+            {
+                return;
+            }
+
+            SelectedIndex = hotbarIndex;
+            SelectionChanged?.Invoke(SelectedIndex);
+        }
+
+        /// <summary>Rueda del ratón: +1 / -1, con vuelta circular.</summary>
+        public void Cycle(int direction)
+        {
+            if (direction == 0) return;
+            int next = (SelectedIndex + Math.Sign(direction) + HotbarSize) % HotbarSize;
+            Select(next);
+        }
+
+        /// <summary>Añade ítems. Primero completa pilas existentes, luego huecos de la hotbar, luego la mochila.</summary>
+        /// <returns>Cantidad que no cupo (0 = todo dentro).</returns>
+        public int Add(ItemDefinition item, int count)
+        {
+            if (item == null || count <= 0)
             {
                 return 0;
             }
 
-            int total = 0;
-            for (int i = 0; i < slots.Length; i++)
+            int remaining = count;
+
+            for (int i = 0; i < slots.Length && remaining > 0; i++)
             {
-                if (slots[i].Item == item)
+                if (slots[i].Item == item && slots[i].SpaceLeft > 0)
                 {
-                    total += slots[i].Count;
+                    remaining = FillSlot(i, item, remaining);
                 }
             }
 
-            return total;
+            for (int i = 0; i < slots.Length && remaining > 0; i++)
+            {
+                if (slots[i].IsEmpty)
+                {
+                    remaining = FillSlot(i, item, remaining);
+                }
+            }
+
+            return remaining;
         }
 
-        /// <summary>Cuántas unidades de este ítem caben todavía (pilas a medias + casillas vacías).</summary>
+        /// <summary>Cuántas unidades de este ítem caben todavía (pilas a medias + ranuras vacías).</summary>
         public int GetFreeSpaceFor(ItemDefinition item)
         {
             if (item == null)
@@ -63,7 +99,7 @@ namespace DeadAcres.Items
                 }
                 else if (slots[i].Item == item)
                 {
-                    space += Math.Max(0, item.MaxStack - slots[i].Count);
+                    space += slots[i].SpaceLeft;
                 }
             }
 
@@ -72,127 +108,66 @@ namespace DeadAcres.Items
 
         public bool CanAdd(ItemDefinition item, int count) => count > 0 && GetFreeSpaceFor(item) >= count;
 
-        /// <summary>
-        /// Añade lo que quepa: primero rellena pilas existentes y después usa casillas vacías.
-        /// </summary>
-        /// <returns>Unidades que no cupieron (0 si entró todo).</returns>
-        public int Add(ItemDefinition item, int count)
-        {
-            if (item == null || count <= 0)
-            {
-                return Math.Max(0, count);
-            }
-
-            int remaining = count;
-
-            for (int i = 0; i < slots.Length && remaining > 0; i++)
-            {
-                if (slots[i].Item == item && slots[i].Count < item.MaxStack)
-                {
-                    int moved = Math.Min(remaining, item.MaxStack - slots[i].Count);
-                    SetSlot(i, new ItemStack(item, slots[i].Count + moved));
-                    remaining -= moved;
-                }
-            }
-
-            for (int i = 0; i < slots.Length && remaining > 0; i++)
-            {
-                if (slots[i].IsEmpty)
-                {
-                    int moved = Math.Min(remaining, item.MaxStack);
-                    SetSlot(i, new ItemStack(item, moved));
-                    remaining -= moved;
-                }
-            }
-
-            return remaining;
-        }
-
-        /// <summary>Añade todo o nada.</summary>
-        public bool TryAdd(ItemDefinition item, int count)
-        {
-            if (!CanAdd(item, count))
-            {
-                return false;
-            }
-
-            Add(item, count);
-            return true;
-        }
-
-        /// <summary>Quita unidades de una casilla concreta. Todo o nada.</summary>
-        public bool TryRemoveAt(int index, int count)
+        /// <returns>True si había suficiente y se quitó.</returns>
+        public bool RemoveAt(int index, int count = 1)
         {
             if (index < 0 || index >= slots.Length || count <= 0 || slots[index].Count < count)
             {
                 return false;
             }
 
-            ItemStack stack = slots[index];
-            SetSlot(index, new ItemStack(stack.Item, stack.Count - count));
+            slots[index] = slots[index].WithCount(slots[index].Count - count);
+            SlotChanged?.Invoke(index);
             return true;
         }
 
-        /// <summary>Quita unidades del ítem de donde las haya, empezando por el final. Todo o nada.</summary>
-        public bool TryRemove(ItemDefinition item, int count)
+        public int CountOf(ItemDefinition item)
         {
-            if (count <= 0 || CountOf(item) < count)
+            int total = 0;
+            for (int i = 0; i < slots.Length; i++)
             {
-                return false;
+                if (slots[i].Item == item) total += slots[i].Count;
             }
 
-            int remaining = count;
-            for (int i = slots.Length - 1; i >= 0 && remaining > 0; i--)
-            {
-                if (slots[i].Item != item)
-                {
-                    continue;
-                }
-
-                int taken = Math.Min(remaining, slots[i].Count);
-                SetSlot(i, new ItemStack(item, slots[i].Count - taken));
-                remaining -= taken;
-            }
-
-            return true;
+            return total;
         }
 
-        /// <summary>
-        /// Arrastrar una casilla sobre otra: si tienen el mismo ítem se apilan (lo que no quepa
-        /// se queda en el origen); si no, se intercambian.
-        /// </summary>
-        public bool Move(int from, int to)
+        /// <summary>Arrastrar en la UI: intercambia ranuras, o junta pilas del mismo ítem.</summary>
+        public void Move(int from, int to)
         {
-            if (from < 0 || from >= slots.Length || to < 0 || to >= slots.Length || from == to || slots[from].IsEmpty)
+            if (from == to || from < 0 || to < 0 || from >= slots.Length || to >= slots.Length || slots[from].IsEmpty)
             {
-                return false;
+                return;
             }
 
             ItemStack source = slots[from];
             ItemStack target = slots[to];
 
-            if (!target.IsEmpty && target.Item == source.Item)
+            if (target.Item == source.Item && target.SpaceLeft > 0)
             {
-                int moved = Math.Min(source.Count, source.Item.MaxStack - target.Count);
-                if (moved <= 0)
-                {
-                    return false;
-                }
-
-                SetSlot(to, new ItemStack(source.Item, target.Count + moved));
-                SetSlot(from, new ItemStack(source.Item, source.Count - moved));
-                return true;
+                int moved = Math.Min(target.SpaceLeft, source.Count);
+                slots[to] = target.WithCount(target.Count + moved);
+                slots[from] = source.WithCount(source.Count - moved);
+            }
+            else
+            {
+                slots[to] = source;
+                slots[from] = target;
             }
 
-            SetSlot(to, source);
-            SetSlot(from, target);
-            return true;
+            SlotChanged?.Invoke(from);
+            SlotChanged?.Invoke(to);
         }
 
-        private void SetSlot(int index, ItemStack stack)
+        private int FillSlot(int index, ItemDefinition item, int remaining)
         {
-            slots[index] = stack;
+            int current = slots[index].IsEmpty ? 0 : slots[index].Count;
+            int added = Math.Min(item.MaxStack - current, remaining);
+            if (added <= 0) return remaining;
+
+            slots[index] = new ItemStack(item, current + added);
             SlotChanged?.Invoke(index);
+            return remaining - added;
         }
     }
 }

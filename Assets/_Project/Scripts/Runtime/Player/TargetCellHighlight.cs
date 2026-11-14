@@ -64,10 +64,9 @@ namespace DeadAcres.Player
 
             EnsureFrame(interactor.Farm.CellSize);
 
-            Transform farm = interactor.Farm.transform;
             frame.SetPositionAndRotation(
-                interactor.Farm.CellToWorld(context.Cell) + farm.up * HeightAboveGround,
-                farm.rotation);
+                interactor.Farm.CellToWorld(context.Cell) + Vector3.up * HeightAboveGround,
+                Quaternion.identity);
 
             bool actionable = context.Primary != PrimaryActionKind.None || context.CanHarvest;
             Color color = actionable ? actionColor : idleColor;

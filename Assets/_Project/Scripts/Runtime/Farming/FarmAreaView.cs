@@ -88,7 +88,7 @@ namespace DeadAcres.Farming
             float width = farm.CellSize * Mathf.Lerp(0.2f, 0.6f, growth);
             Transform crop = visual.Crop.transform;
             crop.localScale = new Vector3(width, height, width);
-            crop.position = farm.CellToWorld(cell) + farm.transform.up * (SoilHeight + height * 0.5f);
+            crop.position = farm.CellToWorld(cell) + Vector3.up * (SoilHeight + height * 0.5f);
 
             SetColor(visual.CropRenderer, state.Stage == PlotStage.Ripe ? state.Crop.RipeColor : sproutColor);
             visual.Crop.SetActive(true);
@@ -102,14 +102,14 @@ namespace DeadAcres.Farming
             }
 
             Vector3 center = farm.CellToWorld(cell);
-            Quaternion rotation = farm.transform.rotation;
+            Quaternion rotation = Quaternion.identity;
             float tile = farm.CellSize * 0.94f;
 
             // La losa no lleva collider: el rayo de interacción debe dar en el suelo.
             GameObject soil = CreateCube($"Soil {cell.x},{cell.y}", out Renderer soilRenderer, out Collider soilCollider);
             soilCollider.enabled = false;
             Destroy(soilCollider);
-            soil.transform.SetPositionAndRotation(center + farm.transform.up * (SoilHeight * 0.5f), rotation);
+            soil.transform.SetPositionAndRotation(center + Vector3.up * (SoilHeight * 0.5f), rotation);
             soil.transform.localScale = new Vector3(tile, SoilHeight, tile);
             SetColor(soilRenderer, soilColor);
 

@@ -5,84 +5,56 @@ using UnityEngine;
 
 namespace DeadAcres.Player
 {
-    /// <summary>
-    /// Inventario de un jugador y su casilla de hotbar seleccionada. La hotbar son las
-    /// primeras <see cref="HotbarSize"/> casillas del inventario.
-    /// </summary>
+    /// <summary>Conecta el <see cref="Inventory"/> del jugador con el input de la hotbar.</summary>
+    [DefaultExecutionOrder(-80)]
     public sealed class PlayerInventory : MonoBehaviour
     {
-        public const int HotbarSize = 10;
-
         [Serializable]
         private struct StartingItem
         {
             public ItemDefinition item;
-            public int count;
+            [Min(1)] public int count;
         }
 
-        [SerializeField, Min(HotbarSize)] private int slotCount = 30;
-        [SerializeField] private List<StartingItem> startingItems = new List<StartingItem>();
+        [SerializeField] private PlayerInputReader input;
+        [SerializeField, Min(0)] private int backpackSize = Inventory.DefaultBackpackSize;
 
-        private Inventory inventory;
-        private int selectedSlot;
+        [Tooltip("Equipo inicial: azada, martillo, escopeta... (GDD sección 8).")]
+        [SerializeField] private StartingItem[] startingItems = Array.Empty<StartingItem>();
 
-        public event Action<int> SelectedSlotChanged;
+        public Inventory Inventory { get; private set; }
 
-        public Inventory Inventory
+        private void Awake()
         {
-            get
+            Inventory = new Inventory(backpackSize);
+            foreach (StartingItem start in startingItems)
             {
-                EnsureCreated();
-                return inventory;
+                Inventory.Add(start.item, start.count);
             }
         }
 
-        public int SelectedSlot => selectedSlot;
-
-        public ItemStack SelectedStack => Inventory.GetSlot(selectedSlot);
-
-        private void Awake() => EnsureCreated();
-
-        public void SelectSlot(int index)
+        private void OnEnable()
         {
-            int wrapped = ((index % HotbarSize) + HotbarSize) % HotbarSize;
-            if (wrapped == selectedSlot)
-            {
-                return;
-            }
-
-            selectedSlot = wrapped;
-            SelectedSlotChanged?.Invoke(selectedSlot);
+            input.HotbarSlotPressed += Inventory.Select;
+            input.HotbarCycled += Inventory.Cycle;
         }
 
-        public void CycleSlot(int direction) => SelectSlot(selectedSlot + direction);
-
-        // Creación perezosa: otros componentes pueden pedir el inventario en su OnEnable,
-        // antes de que se ejecute este Awake.
-        private void EnsureCreated()
+        private void OnDisable()
         {
-            if (inventory != null)
-            {
-                return;
-            }
-
-            inventory = new Inventory(Mathf.Max(HotbarSize, slotCount));
-            for (int i = 0; i < startingItems.Count; i++)
-            {
-                inventory.Add(startingItems[i].item, startingItems[i].count);
-            }
+            input.HotbarSlotPressed -= Inventory.Select;
+            input.HotbarCycled -= Inventory.Cycle;
         }
 
-        internal void ConfigureLoadout(int slots, IEnumerable<KeyValuePair<ItemDefinition, int>> items)
+        internal void Configure(PlayerInputReader inputReader, IEnumerable<KeyValuePair<ItemDefinition, int>> items)
         {
-            slotCount = Mathf.Max(HotbarSize, slots);
-            startingItems = new List<StartingItem>();
+            input = inputReader;
+            var list = new List<StartingItem>();
             foreach (KeyValuePair<ItemDefinition, int> pair in items)
             {
-                startingItems.Add(new StartingItem { item = pair.Key, count = pair.Value });
+                list.Add(new StartingItem { item = pair.Key, count = pair.Value });
             }
 
-            inventory = null;
+            startingItems = list.ToArray();
         }
     }
 }

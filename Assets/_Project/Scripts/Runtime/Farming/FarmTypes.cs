@@ -23,6 +23,9 @@ namespace DeadAcres.Farming
         MissingSeed = 8,
         InventoryFull = 9,
         InvalidCrop = 10,
+
+        /// <summary>La celda está ocupada por un objeto colocado (muro, torreta...).</summary>
+        Blocked = 11,
     }
 
     /// <summary>Foto de una parcela para vistas y HUD. Struct: no genera basura.</summary>

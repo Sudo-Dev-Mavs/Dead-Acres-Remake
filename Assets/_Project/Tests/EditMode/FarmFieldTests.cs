@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DeadAcres.Building;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
@@ -23,9 +24,9 @@ namespace DeadAcres.Tests
         public void SetUp()
         {
             seed = ScriptableObject.CreateInstance<ItemDefinition>();
-            seed.Configure("seed_test", "Semillas", ItemCategory.Seed, 99, Color.green);
+            seed.Configure("Semillas", ItemKind.Seed, 99);
             fruit = ScriptableObject.CreateInstance<ItemDefinition>();
-            fruit.Configure("produce_test", "Fruto", ItemCategory.Produce, 10, Color.red);
+            fruit.Configure("Fruto", ItemKind.Produce, 10);
 
             // 40 s hasta la primera cosecha, 20 s de rebrote, 2-3 frutos.
             regrowing = ScriptableObject.CreateInstance<CropDefinition>();
@@ -230,7 +231,7 @@ namespace DeadAcres.Tests
         [Test]
         public void PlantFromSlot_SpendsOneSeed_OnlyWhenThePlantingSucceeds()
         {
-            var inventory = new Inventory(2);
+            var inventory = new Inventory(0); // solo las 9 ranuras de la hotbar
             inventory.Add(seed, 3);
             inventory.Add(fruit, 1);
 
@@ -240,9 +241,9 @@ namespace DeadAcres.Tests
 
             field.Till(Cell);
             Assert.AreEqual(FarmActionResult.MissingSeed,
-                FarmCommands.PlantFromSlot(field, Cell, regrowing, inventory, 1), "La casilla 1 tiene fruto, no semilla.");
+                FarmCommands.PlantFromSlot(field, Cell, regrowing, inventory, 1), "La ranura 1 tiene fruto, no semilla.");
             Assert.AreEqual(FarmActionResult.MissingSeed,
-                FarmCommands.PlantFromSlot(field, Cell, regrowing, inventory, 7), "Casilla inexistente.");
+                FarmCommands.PlantFromSlot(field, Cell, regrowing, inventory, 99), "Ranura inexistente.");
 
             Assert.AreEqual(FarmActionResult.Ok, FarmCommands.PlantFromSlot(field, Cell, regrowing, inventory, 0));
             Assert.AreEqual(2, inventory.CountOf(seed));
@@ -254,7 +255,7 @@ namespace DeadAcres.Tests
         [Test]
         public void HarvestInto_StoresTheProduce()
         {
-            var inventory = new Inventory(2);
+            var inventory = new Inventory(0);
             field.Till(Cell);
             field.Plant(Cell, regrowing);
             field.Tick(40f);
@@ -269,8 +270,8 @@ namespace DeadAcres.Tests
         [Test]
         public void HarvestInto_WithoutRoom_LeavesTheCropRipe()
         {
-            var inventory = new Inventory(1);
-            inventory.Add(fruit, 8); // caben 2, pero el cultivo puede dar 3
+            var inventory = new Inventory(0);
+            inventory.Add(fruit, 88); // 9 ranuras × 10 = 90: caben 2, pero el cultivo puede dar 3
             field.Till(Cell);
             field.Plant(Cell, regrowing);
             field.Tick(40f);
@@ -279,8 +280,52 @@ namespace DeadAcres.Tests
 
             Assert.AreEqual(FarmActionResult.InventoryFull, result);
             Assert.AreEqual(0, amount);
-            Assert.AreEqual(8, inventory.CountOf(fruit));
+            Assert.AreEqual(88, inventory.CountOf(fruit));
             Assert.AreEqual(FarmActionResult.Ok, field.CanHarvest(Cell), "No se pierde la cosecha.");
+        }
+
+        [Test]
+        public void SharedGrid_PlantsOccupyTheirCell_AndObjectsBlockFarming()
+        {
+            var grid = new PlacementGrid(8, 8, Vector3.zero);
+            field = new FarmField(new RectInt(0, 0, 8, 8), null, null, grid);
+            var wallCell = new Vector2Int(6, 6);
+            var wallRect = new RectInt(wallCell, Vector2Int.one);
+            int wall = grid.Occupy(wallRect);
+
+            Assert.AreEqual(FarmActionResult.Blocked, field.Till(wallCell), "No se ara debajo de un muro.");
+
+            field.Till(Cell);
+            Assert.IsTrue(grid.IsFree(new RectInt(Cell, Vector2Int.one)), "La tierra arada vacía no ocupa la celda.");
+            field.Plant(Cell, regrowing);
+            Assert.IsFalse(grid.IsFree(new RectInt(Cell, Vector2Int.one)), "Sobre una planta no cabe un objeto.");
+
+            field.ClearCrop(Cell);
+            Assert.IsTrue(grid.IsFree(new RectInt(Cell, Vector2Int.one)), "Al arrancar la planta se libera la celda.");
+
+            // Un muro puesto sobre tierra arada vacía impide plantar hasta que se quite.
+            int onSoil = grid.Occupy(new RectInt(Cell, Vector2Int.one));
+            Assert.AreEqual(FarmActionResult.Blocked, field.Plant(Cell, regrowing));
+            grid.Release(onSoil);
+            Assert.AreEqual(FarmActionResult.Ok, field.Plant(Cell, regrowing));
+
+            grid.Release(wall);
+            Assert.AreEqual(FarmActionResult.Ok, field.Till(wallCell));
+        }
+
+        [Test]
+        public void SharedGrid_SingleHarvestCrop_FreesItsCellWhenHarvested()
+        {
+            var grid = new PlacementGrid(8, 8, Vector3.zero);
+            field = new FarmField(new RectInt(0, 0, 8, 8), null, null, grid);
+            field.Till(Cell);
+            field.Plant(Cell, singleHarvest);
+            field.Tick(40f);
+
+            field.Harvest(Cell, out _, out _);
+
+            Assert.IsTrue(grid.IsFree(new RectInt(Cell, Vector2Int.one)));
+            Assert.AreEqual(0, grid.OccupantCount);
         }
     }
 }

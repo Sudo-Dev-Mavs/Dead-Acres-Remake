@@ -7,28 +7,30 @@ using UnityEngine;
 namespace DeadAcres.Player
 {
     /// <summary>
-    /// Convierte el input del jugador local en intenciones: cambiar de casilla, arar, plantar,
-    /// cosechar, dar el día por terminado. No modifica estado por su cuenta: llama a
-    /// <see cref="FarmField"/> y <see cref="FarmCommands"/>, que son quienes validan. En co-op,
-    /// esas llamadas pasarán a ser peticiones al host y este componente no cambia.
+    /// Convierte el input del jugador local en intenciones de granja: arar, plantar, cosechar y
+    /// dar el día por terminado. No modifica estado por su cuenta: llama a <see cref="FarmField"/>
+    /// y <see cref="FarmCommands"/>, que son quienes validan. En co-op esas llamadas pasarán a ser
+    /// peticiones al host y este componente no cambia.
+    /// Colocar objetos es cosa de PlacementController; aquí solo se usan la azada y las semillas.
     /// </summary>
     public sealed class PlayerInteractor : MonoBehaviour
     {
-        [SerializeField] private PlayerInputHandler input;
-        [SerializeField] private PlayerInventory inventory;
+        [SerializeField] private PlayerInputReader input;
+        [SerializeField] private PlayerInventory playerInventory;
 
         [Tooltip("Origen y dirección del rayo de interacción (la cámara).")]
         [SerializeField] private Transform eye;
 
         [SerializeField] private FarmArea farm;
 
-        [Tooltip("Opcional. Para el botón \"Listo\" (Enter).")]
+        [Tooltip("Opcional. Para el botón \"Listo\".")]
         [SerializeField] private DayNightCycle dayNight;
 
-        [SerializeField, Min(0.5f)] private float reach = 4.5f;
+        [SerializeField, Min(0.5f)] private float reach = 6f;
         [SerializeField] private LayerMask targetMask = Physics.DefaultRaycastLayers;
 
         private InteractionContext context;
+        private bool cursorWasLocked;
 
         /// <summary>Cambió lo que mira el jugador o lo que podría hacer ahí.</summary>
         public event Action<InteractionContext> ContextChanged;
@@ -41,39 +43,28 @@ namespace DeadAcres.Player
         public InteractionContext Context => context;
         public FarmArea Farm => farm;
 
+        private Inventory Inventory => playerInventory.Inventory;
+
+        private void OnEnable()
+        {
+            input.PrimaryPressed += UsePrimary;
+            input.InteractPressed += Harvest;
+            input.ReadyPressed += SkipDay;
+        }
+
+        private void OnDisable()
+        {
+            input.PrimaryPressed -= UsePrimary;
+            input.InteractPressed -= Harvest;
+            input.ReadyPressed -= SkipDay;
+        }
+
+        // Lo que se mira cambia de forma continua con la cámara: se recalcula cada frame,
+        // pero el evento solo sale cuando el resultado cambia.
         private void Update()
         {
-            if (input == null || inventory == null)
-            {
-                return;
-            }
-
-            if (input.SlotPressed >= 0)
-            {
-                inventory.SelectSlot(input.SlotPressed);
-            }
-            else if (input.ScrollStep != 0)
-            {
-                // Rueda hacia abajo = siguiente casilla.
-                inventory.CycleSlot(-input.ScrollStep);
-            }
-
             UpdateContext();
-
-            if (input.PrimaryPressed)
-            {
-                UsePrimary();
-            }
-
-            if (input.InteractPressed)
-            {
-                Harvest();
-            }
-
-            if (input.ReadyPressed && dayNight != null)
-            {
-                dayNight.TrySkipDay();
-            }
+            cursorWasLocked = Cursor.lockState == CursorLockMode.Locked;
         }
 
         private void UpdateContext()
@@ -96,7 +87,7 @@ namespace DeadAcres.Player
             }
 
             bool hasPlot = farm.Field.TryGetPlot(cell, out PlotState plot);
-            ItemStack selected = inventory.SelectedStack;
+            ItemStack selected = Inventory.Selected;
             PrimaryActionKind primary = PrimaryActionKind.None;
             CropDefinition cropToPlant = null;
 
@@ -104,12 +95,13 @@ namespace DeadAcres.Player
             {
                 if (selected.Item.Tool == ToolKind.Hoe)
                 {
-                    if (!hasPlot)
+                    if (farm.Field.CanTill(cell) == FarmActionResult.Ok)
                     {
                         primary = PrimaryActionKind.Till;
                     }
                 }
-                else if (hasPlot && plot.Crop == null && TryGetCropFor(selected.Item, out CropDefinition crop))
+                else if (TryGetCropFor(selected.Item, out CropDefinition crop)
+                         && farm.Field.CanPlant(cell, crop) == FarmActionResult.Ok)
                 {
                     primary = PrimaryActionKind.Plant;
                     cropToPlant = crop;
@@ -141,19 +133,27 @@ namespace DeadAcres.Player
         private bool TryGetCropFor(ItemDefinition item, out CropDefinition crop)
         {
             crop = null;
-            return item.Category == ItemCategory.Seed
+            return item.Kind == ItemKind.Seed
                 && farm.Catalog != null
                 && farm.Catalog.TryGetBySeed(item, out crop);
         }
 
         private void UsePrimary()
         {
+            // El clic que recupera el cursor (tras Esc) no debe usar la herramienta.
+            if (!cursorWasLocked || farm == null)
+            {
+                return;
+            }
+
+            // Los eventos de input llegan antes que Update: se refresca lo que se mira.
+            UpdateContext();
             if (!context.HasTarget)
             {
                 return;
             }
 
-            ItemStack selected = inventory.SelectedStack;
+            ItemStack selected = Inventory.Selected;
             if (selected.IsEmpty)
             {
                 return;
@@ -166,8 +166,7 @@ namespace DeadAcres.Player
             }
             else if (TryGetCropFor(selected.Item, out CropDefinition crop))
             {
-                result = FarmCommands.PlantFromSlot(farm.Field, context.Cell, crop, inventory.Inventory,
-                    inventory.SelectedSlot);
+                result = FarmCommands.PlantFromSlot(farm.Field, context.Cell, crop, Inventory, Inventory.SelectedIndex);
             }
             else
             {
@@ -179,12 +178,18 @@ namespace DeadAcres.Player
 
         private void Harvest()
         {
+            if (!cursorWasLocked || farm == null)
+            {
+                return;
+            }
+
+            UpdateContext();
             if (!context.HasTarget)
             {
                 return;
             }
 
-            FarmActionResult result = FarmCommands.HarvestInto(farm.Field, context.Cell, inventory.Inventory,
+            FarmActionResult result = FarmCommands.HarvestInto(farm.Field, context.Cell, Inventory,
                 out ItemDefinition produce, out int amount);
 
             if (result == FarmActionResult.Ok)
@@ -195,6 +200,14 @@ namespace DeadAcres.Player
             Report(result);
         }
 
+        private void SkipDay()
+        {
+            if (dayNight != null)
+            {
+                dayNight.TrySkipDay();
+            }
+        }
+
         private void Report(FarmActionResult result)
         {
             if (result != FarmActionResult.Ok)
@@ -202,15 +215,15 @@ namespace DeadAcres.Player
                 ActionRejected?.Invoke(result);
             }
 
-            // La acción puede haber cambiado la parcela o la casilla: se recalcula en el mismo frame.
+            // La acción puede haber cambiado la parcela o la ranura: se recalcula ya.
             UpdateContext();
         }
 
-        internal void Configure(PlayerInputHandler inputHandler, PlayerInventory playerInventory, Transform eyeTransform,
+        internal void Configure(PlayerInputReader inputReader, PlayerInventory inventory, Transform eyeTransform,
             FarmArea farmArea, DayNightCycle cycle)
         {
-            input = inputHandler;
-            inventory = playerInventory;
+            input = inputReader;
+            playerInventory = inventory;
             eye = eyeTransform;
             farm = farmArea;
             dayNight = cycle;

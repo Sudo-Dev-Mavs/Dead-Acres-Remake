@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DeadAcres.Building;
 using DeadAcres.DayNight;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
@@ -11,7 +12,7 @@ using UnityEngine.UI;
 namespace DeadAcres.UI
 {
     /// <summary>
-    /// HUD provisional del jugador local: reloj, fase, contador de plantas, hotbar, ayuda contextual
+    /// HUD provisional del jugador local: reloj, fase, contadores de plantas y objetos, hotbar, ayuda contextual
     /// y avisos. Solo escucha eventos y pinta; no modifica estado de juego.
     /// </summary>
     public sealed class HudView : MonoBehaviour
@@ -29,7 +30,7 @@ namespace DeadAcres.UI
         [SerializeField] private PhaseEventChannel phaseChanged;
         [SerializeField] private PlayerInventory playerInventory;
         [SerializeField] private PlayerInteractor interactor;
-        [SerializeField] private PlacementLimits limits;
+        [SerializeField] private FarmWorld world;
 
         [Header("Widgets")]
         [SerializeField] private Text clockLabel;
@@ -56,7 +57,7 @@ namespace DeadAcres.UI
             if (playerInventory != null)
             {
                 playerInventory.Inventory.SlotChanged += OnSlotChanged;
-                playerInventory.SelectedSlotChanged += OnSelectedSlotChanged;
+                playerInventory.Inventory.SelectionChanged += OnSelectionChanged;
             }
 
             if (interactor != null)
@@ -66,7 +67,7 @@ namespace DeadAcres.UI
                 interactor.Harvested += OnHarvested;
             }
 
-            limiter = limits != null ? limits.Limiter : null;
+            limiter = world != null ? world.Limiter : null;
             if (limiter != null) limiter.CountChanged += OnPlacementCountChanged;
         }
 
@@ -77,7 +78,7 @@ namespace DeadAcres.UI
             if (playerInventory != null)
             {
                 playerInventory.Inventory.SlotChanged -= OnSlotChanged;
-                playerInventory.SelectedSlotChanged -= OnSelectedSlotChanged;
+                playerInventory.Inventory.SelectionChanged -= OnSelectionChanged;
             }
 
             if (interactor != null)
@@ -137,13 +138,13 @@ namespace DeadAcres.UI
         private void OnSlotChanged(int index)
         {
             RefreshSlot(index);
-            if (index == playerInventory.SelectedSlot)
+            if (index == playerInventory.Inventory.SelectedIndex)
             {
                 RefreshSelectedLabel();
             }
         }
 
-        private void OnSelectedSlotChanged(int index)
+        private void OnSelectionChanged(int index)
         {
             for (int i = 0; i < slots.Count; i++)
             {
@@ -171,10 +172,7 @@ namespace DeadAcres.UI
 
         private void OnPlacementCountChanged(PlaceableCategory category, int count, int limit)
         {
-            if (category == PlaceableCategory.Plant)
-            {
-                RefreshPlantsLabel();
-            }
+            RefreshPlantsLabel();
         }
 
         private void RefreshAllSlots()
@@ -189,7 +187,7 @@ namespace DeadAcres.UI
                 RefreshSlot(i);
             }
 
-            OnSelectedSlotChanged(playerInventory.SelectedSlot);
+            OnSelectionChanged(playerInventory.Inventory.SelectedIndex);
         }
 
         private void RefreshSlot(int index)
@@ -199,7 +197,7 @@ namespace DeadAcres.UI
                 return;
             }
 
-            ItemStack stack = playerInventory.Inventory.GetSlot(index);
+            ItemStack stack = playerInventory.Inventory[index];
             SlotWidgets widgets = slots[index];
 
             if (widgets.icon != null)
@@ -207,7 +205,8 @@ namespace DeadAcres.UI
                 widgets.icon.enabled = !stack.IsEmpty;
                 if (!stack.IsEmpty)
                 {
-                    widgets.icon.color = stack.Item.Color;
+                    widgets.icon.sprite = stack.Item.Icon;
+                    widgets.icon.color = stack.Item.Icon != null ? Color.white : stack.Item.Tint;
                 }
             }
 
@@ -216,7 +215,7 @@ namespace DeadAcres.UI
 
         private void RefreshSelectedLabel()
         {
-            ItemStack stack = playerInventory.SelectedStack;
+            ItemStack stack = playerInventory.Inventory.Selected;
             SetText(selectedItemLabel, stack.IsEmpty ? string.Empty : stack.Item.DisplayName);
         }
 
@@ -228,9 +227,9 @@ namespace DeadAcres.UI
                 return;
             }
 
-            int count = limiter.GetCount(PlaceableCategory.Plant);
-            int limit = limiter.GetLimit(PlaceableCategory.Plant);
-            SetText(plantsLabel, $"Plantas {count}/{limit}");
+            SetText(plantsLabel,
+                $"Plantas {limiter.GetCount(PlaceableCategory.Plant)}/{limiter.GetLimit(PlaceableCategory.Plant)}" +
+                $"   Objetos {limiter.GetCount(PlaceableCategory.Object)}/{limiter.GetLimit(PlaceableCategory.Object)}");
         }
 
         private void ShowNotice(string message)
@@ -248,7 +247,7 @@ namespace DeadAcres.UI
 
             if (context.CanHarvest)
             {
-                return $"[E] Cosechar {context.PlotCrop.DisplayName}";
+                return $"[F] Cosechar {context.PlotCrop.DisplayName}";
             }
 
             switch (context.Primary)
@@ -272,7 +271,7 @@ namespace DeadAcres.UI
             switch (phase)
             {
                 case GamePhase.Dawn: return "Amanecer";
-                case GamePhase.Day: return "Día  ·  [Enter] Listo";
+                case GamePhase.Day: return "Día  ·  [R] Listo";
                 case GamePhase.Dusk: return "Atardecer";
                 default: return "Noche";
             }
@@ -288,6 +287,7 @@ namespace DeadAcres.UI
                 case FarmActionResult.NotRipe: return "Todavía no está maduro";
                 case FarmActionResult.PlantLimitReached: return "Límite de plantas alcanzado";
                 case FarmActionResult.InventoryFull: return "Inventario lleno";
+                case FarmActionResult.Blocked: return "Hay un objeto en esa celda";
                 default: return null;
             }
         }
@@ -301,14 +301,14 @@ namespace DeadAcres.UI
         }
 
         internal void Configure(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
-            PlayerInteractor playerInteractor, PlacementLimits placementLimits, Text clock, Text phase, Text plants,
+            PlayerInteractor playerInteractor, FarmWorld farmWorld, Text clock, Text phase, Text plants,
             Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
         {
             dayNight = cycle;
             phaseChanged = phaseChannel;
             playerInventory = inventory;
             interactor = playerInteractor;
-            limits = placementLimits;
+            world = farmWorld;
             clockLabel = clock;
             phaseLabel = phase;
             plantsLabel = plants;

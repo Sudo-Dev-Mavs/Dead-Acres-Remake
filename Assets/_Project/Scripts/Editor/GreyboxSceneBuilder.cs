@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
+using DeadAcres.Building;
 using DeadAcres.DayNight;
 using DeadAcres.Farming;
-using DeadAcres.GameMode;
 using DeadAcres.Player;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -13,8 +13,8 @@ using UnityEngine.SceneManagement;
 namespace DeadAcres.EditorTools
 {
     /// <summary>
-    /// Genera una escena jugable de pruebas con formas básicas: suelo, sol y luna, zona de granja,
-    /// jugador en primera persona y HUD, todo ya cableado.
+    /// Genera una escena jugable de pruebas con formas básicas: suelo, sol y luna, rejilla de granja,
+    /// jugador en primera persona (con colocación de objetos) y HUD, todo ya cableado.
     /// Menú: Dead Acres → Crear escena greybox.
     /// La escena se regenera entera cada vez: los cambios hechos a mano en ella se pierden.
     /// </summary>
@@ -22,11 +22,11 @@ namespace DeadAcres.EditorTools
     {
         private const string SceneFolder = "Assets/_Project/Scenes";
         private const string ScenePath = SceneFolder + "/Greybox.unity";
-        private const string MaterialFolder = "Assets/_Project/Art/Materials";
 
-        private static readonly Vector3 FarmCenter = new Vector3(0f, 0f, 16f);
-        private static readonly Vector2Int FarmSizeInCells = new Vector2Int(24, 24);
-        private const float FarmCellSize = 1f;
+        // FarmWorld marca la esquina (0,0) de la rejilla: 32×32 celdas de 1 m delante del jugador.
+        private static readonly Vector3 GridOrigin = new Vector3(-16f, 0f, 4f);
+        private const int GridSize = 32;
+        private const float GridCellSize = 1f;
 
         [MenuItem("Dead Acres/Crear escena greybox")]
         public static void Build()
@@ -51,10 +51,11 @@ namespace DeadAcres.EditorTools
 
             DefaultDataGenerator.GeneratedData data = DefaultDataGenerator.Generate();
 
-            EditorPaths.EnsureFolder(MaterialFolder);
-            Material groundMaterial = LoadOrCreateMaterial("Greybox_Ground", new Color(0.33f, 0.55f, 0.27f));
-            Material propMaterial = LoadOrCreateMaterial("Greybox_Prop", new Color(0.62f, 0.62f, 0.66f));
-            Material tintMaterial = LoadOrCreateMaterial("Greybox_Tint", Color.white);
+            Material groundMaterial = EditorPaths.LoadOrCreateMaterial("Greybox_Ground", new Color(0.33f, 0.55f, 0.27f));
+            Material propMaterial = EditorPaths.LoadOrCreateMaterial("Greybox_Prop", new Color(0.62f, 0.62f, 0.66f));
+            Material tintMaterial = EditorPaths.LoadOrCreateMaterial("Greybox_Tint", Color.white);
+            Material ghostValid = EditorPaths.LoadOrCreateGhostMaterial("Ghost_Valid", new Color(0.2f, 0.9f, 0.3f, 0.45f));
+            Material ghostInvalid = EditorPaths.LoadOrCreateGhostMaterial("Ghost_Invalid", new Color(0.95f, 0.2f, 0.2f, 0.45f));
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -75,23 +76,24 @@ namespace DeadAcres.EditorTools
             var cycle = systems.AddComponent<DayNightCycle>();
             cycle.Configure(data.DayNight, data.PhaseChanged, data.NightCompleted, sun.transform);
             systems.AddComponent<DayNightLighting>().Configure(sun, moon);
-            var limits = systems.AddComponent<PlacementLimits>();
-            limits.Configure(data.Session);
 
-            var farmObject = new GameObject("FarmArea");
-            farmObject.transform.position = FarmCenter;
-            var farm = farmObject.AddComponent<FarmArea>();
-            farm.Configure(data.Crops, limits, cycle, FarmSizeInCells, FarmCellSize);
+            var worldObject = new GameObject("FarmWorld");
+            worldObject.transform.position = GridOrigin;
+            var world = worldObject.AddComponent<FarmWorld>();
+            world.Configure(data.Session, GridSize, GridSize, GridCellSize);
+            var farm = worldObject.AddComponent<FarmArea>();
+            farm.Configure(world, data.Crops, cycle);
 
             var farmView = new GameObject("FarmView").AddComponent<FarmAreaView>();
             farmView.Configure(farm, tintMaterial);
 
-            PlayerInteractor interactor = CreatePlayer(data, farm, cycle, out PlayerInventory inventory);
+            PlayerInteractor interactor = CreatePlayer(data, world, farm, cycle, ghostValid, ghostInvalid,
+                out PlayerInventory inventory);
 
             var highlight = new GameObject("TargetCellHighlight").AddComponent<TargetCellHighlight>();
             highlight.Configure(interactor, tintMaterial);
 
-            HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, limits);
+            HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, world);
 
             EditorPaths.EnsureFolder(SceneFolder);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -102,8 +104,9 @@ namespace DeadAcres.EditorTools
             Debug.Log($"Dead Acres: escena generada en {ScenePath}. Pulsa Play para probarla.");
         }
 
-        private static PlayerInteractor CreatePlayer(DefaultDataGenerator.GeneratedData data, FarmArea farm,
-            DayNightCycle cycle, out PlayerInventory inventory)
+        private static PlayerInteractor CreatePlayer(DefaultDataGenerator.GeneratedData data, FarmWorld world,
+            FarmArea farm, DayNightCycle cycle, Material ghostValid, Material ghostInvalid,
+            out PlayerInventory inventory)
         {
             var player = new GameObject("Player");
             player.transform.position = new Vector3(0f, 0.1f, 0f);
@@ -113,21 +116,27 @@ namespace DeadAcres.EditorTools
             controller.radius = 0.35f;
             controller.center = new Vector3(0f, 0.9f, 0f);
 
+            // El pivote rota en vertical; el cuerpo, en horizontal.
+            var pivot = new GameObject("CameraPivot").transform;
+            pivot.SetParent(player.transform, false);
+            pivot.localPosition = new Vector3(0f, 1.62f, 0f);
+
             var cameraObject = new GameObject("PlayerCamera") { tag = "MainCamera" };
-            cameraObject.transform.SetParent(player.transform, false);
-            cameraObject.transform.localPosition = new Vector3(0f, 1.62f, 0f);
+            cameraObject.transform.SetParent(pivot, false);
             var camera = cameraObject.AddComponent<Camera>();
             camera.nearClipPlane = 0.05f;
             camera.farClipPlane = 500f;
             camera.fieldOfView = 70f;
             cameraObject.AddComponent<AudioListener>();
 
-            var input = player.AddComponent<PlayerInputHandler>();
-            player.AddComponent<PlayerMotor>().Configure(input);
-            player.AddComponent<PlayerLook>().Configure(input, cameraObject.transform);
+            var input = player.AddComponent<PlayerInputReader>();
+            player.AddComponent<FirstPersonController>().Configure(input, pivot);
 
             inventory = player.AddComponent<PlayerInventory>();
-            inventory.ConfigureLoadout(30, data.StartingItems);
+            inventory.Configure(input, data.StartingItems);
+
+            player.AddComponent<PlacementController>()
+                .Configure(input, inventory, world, camera, ghostValid, ghostInvalid);
 
             var interactor = player.AddComponent<PlayerInteractor>();
             interactor.Configure(input, inventory, cameraObject.transform, farm, cycle);
@@ -164,14 +173,14 @@ namespace DeadAcres.EditorTools
             CreateBox("RV (placeholder)", props, material, new Vector3(-7f, 1.4f, -2f), new Vector3(2.6f, 2.8f, 7f));
 
             // Postes en las esquinas de la zona cultivable, como referencia visual.
-            float halfX = FarmSizeInCells.x * FarmCellSize * 0.5f;
-            float halfZ = FarmSizeInCells.y * FarmCellSize * 0.5f;
-            for (int x = -1; x <= 1; x += 2)
+            float side = GridSize * GridCellSize;
+            for (int x = 0; x <= 1; x++)
             {
-                for (int z = -1; z <= 1; z += 2)
+                for (int z = 0; z <= 1; z++)
                 {
-                    Vector3 position = FarmCenter + new Vector3(x * (halfX + 0.25f), 0.7f, z * (halfZ + 0.25f));
-                    CreateBox("Farm corner post", props, material, position, new Vector3(0.3f, 1.4f, 0.3f));
+                    // Justo por fuera de la rejilla, para no tapar ninguna celda.
+                    var offset = new Vector3(x == 0 ? -0.25f : side + 0.25f, 0.7f, z == 0 ? -0.25f : side + 0.25f);
+                    CreateBox("Grid corner post", props, material, GridOrigin + offset, new Vector3(0.3f, 1.4f, 0.3f));
                 }
             }
         }
@@ -184,36 +193,6 @@ namespace DeadAcres.EditorTools
             box.transform.position = position;
             box.transform.localScale = scale;
             box.GetComponent<Renderer>().sharedMaterial = material;
-        }
-
-        private static Material LoadOrCreateMaterial(string name, Color color)
-        {
-            string path = $"{MaterialFolder}/{name}.mat";
-            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (material == null)
-            {
-                material = new Material(FindLitShader()) { name = name };
-                AssetDatabase.CreateAsset(material, path);
-            }
-
-            // _BaseColor en URP; _Color si se acabó usando el shader Standard.
-            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
-            if (material.HasProperty("_Color")) material.SetColor("_Color", color);
-            if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", 0.1f);
-            EditorUtility.SetDirty(material);
-            return material;
-        }
-
-        private static Shader FindLitShader()
-        {
-            RenderPipelineAsset pipeline = GraphicsSettings.currentRenderPipeline;
-            if (pipeline != null && pipeline.defaultShader != null)
-            {
-                return pipeline.defaultShader;
-            }
-
-            Shader shader = Shader.Find("Universal Render Pipeline/Lit");
-            return shader != null ? shader : Shader.Find("Standard");
         }
 
         private static void AddToBuildSettings(string scenePath)

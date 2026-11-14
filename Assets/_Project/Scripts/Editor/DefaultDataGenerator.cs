@@ -82,8 +82,14 @@ namespace DeadAcres.EditorTools
 
         private static void GenerateItemsAndCrops(GeneratedData data)
         {
-            ItemDefinition hoe = CreateItem("tool_hoe", "Azada", ItemCategory.Tool, 1,
+            ItemDefinition hoe = CreateItem("tool_hoe", "Azada", ItemKind.Tool, 1,
                 new Color(0.60f, 0.60f, 0.66f), ToolKind.Hoe);
+
+            // Un colocable sencillo para probar la colocación en rejilla (fantasma, Q/E, límites).
+            var wallColor = new Color(0.55f, 0.38f, 0.22f);
+            GameObject wallPrefab = CreateBoxPrefab("WoodWall", new Vector3(1f, 2f, 0.3f), wallColor);
+            ItemDefinition wall = CreateItem("placeable_wood_wall", "Muro de madera", ItemKind.Placeable, 99,
+                wallColor, ToolKind.None, wallPrefab);
 
             // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura.
             var crops = new List<CropDefinition>
@@ -104,6 +110,7 @@ namespace DeadAcres.EditorTools
                 new KeyValuePair<ItemDefinition, int>(hoe, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 8),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 4),
+                new KeyValuePair<ItemDefinition, int>(wall, 12),
             };
         }
 
@@ -112,8 +119,8 @@ namespace DeadAcres.EditorTools
         {
             Color seedColor = Color.Lerp(color, new Color(0.45f, 0.36f, 0.24f), 0.6f);
             ItemDefinition seed = CreateItem($"seed_{id}", $"Semillas de {name.ToLowerInvariant()}",
-                ItemCategory.Seed, 99, seedColor);
-            ItemDefinition produce = CreateItem($"produce_{id}", name, ItemCategory.Produce, 99, color);
+                ItemKind.Seed, 99, seedColor);
+            ItemDefinition produce = CreateItem($"produce_{id}", name, ItemKind.Produce, 99, color);
 
             var crop = EditorPaths.LoadOrCreate<CropDefinition>($"{Root}/Crops/Crop_{id}.asset");
             crop.Configure(id, name, seed, produce, growSeconds, regrowSeconds, yieldMin, yieldMax, color, height);
@@ -121,13 +128,36 @@ namespace DeadAcres.EditorTools
             return crop;
         }
 
-        private static ItemDefinition CreateItem(string id, string name, ItemCategory category, int maxStack,
-            Color color, ToolKind tool = ToolKind.None)
+        private static ItemDefinition CreateItem(string id, string name, ItemKind kind, int maxStack,
+            Color color, ToolKind tool = ToolKind.None, GameObject placedPrefab = null)
         {
             var item = EditorPaths.LoadOrCreate<ItemDefinition>($"{Root}/Items/Item_{id}.asset");
-            item.Configure(id, name, category, maxStack, color, tool);
+            item.Configure(name, kind, maxStack);
+            item.ConfigureExtras(id, color, tool, placedPrefab);
             EditorUtility.SetDirty(item);
             return item;
+        }
+
+        /// <summary>
+        /// Prefab provisional: raíz a ras de suelo (donde lo instancia la colocación) y una caja
+        /// hija con collider, levantada media altura.
+        /// </summary>
+        private static GameObject CreateBoxPrefab(string name, Vector3 size, Color color)
+        {
+            const string folder = "Assets/_Project/Prefabs/Placeables";
+            EditorPaths.EnsureFolder(folder);
+
+            var root = new GameObject(name);
+            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            box.name = "Box";
+            box.transform.SetParent(root.transform, false);
+            box.transform.localPosition = new Vector3(0f, size.y * 0.5f, 0f);
+            box.transform.localScale = size;
+            box.GetComponent<Renderer>().sharedMaterial = EditorPaths.LoadOrCreateMaterial($"Greybox_{name}", color);
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{name}.prefab");
+            Object.DestroyImmediate(root);
+            return prefab;
         }
 
         private static DifficultyProfile CreateDifficulty(string name, string flavor, float health, float damage)

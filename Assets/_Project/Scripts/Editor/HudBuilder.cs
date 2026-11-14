@@ -1,6 +1,7 @@
 using System.Collections.Generic;
+using DeadAcres.Building;
 using DeadAcres.DayNight;
-using DeadAcres.GameMode;
+using DeadAcres.Items;
 using DeadAcres.Player;
 using DeadAcres.UI;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace DeadAcres.EditorTools
         private static readonly Vector2 MiddleLeft = new Vector2(0f, 0.5f);
 
         public static HudView Build(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
-            PlayerInteractor interactor, PlacementLimits limits)
+            PlayerInteractor interactor, FarmWorld world)
         {
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null)
@@ -70,14 +71,14 @@ namespace DeadAcres.EditorTools
             List<HudView.SlotWidgets> slots = CreateHotbar(root, font);
 
             var hud = canvasObject.AddComponent<HudView>();
-            hud.Configure(cycle, phaseChannel, inventory, interactor, limits, clock, phase, plants, selectedItem,
+            hud.Configure(cycle, phaseChannel, inventory, interactor, world, clock, phase, plants, selectedItem,
                 hint, notice, slots);
             return hud;
         }
 
         private static List<HudView.SlotWidgets> CreateHotbar(Transform root, Font font)
         {
-            int count = PlayerInventory.HotbarSize;
+            int count = Inventory.HotbarSize;
             float width = count * SlotSize + (count - 1) * SlotGap;
 
             RectTransform bar = CreateRect("Hotbar", root);
@@ -99,7 +100,7 @@ namespace DeadAcres.EditorTools
                 icon.enabled = false;
 
                 Text key = CreateText("Key", frame.transform, font, 14, TextAnchor.UpperLeft);
-                key.text = ((i + 1) % 10).ToString();
+                key.text = (i + 1).ToString();
                 key.color = new Color(1f, 1f, 1f, 0.7f);
                 Place(key.rectTransform, TopLeft, TopLeft, new Vector2(6f, -3f), new Vector2(24f, 18f));
 
