@@ -7,8 +7,8 @@ using UnityEngine;
 namespace DeadAcres.Player
 {
     /// <summary>
-    /// Convierte el input del jugador local en intenciones de granja: arar, plantar, cosechar y
-    /// dar el día por terminado. No modifica estado por su cuenta: llama a <see cref="FarmField"/>
+    /// Convierte el input del jugador local en intenciones: arar, plantar, cosechar, hablar con
+    /// lo que tenga delante (<see cref="IInteractable"/>) y dar el día por terminado. No modifica estado por su cuenta: llama a <see cref="FarmField"/>
     /// y <see cref="FarmCommands"/>, que son quienes validan. En co-op esas llamadas pasarán a ser
     /// peticiones al host y este componente no cambia.
     /// Colocar objetos es cosa de PlacementController; aquí solo se usan la azada y las semillas.
@@ -31,6 +31,8 @@ namespace DeadAcres.Player
 
         private InteractionContext context;
         private bool cursorWasLocked;
+        private Collider lastHitCollider;
+        private IInteractable lastHitInteractable;
 
         /// <summary>Cambió lo que mira el jugador o lo que podría hacer ahí.</summary>
         public event Action<InteractionContext> ContextChanged;
@@ -48,14 +50,14 @@ namespace DeadAcres.Player
         private void OnEnable()
         {
             input.PrimaryPressed += UsePrimary;
-            input.InteractPressed += Harvest;
+            input.InteractPressed += Interact;
             input.ReadyPressed += SkipDay;
         }
 
         private void OnDisable()
         {
             input.PrimaryPressed -= UsePrimary;
-            input.InteractPressed -= Harvest;
+            input.InteractPressed -= Interact;
             input.ReadyPressed -= SkipDay;
         }
 
@@ -81,7 +83,22 @@ namespace DeadAcres.Player
 
         private InteractionContext BuildContext()
         {
-            if (farm == null || !TryFindTargetCell(out Vector2Int cell))
+            if (eye == null
+                || !Physics.Raycast(new Ray(eye.position, eye.forward), out RaycastHit hit, reach, targetMask,
+                    QueryTriggerInteraction.Collide))
+            {
+                return default;
+            }
+
+            IInteractable interactable = GetInteractable(hit.collider);
+            if (interactable != null && interactable.CanInteract)
+            {
+                return new InteractionContext(interactable);
+            }
+
+            // Se empuja el punto un poco hacia dentro de lo que se golpeó: al apuntar al costado
+            // de una planta, la celda elegida es la de la planta y no la vecina.
+            if (farm == null || !farm.TryWorldToCell(hit.point - hit.normal * 0.02f, out Vector2Int cell))
             {
                 return default;
             }
@@ -111,23 +128,16 @@ namespace DeadAcres.Player
             return new InteractionContext(true, cell, primary, cropToPlant, hasPlot, plot.Stage, plot.Crop);
         }
 
-        private bool TryFindTargetCell(out Vector2Int cell)
+        // Solo se busca el componente cuando cambia el collider que se mira.
+        private IInteractable GetInteractable(Collider hitCollider)
         {
-            cell = default;
-            if (eye == null)
+            if (hitCollider != lastHitCollider)
             {
-                return false;
+                lastHitCollider = hitCollider;
+                lastHitInteractable = hitCollider.GetComponentInParent<IInteractable>();
             }
 
-            var ray = new Ray(eye.position, eye.forward);
-            if (!Physics.Raycast(ray, out RaycastHit hit, reach, targetMask, QueryTriggerInteraction.Collide))
-            {
-                return false;
-            }
-
-            // Se empuja el punto un poco hacia dentro de lo que se golpeó: al apuntar al costado
-            // de una planta, la celda elegida es la de la planta y no la vecina.
-            return farm.TryWorldToCell(hit.point - hit.normal * 0.02f, out cell);
+            return lastHitInteractable;
         }
 
         private bool TryGetCropFor(ItemDefinition item, out CropDefinition crop)
@@ -176,15 +186,22 @@ namespace DeadAcres.Player
             Report(result);
         }
 
-        private void Harvest()
+        private void Interact()
         {
-            if (!cursorWasLocked || farm == null)
+            if (!cursorWasLocked)
             {
                 return;
             }
 
             UpdateContext();
-            if (!context.HasTarget)
+
+            if (context.Interactable != null)
+            {
+                context.Interactable.Interact(gameObject);
+                return;
+            }
+
+            if (farm == null || !context.HasTarget)
             {
                 return;
             }

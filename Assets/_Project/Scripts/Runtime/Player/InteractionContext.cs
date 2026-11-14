@@ -32,9 +32,18 @@ namespace DeadAcres.Player
         /// <summary>Cultivo que ya hay en la parcela. Null si no hay.</summary>
         public readonly CropDefinition PlotCrop;
 
+        /// <summary>Lo que se mira y admite Interactuar (Jack...). Tiene prioridad sobre cosechar.</summary>
+        public readonly IInteractable Interactable;
+
+        public InteractionContext(IInteractable interactable) : this()
+        {
+            Interactable = interactable;
+        }
+
         public InteractionContext(bool hasTarget, Vector2Int cell, PrimaryActionKind primary,
             CropDefinition cropToPlant, bool hasPlot, PlotStage stage, CropDefinition plotCrop)
         {
+            Interactable = null;
             HasTarget = hasTarget;
             Cell = cell;
             Primary = primary;
@@ -54,7 +63,8 @@ namespace DeadAcres.Player
                 && CropToPlant == other.CropToPlant
                 && HasPlot == other.HasPlot
                 && Stage == other.Stage
-                && PlotCrop == other.PlotCrop;
+                && PlotCrop == other.PlotCrop
+                && ReferenceEquals(Interactable, other.Interactable);
         }
 
         public override bool Equals(object obj) => obj is InteractionContext other && Equals(other);

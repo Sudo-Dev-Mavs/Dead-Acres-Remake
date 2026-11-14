@@ -66,6 +66,12 @@ namespace DeadAcres.Items
             placeableCategory = category;
         }
 
+        internal void ConfigurePrices(int buy, int sell)
+        {
+            buyPrice = Mathf.Max(0, buy);
+            sellPrice = Mathf.Max(0, sell);
+        }
+
         internal void ConfigureExtras(string newId, Color newTint, ToolKind newTool = ToolKind.None,
             GameObject prefab = null)
         {

@@ -22,11 +22,13 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 | Saltar / correr | Espacio / Shift | A / L3 |
 | Usar (arar con la azada, plantar con semillas) o colocar | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
-| Cosechar / interactuar | F | X |
+| Cosechar / hablar con Jack | F | X |
 | "Listo" (terminar el día) | R | Start |
 | Hotbar | 1-9 y rueda | LB / RB |
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
+
+Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y vende semillas y muros; su catálogo crece cada día. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
 
 ## Estructura
 
@@ -42,8 +44,9 @@ Assets/_Project/
     Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
-    Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerInteractor
-    UI               HudView
+    Economy          Wallet + ShopCommands (puros), ShopCatalog, Shopkeeper (Jack)
+    Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet, PlayerInteractor
+    UI               HudView, ShopView, UiFactory
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
   Data/, Scenes/, Art/, Prefabs/   generados desde el menú Dead Acres

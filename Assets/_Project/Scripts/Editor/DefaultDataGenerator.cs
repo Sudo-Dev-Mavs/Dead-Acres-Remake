@@ -3,6 +3,7 @@ using DeadAcres.Core.Events;
 using DeadAcres.Core.Session;
 using DeadAcres.DayNight;
 using DeadAcres.Difficulty;
+using DeadAcres.Economy;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
@@ -14,7 +15,7 @@ namespace DeadAcres.EditorTools
     /// <summary>
     /// Crea (o actualiza) los assets de configuración, para no teclearlos a mano en el Inspector.
     /// Menú: Dead Acres → Generar datos por defecto.
-    /// Los valores de ítems y cultivos son provisionales: el original no publica sus números.
+    /// Los valores de ítems, cultivos y precios son provisionales: el original no publica sus números.
     /// </summary>
     public static class DefaultDataGenerator
     {
@@ -28,6 +29,8 @@ namespace DeadAcres.EditorTools
             public PhaseEventChannel PhaseChanged;
             public NightResultEventChannel NightCompleted;
             public CropCatalog Crops;
+            public ShopCatalog Shop;
+            public int StartingGold;
             public List<KeyValuePair<ItemDefinition, int>> StartingItems;
         }
 
@@ -45,6 +48,7 @@ namespace DeadAcres.EditorTools
             EditorPaths.EnsureFolder($"{Root}/Events");
             EditorPaths.EnsureFolder($"{Root}/Items");
             EditorPaths.EnsureFolder($"{Root}/Crops");
+            EditorPaths.EnsureFolder($"{Root}/Shop");
 
             var data = new GeneratedData();
 
@@ -90,16 +94,32 @@ namespace DeadAcres.EditorTools
             GameObject wallPrefab = CreateBoxPrefab("WoodWall", new Vector3(1f, 2f, 0.3f), wallColor);
             ItemDefinition wall = CreateItem("placeable_wood_wall", "Muro de madera", ItemKind.Placeable, 99,
                 wallColor, ToolKind.None, wallPrefab);
+            wall.ConfigurePrices(buy: 5, sell: 2); // 5 de oro: uno de los pocos precios que se oyen en el original
 
-            // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura.
+            // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura,
+            // precio de la semilla, precio de venta del fruto.
             var crops = new List<CropDefinition>
             {
-                CreateCrop("strawberry", "Fresa", new Color(0.86f, 0.12f, 0.20f), 60f, 45f, 2, 3, 0.40f),
-                CreateCrop("potato", "Papa", new Color(0.76f, 0.62f, 0.38f), 120f, 90f, 2, 4, 0.35f),
-                CreateCrop("tomato", "Tomate", new Color(0.92f, 0.28f, 0.12f), 90f, 60f, 2, 3, 0.80f),
-                CreateCrop("wheat", "Trigo", new Color(0.90f, 0.76f, 0.30f), 75f, 60f, 1, 2, 0.90f),
-                CreateCrop("sunflower", "Girasol", new Color(0.98f, 0.82f, 0.10f), 100f, 80f, 1, 1, 1.40f),
+                CreateCrop("strawberry", "Fresa", new Color(0.86f, 0.12f, 0.20f), 60f, 45f, 2, 3, 0.40f, 5, 3),
+                CreateCrop("potato", "Papa", new Color(0.76f, 0.62f, 0.38f), 120f, 90f, 2, 4, 0.35f, 8, 4),
+                CreateCrop("tomato", "Tomate", new Color(0.92f, 0.28f, 0.12f), 90f, 60f, 2, 3, 0.80f, 10, 5),
+                CreateCrop("wheat", "Trigo", new Color(0.90f, 0.76f, 0.30f), 75f, 60f, 1, 2, 0.90f, 6, 6),
+                CreateCrop("sunflower", "Girasol", new Color(0.98f, 0.82f, 0.10f), 100f, 80f, 1, 1, 1.40f, 12, 14),
             };
+
+            // Qué trae Jack y desde qué día: su catálogo crece, como en el original.
+            data.Shop = EditorPaths.LoadOrCreate<ShopCatalog>($"{Root}/Shop/ShopCatalog.asset");
+            data.Shop.Configure(new List<KeyValuePair<ItemDefinition, int>>
+            {
+                new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 1),
+                new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 1),
+                new KeyValuePair<ItemDefinition, int>(wall, 1),
+                new KeyValuePair<ItemDefinition, int>(crops[2].SeedItem, 2),
+                new KeyValuePair<ItemDefinition, int>(crops[3].SeedItem, 2),
+                new KeyValuePair<ItemDefinition, int>(crops[4].SeedItem, 3),
+            });
+            EditorUtility.SetDirty(data.Shop);
+            data.StartingGold = 20;
 
             data.Crops = EditorPaths.LoadOrCreate<CropCatalog>($"{Root}/CropCatalog.asset");
             data.Crops.Configure(crops);
@@ -115,12 +135,14 @@ namespace DeadAcres.EditorTools
         }
 
         private static CropDefinition CreateCrop(string id, string name, Color color, float growSeconds,
-            float regrowSeconds, int yieldMin, int yieldMax, float height)
+            float regrowSeconds, int yieldMin, int yieldMax, float height, int seedPrice, int produceSellPrice)
         {
             Color seedColor = Color.Lerp(color, new Color(0.45f, 0.36f, 0.24f), 0.6f);
             ItemDefinition seed = CreateItem($"seed_{id}", $"Semillas de {name.ToLowerInvariant()}",
                 ItemKind.Seed, 99, seedColor);
             ItemDefinition produce = CreateItem($"produce_{id}", name, ItemKind.Produce, 99, color);
+            seed.ConfigurePrices(buy: seedPrice, sell: 0);
+            produce.ConfigurePrices(buy: 0, sell: produceSellPrice);
 
             var crop = EditorPaths.LoadOrCreate<CropDefinition>($"{Root}/Crops/Crop_{id}.asset");
             crop.Configure(id, name, seed, produce, growSeconds, regrowSeconds, yieldMin, yieldMax, color, height);

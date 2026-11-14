@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using DeadAcres.Building;
 using DeadAcres.DayNight;
+using DeadAcres.Economy;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
@@ -31,11 +32,13 @@ namespace DeadAcres.UI
         [SerializeField] private PlayerInventory playerInventory;
         [SerializeField] private PlayerInteractor interactor;
         [SerializeField] private FarmWorld world;
+        [SerializeField] private PlayerWallet playerWallet;
 
         [Header("Widgets")]
         [SerializeField] private Text clockLabel;
         [SerializeField] private Text phaseLabel;
         [SerializeField] private Text plantsLabel;
+        [SerializeField] private Text goldLabel;
         [SerializeField] private Text selectedItemLabel;
         [SerializeField] private Text hintLabel;
         [SerializeField] private Text noticeLabel;
@@ -49,6 +52,7 @@ namespace DeadAcres.UI
         private int lastClockStamp = -1;
         private float noticeTimeLeft;
         private PlacementLimiter limiter;
+        private Wallet wallet;
 
         private void OnEnable()
         {
@@ -69,6 +73,9 @@ namespace DeadAcres.UI
 
             limiter = world != null ? world.Limiter : null;
             if (limiter != null) limiter.CountChanged += OnPlacementCountChanged;
+
+            wallet = playerWallet != null ? playerWallet.Wallet : null;
+            if (wallet != null) wallet.Changed += OnGoldChanged;
         }
 
         private void OnDisable()
@@ -90,6 +97,9 @@ namespace DeadAcres.UI
 
             if (limiter != null) limiter.CountChanged -= OnPlacementCountChanged;
             limiter = null;
+
+            if (wallet != null) wallet.Changed -= OnGoldChanged;
+            wallet = null;
         }
 
         private void Start()
@@ -104,6 +114,7 @@ namespace DeadAcres.UI
 
             RefreshAllSlots();
             RefreshPlantsLabel();
+            OnGoldChanged(wallet != null ? wallet.Gold : 0);
         }
 
         // El reloj avanza de forma continua y no hay evento "cambió el minuto": se consulta cada
@@ -133,7 +144,16 @@ namespace DeadAcres.UI
             }
         }
 
-        private void OnPhaseChanged(PhaseChange change) => SetText(phaseLabel, GetPhaseName(change.Phase));
+        private void OnPhaseChanged(PhaseChange change)
+        {
+            SetText(phaseLabel, GetPhaseName(change.Phase));
+            if (change.Phase == GamePhase.Dusk)
+            {
+                ShowNotice("Se hace tarde: Jack se va al anochecer");
+            }
+        }
+
+        private void OnGoldChanged(int gold) => SetText(goldLabel, wallet != null ? $"Oro {gold}" : string.Empty);
 
         private void OnSlotChanged(int index)
         {
@@ -240,6 +260,11 @@ namespace DeadAcres.UI
 
         private static string BuildHint(InteractionContext context)
         {
+            if (context.Interactable != null)
+            {
+                return $"[F] {context.Interactable.Prompt}";
+            }
+
             if (!context.HasTarget)
             {
                 return string.Empty;
@@ -301,14 +326,16 @@ namespace DeadAcres.UI
         }
 
         internal void Configure(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
-            PlayerInteractor playerInteractor, FarmWorld farmWorld, Text clock, Text phase, Text plants,
-            Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
+            PlayerInteractor playerInteractor, FarmWorld farmWorld, PlayerWallet walletOwner, Text clock, Text phase,
+            Text plants, Text gold, Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
         {
             dayNight = cycle;
             phaseChanged = phaseChannel;
             playerInventory = inventory;
             interactor = playerInteractor;
             world = farmWorld;
+            playerWallet = walletOwner;
+            goldLabel = gold;
             clockLabel = clock;
             phaseLabel = phase;
             plantsLabel = plants;
