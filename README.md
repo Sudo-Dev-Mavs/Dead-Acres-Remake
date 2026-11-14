@@ -27,10 +27,32 @@ Assets/_Project/
     Difficulty       DifficultyProfile (Easy/Medium/Hard/Hell)
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad)
+    Items            ItemDefinition, ItemStack, Inventory (hotbar 9 + mochila)
+    Building         PlacementGrid (ocupación), FarmWorld, PlacementController + fantasma
+    Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory
   Scripts/Editor/    generador de datos por defecto
   Tests/EditMode/    tests NUnit de la lógica pura
   Data/              assets generados (ScriptableObjects)
 ```
+
+## Controles por defecto
+
+| Acción | Teclado/ratón | Mando |
+|---|---|---|
+| Moverse / mirar | WASD / ratón | stick izq. / stick der. |
+| Saltar / correr | Espacio / Shift | A / L3 |
+| Usar o colocar / secundario | Clic izq. / clic der. | RT / LT |
+| Rotar al colocar | Q / E | cruceta izq./der. |
+| Interactuar (Jack) | F | X |
+| "Listo" (saltar el día) | R | Start |
+| Hotbar | 1-9 y rueda | LB / RB |
+
+## Escena de prueba mínima (jugador + colocación)
+
+1. Un plano como suelo y un GameObject vacío `FarmWorld` en la esquina (0,0) de la zona, con su `GameSession`.
+2. Un jugador con `CharacterController`, `PlayerInputReader`, `FirstPersonController`, `PlayerInventory` y `PlacementController`, y un hijo `CameraPivot` con la cámara a ~1,6 m.
+3. Un `ItemDefinition` de tipo Placeable con un prefab simple (un cubo) en los ítems iniciales del `PlayerInventory`.
+4. Dos materiales URP transparentes para el fantasma (verde y rojo) asignados en el `PlacementController`.
 
 ## Convenciones
 
