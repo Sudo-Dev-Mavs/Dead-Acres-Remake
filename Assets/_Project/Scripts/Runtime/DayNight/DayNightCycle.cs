@@ -66,6 +66,15 @@ namespace DeadAcres.DayNight
         /// <summary>Botón "Listo".</summary>
         public bool TrySkipDay() => clock.TrySkipDay();
 
+        internal void Configure(DayNightConfig newConfig, PhaseEventChannel phaseChannel,
+            NightResultEventChannel nightChannel, Transform sunTransform)
+        {
+            config = newConfig;
+            phaseChanged = phaseChannel;
+            nightCompleted = nightChannel;
+            sun = sunTransform;
+        }
+
         private void OnPhaseChanged(PhaseChange change)
         {
             if (phaseChanged != null) phaseChanged.Raise(change);

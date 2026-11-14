@@ -2,7 +2,8 @@
     "name": "DeadAcres.Editor",
     "rootNamespace": "DeadAcres.EditorTools",
     "references": [
-        "DeadAcres.Runtime"
+        "DeadAcres.Runtime",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"
