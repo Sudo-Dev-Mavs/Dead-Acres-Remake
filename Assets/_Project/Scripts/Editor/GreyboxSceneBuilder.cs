@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System.IO;
 using DeadAcres.Building;
+using DeadAcres.Combat;
 using DeadAcres.DayNight;
 using DeadAcres.Economy;
+using DeadAcres.Enemies;
 using DeadAcres.Farming;
+using DeadAcres.Match;
 using DeadAcres.Player;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -73,11 +76,12 @@ namespace DeadAcres.EditorTools
             RenderSettings.ambientLight = new Color(0.62f, 0.66f, 0.72f);
 
             CreateGround(groundMaterial);
-            CreateProps(propMaterial);
+            Health rvHealth = CreateProps(propMaterial, data);
 
             var systems = new GameObject("GameSystems");
+            var waves = systems.AddComponent<WaveDirector>();
             var cycle = systems.AddComponent<DayNightCycle>();
-            cycle.Configure(data.DayNight, data.PhaseChanged, data.NightCompleted, sun.transform);
+            cycle.Configure(data.DayNight, data.PhaseChanged, data.NightCompleted, sun.transform, waves);
             systems.AddComponent<DayNightLighting>().Configure(sun, moon);
 
             var worldObject = new GameObject("FarmWorld");
@@ -98,8 +102,19 @@ namespace DeadAcres.EditorTools
 
             Shopkeeper jack = CreateShopkeeper(data);
 
+            var playerHealth = interactor.GetComponent<Health>();
+            var playerInput = interactor.GetComponent<PlayerInputReader>();
+
+            // Los zombis aparecen en un círculo alrededor de la caravana y van a por ella.
+            waves.Configure(data.Waves, data.Session, data.PhaseChanged, data.NightCompleted, data.ZombiePrefab,
+                rvHealth, new List<Health> { playerHealth }, rvHealth.transform, 45f);
+
+            var match = systems.AddComponent<MatchDirector>();
+            match.Configure(data.Session, cycle, data.NightCompleted, rvHealth, playerHealth, playerInput,
+                data.RvDestroyed, data.Victory);
+
             HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, world,
-                interactor.GetComponent<PlayerWallet>(), jack, interactor.GetComponent<PlayerInputReader>());
+                interactor.GetComponent<PlayerWallet>(), jack, playerInput, playerHealth, rvHealth, match);
 
             // La tienda tiene botones: hace falta un EventSystem con el módulo del Input System.
             var eventSystem = new GameObject("EventSystem");
@@ -146,6 +161,18 @@ namespace DeadAcres.EditorTools
             inventory = player.AddComponent<PlayerInventory>();
             inventory.Configure(input, data.StartingItems);
             player.AddComponent<PlayerWallet>().Configure(data.StartingGold);
+            player.AddComponent<Health>().Configure(Faction.PlayerSide, 100f, data.Session);
+
+            // Arma provisional: una caja en la esquina de la vista y una marca en el impacto.
+            GameObject viewModel = CreateDecoration("WeaponViewModel", new Vector3(0.08f, 0.12f, 0.4f),
+                EditorPaths.LoadOrCreateMaterial("Greybox_Weapon", new Color(0.22f, 0.22f, 0.25f)));
+            viewModel.transform.SetParent(cameraObject.transform, false);
+            viewModel.transform.localPosition = new Vector3(0.28f, -0.24f, 0.55f);
+
+            GameObject impact = CreateDecoration("ImpactMarker", new Vector3(0.12f, 0.12f, 0.12f),
+                EditorPaths.LoadOrCreateMaterial("Greybox_Impact", new Color(1f, 0.85f, 0.2f)));
+
+            player.AddComponent<PlayerWeapon>().Configure(input, inventory, cameraObject.transform, viewModel, impact);
 
             player.AddComponent<PlacementController>()
                 .Configure(input, inventory, world, camera, ghostValid, ghostInvalid);
@@ -195,12 +222,16 @@ namespace DeadAcres.EditorTools
             ground.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static void CreateProps(Material material)
+        /// <returns>La vida de la caravana.</returns>
+        private static Health CreateProps(Material material, DefaultDataGenerator.GeneratedData data)
         {
             var props = new GameObject("Props").transform;
 
-            // Marcador de dónde irá la caravana (lo que defenderás de noche).
-            CreateBox("RV (placeholder)", props, material, new Vector3(-7f, 1.4f, -2f), new Vector3(2.6f, 2.8f, 7f));
+            // La caravana: lo que se defiende de noche. Si llega a cero, se pierde.
+            GameObject rv = CreateBox("RV (placeholder)", props, material, new Vector3(-7f, 1.4f, -2f),
+                new Vector3(2.6f, 2.8f, 7f));
+            var rvHealth = rv.AddComponent<Health>();
+            rvHealth.Configure(Faction.PlayerSide, 600f, data.Session);
 
             // Postes en las esquinas de la zona cultivable, como referencia visual.
             float side = GridSize * GridCellSize;
@@ -213,9 +244,24 @@ namespace DeadAcres.EditorTools
                     CreateBox("Grid corner post", props, material, GridOrigin + offset, new Vector3(0.3f, 1.4f, 0.3f));
                 }
             }
+
+            return rvHealth;
         }
 
-        private static void CreateBox(string name, Transform parent, Material material, Vector3 position, Vector3 scale)
+        /// <summary>Caja visual sin collider (no bloquea disparos ni el rayo de interacción).</summary>
+        private static GameObject CreateDecoration(string name, Vector3 scale, Material material)
+        {
+            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            box.name = name;
+            Object.DestroyImmediate(box.GetComponent<Collider>());
+            box.transform.localScale = scale;
+            var renderer = box.GetComponent<Renderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            return box;
+        }
+
+        private static GameObject CreateBox(string name, Transform parent, Material material, Vector3 position, Vector3 scale)
         {
             GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
             box.name = name;
@@ -223,6 +269,7 @@ namespace DeadAcres.EditorTools
             box.transform.position = position;
             box.transform.localScale = scale;
             box.GetComponent<Renderer>().sharedMaterial = material;
+            return box;
         }
 
         private static void AddToBuildSettings(string scenePath)

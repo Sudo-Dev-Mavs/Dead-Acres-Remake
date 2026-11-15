@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using DeadAcres.Combat;
 using DeadAcres.Core.Events;
 using DeadAcres.Core.Session;
 using DeadAcres.DayNight;
 using DeadAcres.Difficulty;
 using DeadAcres.Economy;
+using DeadAcres.Enemies;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
@@ -30,6 +32,10 @@ namespace DeadAcres.EditorTools
             public NightResultEventChannel NightCompleted;
             public CropCatalog Crops;
             public ShopCatalog Shop;
+            public WaveConfig Waves;
+            public ZombieBrain ZombiePrefab;
+            public VoidEventChannel RvDestroyed;
+            public VoidEventChannel Victory;
             public int StartingGold;
             public List<KeyValuePair<ItemDefinition, int>> StartingItems;
         }
@@ -75,8 +81,14 @@ namespace DeadAcres.EditorTools
 
             data.PhaseChanged = EditorPaths.LoadOrCreate<PhaseEventChannel>($"{Root}/Events/PhaseChangedChannel.asset");
             data.NightCompleted = EditorPaths.LoadOrCreate<NightResultEventChannel>($"{Root}/Events/NightCompletedChannel.asset");
-            EditorPaths.LoadOrCreate<VoidEventChannel>($"{Root}/Events/RvDestroyedChannel.asset");
-            EditorPaths.LoadOrCreate<VoidEventChannel>($"{Root}/Events/VictoryChannel.asset");
+            data.RvDestroyed = EditorPaths.LoadOrCreate<VoidEventChannel>($"{Root}/Events/RvDestroyedChannel.asset");
+            data.Victory = EditorPaths.LoadOrCreate<VoidEventChannel>($"{Root}/Events/VictoryChannel.asset");
+
+            // 5 zombis la primera noche y 3 más cada noche; salen repartidos en 100 s.
+            data.Waves = EditorPaths.LoadOrCreate<WaveConfig>($"{Root}/WaveConfig.asset");
+            data.Waves.Configure(firstNight: 5, perNight: 3, delay: 6f, window: 100f);
+            EditorUtility.SetDirty(data.Waves);
+            data.ZombiePrefab = CreateZombiePrefab(data.Session);
 
             GenerateItemsAndCrops(data);
 
@@ -91,10 +103,15 @@ namespace DeadAcres.EditorTools
 
             // Un colocable sencillo para probar la colocación en rejilla (fantasma, Q/E, límites).
             var wallColor = new Color(0.55f, 0.38f, 0.22f);
-            GameObject wallPrefab = CreateBoxPrefab("WoodWall", new Vector3(1f, 2f, 0.3f), wallColor);
+            GameObject wallPrefab = CreateBoxPrefab("WoodWall", new Vector3(1f, 2f, 0.3f), wallColor, 150f, data.Session);
             ItemDefinition wall = CreateItem("placeable_wood_wall", "Muro de madera", ItemKind.Placeable, 99,
                 wallColor, ToolKind.None, wallPrefab);
             wall.ConfigurePrices(buy: 5, sell: 2); // 5 de oro: uno de los pocos precios que se oyen en el original
+
+            // Pistola inicial, como en el original. 20 de daño: un zombi (60 de vida) cae de tres tiros.
+            ItemDefinition pistol = CreateItem("weapon_pistol", "Pistola", ItemKind.Weapon, 1,
+                new Color(0.25f, 0.25f, 0.28f));
+            pistol.ConfigureWeapon(damage: 20f, range: 60f, interval: 0.25f);
 
             // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura,
             // precio de la semilla, precio de venta del fruto.
@@ -127,6 +144,7 @@ namespace DeadAcres.EditorTools
 
             data.StartingItems = new List<KeyValuePair<ItemDefinition, int>>
             {
+                new KeyValuePair<ItemDefinition, int>(pistol, 1),
                 new KeyValuePair<ItemDefinition, int>(hoe, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 8),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 4),
@@ -162,9 +180,10 @@ namespace DeadAcres.EditorTools
 
         /// <summary>
         /// Prefab provisional: raíz a ras de suelo (donde lo instancia la colocación) y una caja
-        /// hija con collider, levantada media altura.
+        /// hija con collider, levantada media altura. Con vida: los zombis pueden romperlo.
         /// </summary>
-        private static GameObject CreateBoxPrefab(string name, Vector3 size, Color color)
+        private static GameObject CreateBoxPrefab(string name, Vector3 size, Color color, float maxHealth,
+            GameSession session)
         {
             const string folder = "Assets/_Project/Prefabs/Placeables";
             EditorPaths.EnsureFolder(folder);
@@ -177,9 +196,42 @@ namespace DeadAcres.EditorTools
             box.transform.localScale = size;
             box.GetComponent<Renderer>().sharedMaterial = EditorPaths.LoadOrCreateMaterial($"Greybox_{name}", color);
 
+            root.AddComponent<Health>().Configure(Faction.PlayerSide, maxHealth, session);
+            root.AddComponent<DestroyOnDeath>();
+
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{name}.prefab");
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        /// <summary>Zombi provisional: cápsula verde con CharacterController, vida y cerebro.</summary>
+        private static ZombieBrain CreateZombiePrefab(GameSession session)
+        {
+            const string folder = "Assets/_Project/Prefabs/Enemies";
+            EditorPaths.EnsureFolder(folder);
+
+            var root = new GameObject("Zombie");
+            var controller = root.AddComponent<CharacterController>();
+            controller.height = 1.8f;
+            controller.radius = 0.35f;
+            controller.center = new Vector3(0f, 0.9f, 0f);
+
+            // El visual no lleva collider: el del CharacterController es el que recibe los disparos.
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Visual";
+            Object.DestroyImmediate(body.GetComponent<Collider>());
+            body.transform.SetParent(root.transform, false);
+            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            body.transform.localScale = new Vector3(0.7f, 0.9f, 0.7f);
+            body.GetComponent<Renderer>().sharedMaterial =
+                EditorPaths.LoadOrCreateMaterial("Greybox_Zombie", new Color(0.35f, 0.55f, 0.30f));
+
+            root.AddComponent<Health>().Configure(Faction.Enemy, 60f, session);
+            root.AddComponent<ZombieBrain>();
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/Zombie.prefab");
+            Object.DestroyImmediate(root);
+            return prefab.GetComponent<ZombieBrain>();
         }
 
         private static DifficultyProfile CreateDifficulty(string name, string flavor, float health, float damage)

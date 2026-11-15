@@ -20,13 +20,15 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 |---|---|---|
 | Moverse / mirar | WASD / ratón | stick izq. / stick der. |
 | Saltar / correr | Espacio / Shift | A / L3 |
-| Usar (arar con la azada, plantar con semillas) o colocar | Clic izq. | RT |
+| Usar lo que llevas: disparar, arar, plantar o colocar | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
 | Cosechar / hablar con Jack | F | X |
 | "Listo" (terminar el día) | R | Start |
 | Hotbar | 1-9 y rueda | LB / RB |
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
+
+De noche llegan zombis desde todas las direcciones. Van a por la caravana, persiguen al jugador si lo tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman. Con la partida terminada, Enter la reinicia.
 
 Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y vende semillas y muros; su catálogo crece cada día. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
 
@@ -40,12 +42,15 @@ Assets/_Project/
     DayNight         DayNightClock (lógica pura) + DayNightCycle (adaptador) + hora de reloj + iluminación
     Difficulty       DifficultyProfile (Easy/Medium/Hard/Hell)
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
-    Combat           Health (con multiplicadores de dificultad)
+    Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
     Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
     Economy          Wallet + ShopCommands (puros), ShopCatalog, Shopkeeper (Jack)
-    Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet, PlayerInteractor
+    Enemies          WaveRunner + WaveMath (puros), WaveConfig, WaveDirector, ZombieBrain
+    Match            MatchState (puro) + MatchDirector: victoria y derrota
+    Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
+                     PlayerInteractor, PlayerWeapon
     UI               HudView, ShopView, UiFactory
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
