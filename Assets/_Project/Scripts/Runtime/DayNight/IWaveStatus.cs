@@ -8,6 +8,12 @@ namespace DeadAcres.DayNight
     {
         /// <summary>True cuando la oleada de esta noche terminó de spawnear y no queda ningún enemigo vivo.</summary>
         bool IsWaveCleared { get; }
+
+        /// <summary>
+        /// Velocidad a la que pasa la noche hasta su duración mínima. 1 = normal; mayor que 1
+        /// cuando el jugador despejó pronto la oleada y lo que queda debe pasar rápido.
+        /// </summary>
+        float NightTimeScale { get; }
     }
 
     /// <summary>Sin sistema de oleadas: la noche dura exactamente el mínimo.</summary>
@@ -20,5 +26,7 @@ namespace DeadAcres.DayNight
         }
 
         public bool IsWaveCleared => true;
+
+        public float NightTimeScale => 1f;
     }
 }

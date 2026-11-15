@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DeadAcres.Combat;
 using DeadAcres.Core.Session;
@@ -19,6 +20,9 @@ namespace DeadAcres.Enemies
         [SerializeField] private NightResultEventChannel nightCompleted;
         [SerializeField] private ZombieBrain zombiePrefab;
 
+        [Tooltip("Para saber cuánta noche queda al decidir si se mandan refuerzos.")]
+        [SerializeField] private DayNightCycle dayNight;
+
         [Header("Objetivos")]
         [Tooltip("La caravana.")]
         [SerializeField] private Health primaryTarget;
@@ -32,8 +36,14 @@ namespace DeadAcres.Enemies
         private readonly WaveRunner runner = new WaveRunner();
         private readonly List<Health> alive = new List<Health>(64);
         private float healthMultiplier = 1f;
+        private int waveCount;
+        private bool spawningReinforcements;
+
+        /// <summary>Llega un grupo de refuerzo de este tamaño y la noche se acelera.</summary>
+        public event Action<int> ReinforcementsIncoming;
 
         public bool IsWaveCleared => runner.IsWaveCleared;
+        public float NightTimeScale => runner.NightTimeScale;
         public int AliveCount => runner.Alive;
 
         private void OnEnable()
@@ -55,6 +65,37 @@ namespace DeadAcres.Enemies
             {
                 Spawn();
             }
+
+            TrySendReinforcements();
+        }
+
+        // Si el jugador limpia la oleada con noche de sobra, llegan unos cuantos más y lo que
+        // queda de noche pasa más rápido: nada de minutos mirando el campo vacío.
+        private void TrySendReinforcements()
+        {
+            if (!runner.IsActive || !runner.IsWaveCleared || config == null)
+            {
+                return;
+            }
+
+            DayNightClock clock = dayNight != null ? dayNight.Clock : null;
+            if (clock == null || clock.Phase != GamePhase.Night)
+            {
+                return;
+            }
+
+            float remaining = clock.PhaseDuration - clock.PhaseElapsed;
+            if (!WaveMath.ShouldSendReinforcements(config, runner.ReinforcementGroups, remaining))
+            {
+                return;
+            }
+
+            int count = WaveMath.GetReinforcementCount(config, waveCount);
+            if (runner.AddReinforcements(count, config.ReinforcementWindow, config.NightFastForward))
+            {
+                spawningReinforcements = true;
+                ReinforcementsIncoming?.Invoke(count);
+            }
         }
 
         private void OnPhaseChanged(PhaseChange change)
@@ -66,7 +107,9 @@ namespace DeadAcres.Enemies
 
             var rules = session != null ? session.Mode : null;
             healthMultiplier = WaveMath.GetHealthMultiplier(rules, change.DayNumber);
-            runner.Begin(WaveMath.GetEnemyCount(config, rules, change.DayNumber), config.InitialDelay, config.SpawnWindow);
+            waveCount = WaveMath.GetEnemyCount(config, rules, change.DayNumber);
+            spawningReinforcements = false;
+            runner.Begin(waveCount, config.InitialDelay, config.SpawnWindow);
         }
 
         // Amanece: los que queden se queman, como dice la configuración del ciclo.
@@ -89,9 +132,10 @@ namespace DeadAcres.Enemies
         private void Spawn()
         {
             Vector3 center = spawnCenter != null ? spawnCenter.position : transform.position;
-            float angle = Random.value * Mathf.PI * 2f;
-            var position = new Vector3(center.x + Mathf.Cos(angle) * spawnRadius, center.y + 0.1f,
-                center.z + Mathf.Sin(angle) * spawnRadius);
+            float radius = spawningReinforcements ? spawnRadius * config.ReinforcementRadiusFactor : spawnRadius;
+            float angle = UnityEngine.Random.value * Mathf.PI * 2f;
+            var position = new Vector3(center.x + Mathf.Cos(angle) * radius, center.y + 0.1f,
+                center.z + Mathf.Sin(angle) * radius);
             Quaternion facing = Quaternion.LookRotation(new Vector3(center.x - position.x, 0f, center.z - position.z));
 
             ZombieBrain zombie = Instantiate(zombiePrefab, position, facing, transform);
@@ -113,8 +157,9 @@ namespace DeadAcres.Enemies
 
         internal void Configure(WaveConfig waveConfig, GameSession gameSession, PhaseEventChannel phaseChannel,
             NightResultEventChannel nightChannel, ZombieBrain prefab, Health rv, List<Health> playerTargets,
-            Transform center, float radius)
+            Transform center, float radius, DayNightCycle cycle)
         {
+            dayNight = cycle;
             config = waveConfig;
             session = gameSession;
             phaseChanged = phaseChannel;

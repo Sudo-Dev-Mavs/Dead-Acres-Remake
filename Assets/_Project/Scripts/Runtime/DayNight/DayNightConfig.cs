@@ -14,7 +14,7 @@ namespace DeadAcres.DayNight
         [SerializeField, Min(1f)] private float duskDuration = 30f;
 
         [Tooltip("La noche no puede terminar antes de este tiempo aunque no queden enemigos.")]
-        [SerializeField, Min(1f)] private float minNightDuration = 180f;
+        [SerializeField, Min(1f)] private float minNightDuration = 120f;
 
         [Tooltip("Tope de seguridad: al llegar aquí amanece y los enemigos restantes se queman.")]
         [SerializeField, Min(1f)] private float maxNightDuration = 300f;

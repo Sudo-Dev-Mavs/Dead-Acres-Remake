@@ -107,14 +107,14 @@ namespace DeadAcres.EditorTools
 
             // Los zombis aparecen en un círculo alrededor de la caravana y van a por ella.
             waves.Configure(data.Waves, data.Session, data.PhaseChanged, data.NightCompleted, data.ZombiePrefab,
-                rvHealth, new List<Health> { playerHealth }, rvHealth.transform, 45f);
+                rvHealth, new List<Health> { playerHealth }, rvHealth.transform, 45f, cycle);
 
             var match = systems.AddComponent<MatchDirector>();
             match.Configure(data.Session, cycle, data.NightCompleted, rvHealth, playerHealth, playerInput,
                 data.RvDestroyed, data.Victory);
 
             HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, world,
-                interactor.GetComponent<PlayerWallet>(), jack, playerInput, playerHealth, rvHealth, match);
+                interactor.GetComponent<PlayerWallet>(), jack, playerInput, playerHealth, rvHealth, match, waves);
 
             // La tienda tiene botones: hace falta un EventSystem con el módulo del Input System.
             var eventSystem = new GameObject("EventSystem");

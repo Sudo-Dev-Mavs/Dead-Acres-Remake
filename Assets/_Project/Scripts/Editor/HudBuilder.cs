@@ -3,6 +3,7 @@ using DeadAcres.Building;
 using DeadAcres.Combat;
 using DeadAcres.DayNight;
 using DeadAcres.Economy;
+using DeadAcres.Enemies;
 using DeadAcres.Items;
 using DeadAcres.Match;
 using DeadAcres.Player;
@@ -23,7 +24,7 @@ namespace DeadAcres.EditorTools
 
         public static HudView Build(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
             PlayerInteractor interactor, FarmWorld world, PlayerWallet wallet, Shopkeeper shopkeeper,
-            PlayerInputReader input, Health playerHealth, Health rvHealth, MatchDirector match)
+            PlayerInputReader input, Health playerHealth, Health rvHealth, MatchDirector match, WaveDirector waves)
         {
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null)
@@ -85,7 +86,7 @@ namespace DeadAcres.EditorTools
 
             var hud = canvasObject.AddComponent<HudView>();
             hud.Configure(cycle, phaseChannel, inventory, interactor, world, wallet, playerHealth, rvHealth, match,
-                clock, phase, plants, gold, health, rv, banner, selectedItem, hint, notice, slots);
+                waves, clock, phase, plants, gold, health, rv, banner, selectedItem, hint, notice, slots);
 
             // La tienda va la última: se dibuja por encima del HUD.
             BuildShop(canvasObject, font, cycle, shopkeeper, input);
