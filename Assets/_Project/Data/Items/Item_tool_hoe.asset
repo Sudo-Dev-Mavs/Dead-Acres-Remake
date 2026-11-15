@@ -21,6 +21,9 @@ MonoBehaviour:
   tool: 1
   buyPrice: 0
   sellPrice: 0
+  weaponDamage: 20
+  weaponRange: 60
+  fireInterval: 0.25
   placedPrefab: {fileID: 0}
   footprint: {x: 1, y: 1}
   placeableCategory: 1
