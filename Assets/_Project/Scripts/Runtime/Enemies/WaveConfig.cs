@@ -9,16 +9,16 @@ namespace DeadAcres.Enemies
     public sealed class WaveConfig : ScriptableObject
     {
         [Tooltip("Enemigos de la primera noche.")]
-        [SerializeField, Min(1)] private int firstNightCount = 5;
+        [SerializeField, Min(1)] private int firstNightCount = 12;
 
         [Tooltip("Enemigos que se añaden cada noche en Campaña.")]
-        [SerializeField, Min(0)] private int extraPerNight = 3;
+        [SerializeField, Min(0)] private int extraPerNight = 5;
 
         [Tooltip("Segundos desde que anochece hasta el primer enemigo.")]
-        [SerializeField, Min(0f)] private float initialDelay = 6f;
+        [SerializeField, Min(0f)] private float initialDelay = 3f;
 
         [Tooltip("Segundos en los que se reparte la aparición de toda la oleada.")]
-        [SerializeField, Min(1f)] private float spawnWindow = 100f;
+        [SerializeField, Min(1f)] private float spawnWindow = 60f;
 
         public int FirstNightCount => firstNightCount;
         public int ExtraPerNight => extraPerNight;

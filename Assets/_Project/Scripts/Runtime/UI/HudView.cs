@@ -315,17 +315,19 @@ namespace DeadAcres.UI
                 return string.Empty;
             }
 
-            if (context.CanHarvest)
-            {
-                return $"[F] Cosechar {context.PlotCrop.DisplayName}";
-            }
-
             switch (context.Primary)
             {
+                case PrimaryActionKind.Harvest:
+                    return $"[Clic] Cosechar {context.PlotCrop.DisplayName}";
                 case PrimaryActionKind.Till:
                     return "[Clic] Arar";
                 case PrimaryActionKind.Plant:
                     return $"[Clic] Plantar {context.CropToPlant.DisplayName}";
+            }
+
+            if (context.IsRipe)
+            {
+                return $"{context.PlotCrop.DisplayName}: listo (cosecha con la hoz dentada)";
             }
 
             if (context.HasPlot && context.PlotCrop != null)
