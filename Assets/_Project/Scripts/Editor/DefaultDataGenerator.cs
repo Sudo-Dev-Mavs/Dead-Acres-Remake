@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using DeadAcres.Combat;
+using DeadAcres.Building;
 using DeadAcres.Core.Events;
 using DeadAcres.Core.Session;
 using DeadAcres.DayNight;
+using DeadAcres.Defenses;
 using DeadAcres.Difficulty;
 using DeadAcres.Economy;
 using DeadAcres.Enemies;
@@ -108,13 +110,37 @@ namespace DeadAcres.EditorTools
             ItemDefinition hoe = CreateItem("tool_hoe", "Azada", ItemKind.Tool, 1,
                 new Color(0.60f, 0.60f, 0.66f), ToolKind.Hoe);
 
+            ItemDefinition hammer = CreateItem("tool_hammer", "Martillo", ItemKind.Tool, 1,
+                new Color(0.55f, 0.45f, 0.40f), ToolKind.Hammer);
+
+            // 60 de vida por uso: un muro (150) se repara entero con tres.
+            ItemDefinition tape = CreateItem("consumable_duct_tape", "Cinta americana", ItemKind.Consumable, 20,
+                new Color(0.70f, 0.70f, 0.72f));
+            tape.ConfigureRepair(60f);
+            tape.ConfigurePrices(buy: 15, sell: 0);
+
+            ItemDefinition torch = CreatePlaceableItem("placeable_torch", "Antorcha", new Color(1f, 0.55f, 0.15f),
+                CreateTorchPrefab(data.Session), buy: 10, sell: 4);
+            ItemDefinition lamp = CreatePlaceableItem("placeable_lamp", "Luz portátil", new Color(0.95f, 0.95f, 0.80f),
+                CreateLampPrefab(data.Session), buy: 40, sell: 15);
+            ItemDefinition generator = CreatePlaceableItem("placeable_generator", "Generador", new Color(0.80f, 0.65f, 0.15f),
+                CreateGeneratorPrefab(data.Session), buy: 150, sell: 60);
+            ItemDefinition tnt = CreatePlaceableItem("placeable_tnt_scarecrow", "Espantapájaros TNT", new Color(0.85f, 0.15f, 0.15f),
+                CreateTntScarecrowPrefab(data.Session), buy: 60, sell: 20);
+
+            // 200 de oro: uno de los pocos precios que se oyen en el original.
+            ItemDefinition turret = CreatePlaceableItem("placeable_turret", "Torreta", new Color(0.35f, 0.40f, 0.50f),
+                CreateTurretPrefab(data.Session), buy: 200, sell: 80);
+
             // Sin la hoz no se puede cosechar.
             ItemDefinition sickle = CreateItem("tool_sickle", "Hoz dentada", ItemKind.Tool, 1,
                 new Color(0.85f, 0.80f, 0.55f), ToolKind.Sickle);
 
             // Un colocable sencillo para probar la colocación en rejilla (fantasma, Q/E, límites).
             var wallColor = new Color(0.55f, 0.38f, 0.22f);
-            GameObject wallPrefab = CreateBoxPrefab("WoodWall", new Vector3(1f, 2f, 0.3f), wallColor, 150f, data.Session);
+            GameObject wallRoot = NewPlaceable("WoodWall", 150f, data.Session);
+            AddBox(wallRoot, "Box", new Vector3(0f, 1f, 0f), new Vector3(1f, 2f, 0.3f), "WoodWall", wallColor);
+            GameObject wallPrefab = SavePlaceable(wallRoot);
             ItemDefinition wall = CreateItem("placeable_wood_wall", "Muro de madera", ItemKind.Placeable, 99,
                 wallColor, ToolKind.None, wallPrefab);
             wall.ConfigurePrices(buy: 5, sell: 2); // 5 de oro: uno de los pocos precios que se oyen en el original
@@ -142,9 +168,15 @@ namespace DeadAcres.EditorTools
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 1),
                 new KeyValuePair<ItemDefinition, int>(wall, 1),
+                new KeyValuePair<ItemDefinition, int>(torch, 1),
+                new KeyValuePair<ItemDefinition, int>(tape, 1),
+                new KeyValuePair<ItemDefinition, int>(lamp, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[2].SeedItem, 2),
                 new KeyValuePair<ItemDefinition, int>(crops[3].SeedItem, 2),
+                new KeyValuePair<ItemDefinition, int>(tnt, 2),
+                new KeyValuePair<ItemDefinition, int>(turret, 2),
                 new KeyValuePair<ItemDefinition, int>(crops[4].SeedItem, 3),
+                new KeyValuePair<ItemDefinition, int>(generator, 3),
             });
             EditorUtility.SetDirty(data.Shop);
             data.StartingGold = 20;
@@ -161,6 +193,15 @@ namespace DeadAcres.EditorTools
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 8),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 4),
                 new KeyValuePair<ItemDefinition, int>(wall, 12),
+                new KeyValuePair<ItemDefinition, int>(hammer, 1),
+                new KeyValuePair<ItemDefinition, int>(tape, 3),
+                new KeyValuePair<ItemDefinition, int>(torch, 4),
+
+                // Lo que sigue cae en la mochila (Tab). Está para poder probar las defensas sin
+                // tener que ahorrar primero; quitarlo cuando la economía esté afinada.
+                new KeyValuePair<ItemDefinition, int>(turret, 1),
+                new KeyValuePair<ItemDefinition, int>(lamp, 1),
+                new KeyValuePair<ItemDefinition, int>(tnt, 1),
             };
         }
 
@@ -190,30 +231,140 @@ namespace DeadAcres.EditorTools
             return item;
         }
 
-        /// <summary>
-        /// Prefab provisional: raíz a ras de suelo (donde lo instancia la colocación) y una caja
-        /// hija con collider, levantada media altura. Con vida: los zombis pueden romperlo.
-        /// </summary>
-        private static GameObject CreateBoxPrefab(string name, Vector3 size, Color color, float maxHealth,
-            GameSession session)
+        private static ItemDefinition CreatePlaceableItem(string id, string name, Color color, GameObject prefab,
+            int buy, int sell)
+        {
+            ItemDefinition item = CreateItem(id, name, ItemKind.Placeable, 99, color, ToolKind.None, prefab);
+            item.ConfigurePrices(buy, sell);
+            return item;
+        }
+
+        // ---------- Prefabs provisionales de colocables ----------
+        // La raíz queda a ras de suelo (donde instancia la colocación) y lleva la vida; las
+        // piezas son cajas hijas.
+
+        private static GameObject NewPlaceable(string name, float maxHealth, GameSession session)
+        {
+            var root = new GameObject(name);
+            root.AddComponent<Health>().Configure(Faction.PlayerSide, maxHealth, session);
+            root.AddComponent<DestroyOnDeath>();
+            return root;
+        }
+
+        private static GameObject AddBox(GameObject parent, string name, Vector3 localPosition, Vector3 size,
+            string materialName, Color color, bool withCollider = true)
+        {
+            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            box.name = name;
+            if (!withCollider)
+            {
+                Object.DestroyImmediate(box.GetComponent<Collider>());
+            }
+
+            box.transform.SetParent(parent.transform, false);
+            box.transform.localPosition = localPosition;
+            box.transform.localScale = size;
+            box.GetComponent<Renderer>().sharedMaterial = EditorPaths.LoadOrCreateMaterial($"Greybox_{materialName}", color);
+            return box;
+        }
+
+        private static Light AddPointLight(GameObject parent, Vector3 localPosition, Color color, float range,
+            float intensity)
+        {
+            var lightObject = new GameObject("Light");
+            lightObject.transform.SetParent(parent.transform, false);
+            lightObject.transform.localPosition = localPosition;
+            var light = lightObject.AddComponent<Light>();
+            light.type = LightType.Point;
+            light.color = color;
+            light.range = range;
+            light.intensity = intensity;
+            light.shadows = LightShadows.None;
+            return light;
+        }
+
+        private static GameObject SavePlaceable(GameObject root)
         {
             const string folder = "Assets/_Project/Prefabs/Placeables";
             EditorPaths.EnsureFolder(folder);
-
-            var root = new GameObject(name);
-            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            box.name = "Box";
-            box.transform.SetParent(root.transform, false);
-            box.transform.localPosition = new Vector3(0f, size.y * 0.5f, 0f);
-            box.transform.localScale = size;
-            box.GetComponent<Renderer>().sharedMaterial = EditorPaths.LoadOrCreateMaterial($"Greybox_{name}", color);
-
-            root.AddComponent<Health>().Configure(Faction.PlayerSide, maxHealth, session);
-            root.AddComponent<DestroyOnDeath>();
-
-            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{name}.prefab");
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{root.name}.prefab");
             Object.DestroyImmediate(root);
             return prefab;
+        }
+
+        /// <summary>Antorcha: luz sin energía, de poco alcance.</summary>
+        private static GameObject CreateTorchPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Torch", 40f, session);
+            AddBox(root, "Post", new Vector3(0f, 0.6f, 0f), new Vector3(0.12f, 1.2f, 0.12f), "Wood", new Color(0.45f, 0.30f, 0.18f));
+            AddBox(root, "Flame", new Vector3(0f, 1.3f, 0f), new Vector3(0.2f, 0.2f, 0.2f), "Flame", new Color(1f, 0.55f, 0.15f), false);
+            AddPointLight(root, new Vector3(0f, 1.5f, 0f), new Color(1f, 0.65f, 0.3f), 9f, 2.2f);
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Luz portátil: alumbra más, pero solo con energía cerca.</summary>
+        private static GameObject CreateLampPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Lamp", 60f, session);
+            AddBox(root, "Post", new Vector3(0f, 0.9f, 0f), new Vector3(0.15f, 1.8f, 0.15f), "Metal", new Color(0.45f, 0.47f, 0.50f));
+            AddBox(root, "Head", new Vector3(0f, 1.9f, 0f), new Vector3(0.5f, 0.25f, 0.35f), "LampHead", new Color(0.95f, 0.95f, 0.80f), false);
+            Light light = AddPointLight(root, new Vector3(0f, 2.1f, 0f), new Color(1f, 0.97f, 0.88f), 16f, 3f);
+            var consumer = root.AddComponent<PowerConsumer>();
+            root.AddComponent<PoweredLight>().Configure(consumer, light);
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Generador: fuente de energía que se puede colocar lejos de la caravana.</summary>
+        private static GameObject CreateGeneratorPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Generator", 200f, session);
+            AddBox(root, "Body", new Vector3(0f, 0.45f, 0f), new Vector3(0.9f, 0.9f, 0.9f), "Generator", new Color(0.80f, 0.65f, 0.15f));
+            root.AddComponent<PowerSource>().Configure(null, 9f);
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Torreta: base fija, cabeza giratoria con cañón, luz de estado y rayo de disparo.</summary>
+        private static GameObject CreateTurretPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Turret", 150f, session);
+            AddBox(root, "Base", new Vector3(0f, 0.35f, 0f), new Vector3(0.8f, 0.7f, 0.8f), "Metal", new Color(0.45f, 0.47f, 0.50f));
+
+            var head = new GameObject("Head");
+            head.transform.SetParent(root.transform, false);
+            head.transform.localPosition = new Vector3(0f, 0.95f, 0f);
+            AddBox(head, "Body", Vector3.zero, new Vector3(0.45f, 0.35f, 0.45f), "TurretHead", new Color(0.30f, 0.34f, 0.42f), false);
+            AddBox(head, "Barrel", new Vector3(0f, 0f, 0.45f), new Vector3(0.12f, 0.12f, 0.6f), "TurretHead", new Color(0.30f, 0.34f, 0.42f), false);
+
+            GameObject status = AddBox(root, "StatusLight", new Vector3(0f, 0.75f, -0.3f), new Vector3(0.14f, 0.14f, 0.14f), "Tint", Color.white, false);
+            GameObject beam = AddBox(root, "Beam", Vector3.zero, new Vector3(0.05f, 0.05f, 1f), "Flame", new Color(1f, 0.55f, 0.15f), false);
+            beam.SetActive(false);
+
+            var consumer = root.AddComponent<PowerConsumer>();
+            root.AddComponent<Turret>().Configure(consumer, head.transform, beam.transform, status.GetComponent<Renderer>());
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Espantapájaros con TNT: explota cuando se le acerca un enemigo.</summary>
+        private static GameObject CreateTntScarecrowPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("TntScarecrow", 40f, session);
+            AddBox(root, "Post", new Vector3(0f, 0.8f, 0f), new Vector3(0.14f, 1.6f, 0.14f), "Wood", new Color(0.45f, 0.30f, 0.18f));
+            AddBox(root, "Arms", new Vector3(0f, 1.2f, 0f), new Vector3(1.1f, 0.12f, 0.12f), "Wood", new Color(0.45f, 0.30f, 0.18f), false);
+            AddBox(root, "Tnt", new Vector3(0f, 0.85f, 0.15f), new Vector3(0.4f, 0.5f, 0.25f), "Tnt", new Color(0.85f, 0.15f, 0.15f), false);
+
+            // La onda: una esfera que se muestra un instante. Su diámetro es el del radio de daño.
+            GameObject blast = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            blast.name = "Blast";
+            Object.DestroyImmediate(blast.GetComponent<Collider>());
+            blast.transform.SetParent(root.transform, false);
+            blast.transform.localPosition = new Vector3(0f, 1f, 0f);
+            blast.transform.localScale = Vector3.one * 9f;
+            blast.GetComponent<Renderer>().sharedMaterial =
+                EditorPaths.LoadOrCreateMaterial("Greybox_Flame", new Color(1f, 0.55f, 0.15f));
+            blast.SetActive(false);
+
+            root.AddComponent<TntScarecrow>().Configure(blast);
+            return SavePlaceable(root);
         }
 
         /// <summary>Zombi provisional: cápsula verde con CharacterController, vida y cerebro.</summary>

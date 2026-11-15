@@ -118,7 +118,7 @@ namespace DeadAcres.Building
                 marker = placed.AddComponent<PlacedObject>();
             }
 
-            marker.Bind(world, occupantId, item.PlaceableCategory);
+            marker.Bind(world, occupantId, item.PlaceableCategory, item);
 
             // Quitar del inventario al final: puede vaciar la ranura y disparar RefreshGhostItem.
             Inventory.RemoveAt(Inventory.SelectedIndex, 1);

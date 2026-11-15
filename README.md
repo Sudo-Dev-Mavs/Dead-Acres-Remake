@@ -20,10 +20,11 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 |---|---|---|
 | Moverse / mirar | WASD / ratón | stick izq. / stick der. |
 | Saltar / correr | Espacio / Shift | A / L3 |
-| Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada) o colocar | Clic izq. | RT |
+| Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada), colocar, recoger (martillo) o reparar (cinta) | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
 | Hablar con Jack | F | X |
 | "Listo" (terminar el día) | R | Start |
+| Inventario (mover entre hotbar y mochila) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
@@ -33,6 +34,8 @@ Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noc
 De noche llegan zombis desde todas las direcciones. Van a por la caravana, persiguen al jugador si lo tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman.
 
 La noche dura entre 2 y 5 minutos. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad. Con la partida terminada, Enter la reinicia.
+
+Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan cerca de la caravana o de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado y la cinta americana lo repara.
 
 Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y vende semillas y muros; su catálogo crece cada día. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
 
@@ -48,14 +51,16 @@ Assets/_Project/
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
     Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
-    Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma
+    Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
+                     PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight
+    Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
     Economy          Wallet + ShopCommands (puros), ShopCatalog, Shopkeeper (Jack)
     Enemies          WaveRunner + WaveMath (puros), WaveConfig, WaveDirector, ZombieBrain
     Match            MatchState (puro) + MatchDirector: victoria y derrota
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
-                     PlayerInteractor, PlayerWeapon
-    UI               HudView, ShopView, UiFactory
+                     PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo y cinta)
+    UI               HudView, ShopView, InventoryView, UiModal, UiFactory
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
   Data/, Scenes/, Art/, Prefabs/   generados desde el menú Dead Acres

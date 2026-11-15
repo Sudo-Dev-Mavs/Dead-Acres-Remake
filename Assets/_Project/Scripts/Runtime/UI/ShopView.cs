@@ -4,9 +4,7 @@ using DeadAcres.Economy;
 using DeadAcres.Items;
 using DeadAcres.Player;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
 namespace DeadAcres.UI
@@ -19,10 +17,10 @@ namespace DeadAcres.UI
     /// </summary>
     public sealed class ShopView : MonoBehaviour
     {
-        private const float RowHeight = 44f;
-        private const float RowSpacing = 6f;
+        private const float RowHeight = 38f;
+        private const float RowSpacing = 4f;
         private const float RowWidth = 500f;
-        private const int MaxRows = 11;
+        private const int MaxRows = 13;
 
         [Header("Fuentes de datos")]
         [SerializeField] private Shopkeeper shopkeeper;
@@ -116,31 +114,10 @@ namespace DeadAcres.UI
             wallet = playerWallet.Wallet;
             IsOpen = true;
 
-            if (playerInput != null) playerInput.enabled = false;
-            if (dayNight != null) dayNight.SetPaused(true);
-            FirstPersonController.SetCursorLocked(false);
-
-            EnsureUiInput();
+            UiModal.Enter(playerInput, dayNight);
             SetMessage(string.Empty);
             panel.SetActive(true);
             Rebuild();
-        }
-
-        // Sin acciones asignadas, el módulo de UI del Input System no recibe clics.
-        private static void EnsureUiInput()
-        {
-            EventSystem eventSystem = EventSystem.current;
-            if (eventSystem == null)
-            {
-                Debug.LogError("La tienda necesita un EventSystem en la escena para recibir clics.");
-                return;
-            }
-
-            var module = eventSystem.GetComponent<InputSystemUIInputModule>();
-            if (module != null && module.actionsAsset == null)
-            {
-                module.AssignDefaultActions();
-            }
         }
 
         public void Close()
@@ -152,9 +129,7 @@ namespace DeadAcres.UI
 
             IsOpen = false;
             if (panel != null) panel.SetActive(false);
-            if (dayNight != null) dayNight.SetPaused(false);
-            if (playerInput != null) playerInput.enabled = true;
-            FirstPersonController.SetCursorLocked(true);
+            UiModal.Exit(playerInput, dayNight);
             inventory = null;
             wallet = null;
         }
@@ -201,7 +176,7 @@ namespace DeadAcres.UI
 
             Button buy = UiFactory.CreateButton("Buy", row, font, "Comprar");
             UiFactory.Place(buy.GetComponent<RectTransform>(), UiFactory.MiddleRight, UiFactory.MiddleRight,
-                new Vector2(-6f, 0f), new Vector2(110f, 34f));
+                new Vector2(-6f, 0f), new Vector2(110f, 30f));
             buy.interactable =
                 ShopCommands.CanBuy(shopkeeper.Catalog, item, 1, day, wallet, inventory) == ShopResult.Ok;
             buy.onClick.AddListener(() =>
@@ -216,12 +191,12 @@ namespace DeadAcres.UI
 
             Button sellAll = UiFactory.CreateButton("SellAll", row, font, "Todo");
             UiFactory.Place(sellAll.GetComponent<RectTransform>(), UiFactory.MiddleRight, UiFactory.MiddleRight,
-                new Vector2(-6f, 0f), new Vector2(70f, 34f));
+                new Vector2(-6f, 0f), new Vector2(70f, 30f));
             sellAll.onClick.AddListener(() => Report(ShopCommands.Sell(item, inventory.CountOf(item), wallet, inventory)));
 
             Button sellOne = UiFactory.CreateButton("SellOne", row, font, "1");
             UiFactory.Place(sellOne.GetComponent<RectTransform>(), UiFactory.MiddleRight, UiFactory.MiddleRight,
-                new Vector2(-82f, 0f), new Vector2(46f, 34f));
+                new Vector2(-82f, 0f), new Vector2(46f, 30f));
             sellOne.onClick.AddListener(() => Report(ShopCommands.Sell(item, 1, wallet, inventory)));
         }
 

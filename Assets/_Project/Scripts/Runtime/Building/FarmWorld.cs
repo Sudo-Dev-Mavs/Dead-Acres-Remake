@@ -19,11 +19,15 @@ namespace DeadAcres.Building
         public PlacementGrid Grid { get; private set; }
         public PlacementLimiter Limiter { get; private set; }
 
+        /// <summary>Fuentes de energía de la partida (caravana, generadores).</summary>
+        public PowerMap Power { get; private set; }
+
         private void Awake()
         {
             // El transform marca la esquina (0,0) de la zona: así se puede mover la granja en la escena.
             Grid = new PlacementGrid(width, depth, transform.position, cellSize);
             Limiter = new PlacementLimiter(session.Mode);
+            Power = new PowerMap();
         }
 
         internal void Configure(GameSession newSession, int newWidth, int newDepth, float newCellSize)
