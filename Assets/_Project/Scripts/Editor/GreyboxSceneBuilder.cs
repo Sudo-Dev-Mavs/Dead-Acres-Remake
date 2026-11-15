@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using System.IO;
 using DeadAcres.Building;
 using DeadAcres.DayNight;
+using DeadAcres.Economy;
 using DeadAcres.Farming;
 using DeadAcres.Player;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
@@ -93,7 +96,15 @@ namespace DeadAcres.EditorTools
             var highlight = new GameObject("TargetCellHighlight").AddComponent<TargetCellHighlight>();
             highlight.Configure(interactor, tintMaterial);
 
-            HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, world);
+            Shopkeeper jack = CreateShopkeeper(data);
+
+            HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, world,
+                interactor.GetComponent<PlayerWallet>(), jack, interactor.GetComponent<PlayerInputReader>());
+
+            // La tienda tiene botones: hace falta un EventSystem con el módulo del Input System.
+            var eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            eventSystem.AddComponent<InputSystemUIInputModule>().AssignDefaultActions();
 
             EditorPaths.EnsureFolder(SceneFolder);
             EditorSceneManager.MarkSceneDirty(scene);
@@ -134,6 +145,7 @@ namespace DeadAcres.EditorTools
 
             inventory = player.AddComponent<PlayerInventory>();
             inventory.Configure(input, data.StartingItems);
+            player.AddComponent<PlayerWallet>().Configure(data.StartingGold);
 
             player.AddComponent<PlacementController>()
                 .Configure(input, inventory, world, camera, ghostValid, ghostInvalid);
@@ -141,6 +153,24 @@ namespace DeadAcres.EditorTools
             var interactor = player.AddComponent<PlayerInteractor>();
             interactor.Configure(input, inventory, cameraObject.transform, farm, cycle);
             return interactor;
+        }
+
+        /// <summary>Jack provisional: una cápsula junto a la caravana. De noche se oculta.</summary>
+        private static Shopkeeper CreateShopkeeper(DefaultDataGenerator.GeneratedData data)
+        {
+            var jack = new GameObject("Jack");
+            jack.transform.position = new Vector3(-4.6f, 0f, -1f);
+
+            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Visual";
+            body.transform.SetParent(jack.transform, false);
+            body.transform.localPosition = new Vector3(0f, 1f, 0f);
+            body.GetComponent<Renderer>().sharedMaterial =
+                EditorPaths.LoadOrCreateMaterial("Greybox_Jack", new Color(0.20f, 0.45f, 0.85f));
+
+            var keeper = jack.AddComponent<Shopkeeper>();
+            keeper.Configure(data.Shop, data.PhaseChanged, body);
+            return keeper;
         }
 
         private static Light CreateDirectionalLight(string name, Color color, float intensity, LightShadows shadows,

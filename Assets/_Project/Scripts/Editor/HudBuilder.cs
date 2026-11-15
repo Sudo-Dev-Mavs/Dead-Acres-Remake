@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DeadAcres.Building;
 using DeadAcres.DayNight;
+using DeadAcres.Economy;
 using DeadAcres.Items;
 using DeadAcres.Player;
 using DeadAcres.UI;
@@ -10,28 +11,22 @@ using UnityEngine.UI;
 namespace DeadAcres.EditorTools
 {
     /// <summary>
-    /// Monta por código el Canvas del HUD provisional (uGUI con texto "legacy", que no necesita
-    /// importar los recursos de TextMeshPro). Diseñado sobre 1920×1080; escala con la pantalla.
+    /// Monta por código el Canvas de la interfaz provisional: HUD y ventana de la tienda.
+    /// Diseñado sobre 1920×1080; escala con la pantalla.
     /// </summary>
     internal static class HudBuilder
     {
         private const float SlotSize = 72f;
         private const float SlotGap = 6f;
 
-        private static readonly Vector2 TopLeft = new Vector2(0f, 1f);
-        private static readonly Vector2 TopRight = new Vector2(1f, 1f);
-        private static readonly Vector2 BottomRight = new Vector2(1f, 0f);
-        private static readonly Vector2 BottomCenter = new Vector2(0.5f, 0f);
-        private static readonly Vector2 Center = new Vector2(0.5f, 0.5f);
-        private static readonly Vector2 MiddleLeft = new Vector2(0f, 0.5f);
-
         public static HudView Build(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
-            PlayerInteractor interactor, FarmWorld world)
+            PlayerInteractor interactor, FarmWorld world, PlayerWallet wallet, Shopkeeper shopkeeper,
+            PlayerInputReader input)
         {
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null)
             {
-                Debug.LogError("No se encontró la fuente integrada LegacyRuntime.ttf; el HUD saldrá sin texto.");
+                Debug.LogError("No se encontró la fuente integrada LegacyRuntime.ttf; la interfaz saldrá sin texto.");
             }
 
             var canvasObject = new GameObject("HUD") { layer = LayerMask.NameToLayer("UI") };
@@ -44,36 +39,93 @@ namespace DeadAcres.EditorTools
             scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
             scaler.matchWidthOrHeight = 0.5f;
 
+            // Para los botones de la tienda. El HUD en sí no recibe clics.
+            canvasObject.AddComponent<GraphicRaycaster>();
+
             Transform root = canvasObject.transform;
 
-            Text clock = CreateText("Clock", root, font, 30, TextAnchor.UpperRight);
-            Place(clock.rectTransform, TopRight, TopRight, new Vector2(-24f, -18f), new Vector2(480f, 40f));
+            Text clock = UiFactory.CreateText("Clock", root, font, 30, TextAnchor.UpperRight);
+            UiFactory.Place(clock.rectTransform, UiFactory.TopRight, UiFactory.TopRight, new Vector2(-24f, -18f), new Vector2(480f, 40f));
 
-            Text phase = CreateText("Phase", root, font, 22, TextAnchor.UpperRight);
-            Place(phase.rectTransform, TopRight, TopRight, new Vector2(-24f, -58f), new Vector2(480f, 30f));
+            Text phase = UiFactory.CreateText("Phase", root, font, 22, TextAnchor.UpperRight);
+            UiFactory.Place(phase.rectTransform, UiFactory.TopRight, UiFactory.TopRight, new Vector2(-24f, -58f), new Vector2(480f, 30f));
 
-            Text plants = CreateText("Plants", root, font, 24, TextAnchor.UpperLeft);
-            Place(plants.rectTransform, TopLeft, TopLeft, new Vector2(24f, -18f), new Vector2(480f, 34f));
+            Text plants = UiFactory.CreateText("Placed", root, font, 24, TextAnchor.UpperLeft);
+            UiFactory.Place(plants.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(24f, -18f), new Vector2(600f, 34f));
 
-            Image crosshair = CreateImage("Crosshair", root, new Color(1f, 1f, 1f, 0.85f));
-            Place(crosshair.rectTransform, Center, Center, Vector2.zero, new Vector2(6f, 6f));
+            Text gold = UiFactory.CreateText("Gold", root, font, 26, TextAnchor.UpperLeft);
+            gold.color = new Color(1f, 0.86f, 0.35f);
+            UiFactory.Place(gold.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(24f, -54f), new Vector2(400f, 36f));
 
-            Text hint = CreateText("Hint", root, font, 22, TextAnchor.MiddleCenter);
-            Place(hint.rectTransform, Center, Center, new Vector2(0f, -70f), new Vector2(900f, 32f));
+            Image crosshair = UiFactory.CreateImage("Crosshair", root, new Color(1f, 1f, 1f, 0.85f));
+            UiFactory.Place(crosshair.rectTransform, UiFactory.Center, UiFactory.Center, Vector2.zero, new Vector2(6f, 6f));
 
-            Text notice = CreateText("Notice", root, font, 22, TextAnchor.MiddleCenter);
+            Text hint = UiFactory.CreateText("Hint", root, font, 22, TextAnchor.MiddleCenter);
+            UiFactory.Place(hint.rectTransform, UiFactory.Center, UiFactory.Center, new Vector2(0f, -70f), new Vector2(900f, 32f));
+
+            Text notice = UiFactory.CreateText("Notice", root, font, 22, TextAnchor.MiddleCenter);
             notice.color = new Color(1f, 0.9f, 0.45f);
-            Place(notice.rectTransform, Center, Center, new Vector2(0f, -108f), new Vector2(900f, 32f));
+            UiFactory.Place(notice.rectTransform, UiFactory.Center, UiFactory.Center, new Vector2(0f, -108f), new Vector2(900f, 32f));
 
-            Text selectedItem = CreateText("SelectedItem", root, font, 22, TextAnchor.MiddleCenter);
-            Place(selectedItem.rectTransform, BottomCenter, BottomCenter, new Vector2(0f, 104f), new Vector2(700f, 30f));
+            Text selectedItem = UiFactory.CreateText("SelectedItem", root, font, 22, TextAnchor.MiddleCenter);
+            UiFactory.Place(selectedItem.rectTransform, UiFactory.BottomCenter, UiFactory.BottomCenter, new Vector2(0f, 104f), new Vector2(700f, 30f));
 
             List<HudView.SlotWidgets> slots = CreateHotbar(root, font);
 
             var hud = canvasObject.AddComponent<HudView>();
-            hud.Configure(cycle, phaseChannel, inventory, interactor, world, clock, phase, plants, selectedItem,
-                hint, notice, slots);
+            hud.Configure(cycle, phaseChannel, inventory, interactor, world, wallet, clock, phase, plants, gold,
+                selectedItem, hint, notice, slots);
+
+            // La tienda va la última: se dibuja por encima del HUD.
+            BuildShop(canvasObject, font, cycle, shopkeeper, input);
             return hud;
+        }
+
+        private static void BuildShop(GameObject canvasObject, Font font, DayNightCycle cycle, Shopkeeper shopkeeper,
+            PlayerInputReader input)
+        {
+            // Fondo que oscurece el juego y se traga los clics fuera de la ventana.
+            Image dim = UiFactory.CreateImage("Shop", canvasObject.transform, new Color(0f, 0f, 0f, 0.6f), true);
+            UiFactory.Stretch(dim.rectTransform);
+
+            Image window = UiFactory.CreateImage("Window", dim.transform, new Color(0.12f, 0.13f, 0.15f, 0.97f), true);
+            UiFactory.Place(window.rectTransform, UiFactory.Center, UiFactory.Center, Vector2.zero, new Vector2(1140f, 720f));
+            Transform root = window.transform;
+
+            Text title = UiFactory.CreateText("Title", root, font, 30, TextAnchor.UpperLeft, false);
+            title.text = "Tienda de Jack";
+            UiFactory.Place(title.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(30f, -20f), new Vector2(500f, 40f));
+
+            Text gold = UiFactory.CreateText("Gold", root, font, 26, TextAnchor.UpperRight, false);
+            gold.color = new Color(1f, 0.86f, 0.35f);
+            UiFactory.Place(gold.rectTransform, UiFactory.TopRight, UiFactory.TopRight, new Vector2(-30f, -22f), new Vector2(300f, 36f));
+
+            RectTransform buyList = CreateColumn(root, font, "Comprar", 30f);
+            RectTransform sellList = CreateColumn(root, font, "Vender", 610f);
+
+            Text message = UiFactory.CreateText("Message", root, font, 20, TextAnchor.MiddleLeft, false);
+            message.color = new Color(1f, 0.6f, 0.45f);
+            UiFactory.Place(message.rectTransform, Vector2.zero, Vector2.zero, new Vector2(30f, 22f), new Vector2(760f, 34f));
+
+            Button close = UiFactory.CreateButton("Close", root, font, "Cerrar  [Esc]");
+            UiFactory.Place(close.GetComponent<RectTransform>(), UiFactory.BottomRight, UiFactory.BottomRight,
+                new Vector2(-30f, 20f), new Vector2(190f, 40f));
+
+            var shop = canvasObject.AddComponent<ShopView>();
+            shop.Configure(shopkeeper, cycle, input, dim.gameObject, buyList, sellList, gold, message, close, font);
+            dim.gameObject.SetActive(false);
+        }
+
+        private static RectTransform CreateColumn(Transform root, Font font, string header, float x)
+        {
+            Text title = UiFactory.CreateText($"{header} header", root, font, 22, TextAnchor.UpperLeft, false);
+            title.text = header;
+            title.color = new Color(1f, 1f, 1f, 0.7f);
+            UiFactory.Place(title.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(x, -80f), new Vector2(500f, 30f));
+
+            RectTransform list = UiFactory.CreateRect($"{header} list", root);
+            UiFactory.Place(list, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(x, -120f), new Vector2(500f, 550f));
+            return list;
         }
 
         private static List<HudView.SlotWidgets> CreateHotbar(Transform root, Font font)
@@ -81,82 +133,32 @@ namespace DeadAcres.EditorTools
             int count = Inventory.HotbarSize;
             float width = count * SlotSize + (count - 1) * SlotGap;
 
-            RectTransform bar = CreateRect("Hotbar", root);
-            Place(bar, BottomCenter, BottomCenter, new Vector2(0f, 24f), new Vector2(width, SlotSize));
+            RectTransform bar = UiFactory.CreateRect("Hotbar", root);
+            UiFactory.Place(bar, UiFactory.BottomCenter, UiFactory.BottomCenter, new Vector2(0f, 24f), new Vector2(width, SlotSize));
 
             var slots = new List<HudView.SlotWidgets>(count);
             for (int i = 0; i < count; i++)
             {
-                Image frame = CreateImage($"Slot {i + 1}", bar, new Color(0f, 0f, 0f, 0.55f));
-                Place(frame.rectTransform, MiddleLeft, MiddleLeft, new Vector2(i * (SlotSize + SlotGap), 0f),
-                    new Vector2(SlotSize, SlotSize));
+                Image frame = UiFactory.CreateImage($"Slot {i + 1}", bar, new Color(0f, 0f, 0f, 0.55f));
+                UiFactory.Place(frame.rectTransform, UiFactory.MiddleLeft, UiFactory.MiddleLeft,
+                    new Vector2(i * (SlotSize + SlotGap), 0f), new Vector2(SlotSize, SlotSize));
 
-                Image icon = CreateImage("Icon", frame.transform, Color.white);
-                RectTransform iconRect = icon.rectTransform;
-                iconRect.anchorMin = Vector2.zero;
-                iconRect.anchorMax = Vector2.one;
-                iconRect.offsetMin = new Vector2(14f, 14f);
-                iconRect.offsetMax = new Vector2(-14f, -14f);
+                Image icon = UiFactory.CreateImage("Icon", frame.transform, Color.white);
+                UiFactory.Stretch(icon.rectTransform, 14f);
                 icon.enabled = false;
 
-                Text key = CreateText("Key", frame.transform, font, 14, TextAnchor.UpperLeft);
+                Text key = UiFactory.CreateText("Key", frame.transform, font, 14, TextAnchor.UpperLeft);
                 key.text = (i + 1).ToString();
                 key.color = new Color(1f, 1f, 1f, 0.7f);
-                Place(key.rectTransform, TopLeft, TopLeft, new Vector2(6f, -3f), new Vector2(24f, 18f));
+                UiFactory.Place(key.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(6f, -3f), new Vector2(24f, 18f));
 
-                Text stackCount = CreateText("Count", frame.transform, font, 20, TextAnchor.LowerRight);
-                Place(stackCount.rectTransform, BottomRight, BottomRight, new Vector2(-6f, 3f), new Vector2(60f, 24f));
+                Text stackCount = UiFactory.CreateText("Count", frame.transform, font, 20, TextAnchor.LowerRight);
+                UiFactory.Place(stackCount.rectTransform, UiFactory.BottomRight, UiFactory.BottomRight, new Vector2(-6f, 3f), new Vector2(60f, 24f));
 
                 slots.Add(new HudView.SlotWidgets { frame = frame, icon = icon, count = stackCount });
             }
 
             return slots;
-        }
-
-        private static RectTransform CreateRect(string name, Transform parent)
-        {
-            var element = new GameObject(name, typeof(RectTransform)) { layer = LayerMask.NameToLayer("UI") };
-            var rect = (RectTransform)element.transform;
-            rect.SetParent(parent, false);
-            return rect;
-        }
-
-        private static Text CreateText(string name, Transform parent, Font font, int fontSize, TextAnchor alignment)
-        {
-            RectTransform rect = CreateRect(name, parent);
-            var text = rect.gameObject.AddComponent<Text>();
-            text.font = font;
-            text.fontSize = fontSize;
-            text.alignment = alignment;
-            text.color = Color.white;
-            text.text = string.Empty;
-            text.raycastTarget = false;
-            text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            text.verticalOverflow = VerticalWrapMode.Overflow;
-
-            // Sombra para que se lea sobre el cielo y sobre la hierba.
-            var shadow = rect.gameObject.AddComponent<Shadow>();
-            shadow.effectColor = new Color(0f, 0f, 0f, 0.85f);
-            shadow.effectDistance = new Vector2(1.5f, -1.5f);
-            return text;
-        }
-
-        private static Image CreateImage(string name, Transform parent, Color color)
-        {
-            RectTransform rect = CreateRect(name, parent);
-            var image = rect.gameObject.AddComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
-            return image;
-        }
-
-        private static void Place(RectTransform rect, Vector2 anchor, Vector2 pivot, Vector2 position, Vector2 size)
-        {
-            rect.anchorMin = anchor;
-            rect.anchorMax = anchor;
-            rect.pivot = pivot;
-            rect.anchoredPosition = position;
-            rect.sizeDelta = size;
         }
     }
 }

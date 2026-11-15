@@ -121,6 +121,31 @@ namespace DeadAcres.Items
             return true;
         }
 
+        /// <summary>Quita unidades del ítem de donde las haya, empezando por el final (la mochila). Todo o nada.</summary>
+        public bool Remove(ItemDefinition item, int count)
+        {
+            if (item == null || count <= 0 || CountOf(item) < count)
+            {
+                return false;
+            }
+
+            int remaining = count;
+            for (int i = slots.Length - 1; i >= 0 && remaining > 0; i--)
+            {
+                if (slots[i].Item != item)
+                {
+                    continue;
+                }
+
+                int taken = Math.Min(remaining, slots[i].Count);
+                slots[i] = slots[i].WithCount(slots[i].Count - taken);
+                SlotChanged?.Invoke(i);
+                remaining -= taken;
+            }
+
+            return true;
+        }
+
         public int CountOf(ItemDefinition item)
         {
             int total = 0;
