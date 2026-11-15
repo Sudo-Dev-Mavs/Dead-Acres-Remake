@@ -16,3 +16,10 @@ MonoBehaviour:
   extraPerNight: 5
   initialDelay: 3
   spawnWindow: 60
+  reinforcementFraction: 0.25
+  reinforcementMinCount: 3
+  maxReinforcementGroups: 2
+  reinforcementWindow: 6
+  minNightRemaining: 15
+  nightFastForward: 3
+  reinforcementRadiusFactor: 0.6

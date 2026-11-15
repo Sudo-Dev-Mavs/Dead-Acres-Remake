@@ -16,5 +16,5 @@ MonoBehaviour:
   firstDayDuration: 360
   dayDuration: 240
   duskDuration: 30
-  minNightDuration: 180
+  minNightDuration: 120
   maxNightDuration: 300
