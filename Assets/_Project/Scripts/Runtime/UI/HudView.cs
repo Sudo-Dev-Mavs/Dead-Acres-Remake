@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using DeadAcres.Building;
+using DeadAcres.Combat;
 using DeadAcres.DayNight;
 using DeadAcres.Economy;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
+using DeadAcres.Match;
 using DeadAcres.Player;
 using UnityEngine;
 using UnityEngine.UI;
@@ -33,12 +35,18 @@ namespace DeadAcres.UI
         [SerializeField] private PlayerInteractor interactor;
         [SerializeField] private FarmWorld world;
         [SerializeField] private PlayerWallet playerWallet;
+        [SerializeField] private Health playerHealth;
+        [SerializeField] private Health rvHealth;
+        [SerializeField] private MatchDirector match;
 
         [Header("Widgets")]
         [SerializeField] private Text clockLabel;
         [SerializeField] private Text phaseLabel;
         [SerializeField] private Text plantsLabel;
         [SerializeField] private Text goldLabel;
+        [SerializeField] private Text healthLabel;
+        [SerializeField] private Text rvLabel;
+        [SerializeField] private Text bannerLabel;
         [SerializeField] private Text selectedItemLabel;
         [SerializeField] private Text hintLabel;
         [SerializeField] private Text noticeLabel;
@@ -76,6 +84,10 @@ namespace DeadAcres.UI
 
             wallet = playerWallet != null ? playerWallet.Wallet : null;
             if (wallet != null) wallet.Changed += OnGoldChanged;
+
+            if (playerHealth != null) playerHealth.HealthChanged += OnPlayerHealthChanged;
+            if (rvHealth != null) rvHealth.HealthChanged += OnRvHealthChanged;
+            if (match != null) match.Ended += OnMatchEnded;
         }
 
         private void OnDisable()
@@ -100,6 +112,10 @@ namespace DeadAcres.UI
 
             if (wallet != null) wallet.Changed -= OnGoldChanged;
             wallet = null;
+
+            if (playerHealth != null) playerHealth.HealthChanged -= OnPlayerHealthChanged;
+            if (rvHealth != null) rvHealth.HealthChanged -= OnRvHealthChanged;
+            if (match != null) match.Ended -= OnMatchEnded;
         }
 
         private void Start()
@@ -115,6 +131,11 @@ namespace DeadAcres.UI
             RefreshAllSlots();
             RefreshPlantsLabel();
             OnGoldChanged(wallet != null ? wallet.Gold : 0);
+            SetText(bannerLabel, string.Empty);
+
+            // Health ya se inicializó en su Awake (y avisó antes de que hubiera nadie escuchando).
+            if (playerHealth != null) OnPlayerHealthChanged(playerHealth.Current, playerHealth.Max);
+            if (rvHealth != null) OnRvHealthChanged(rvHealth.Current, rvHealth.Max);
         }
 
         // El reloj avanza de forma continua y no hay evento "cambió el minuto": se consulta cada
@@ -151,6 +172,30 @@ namespace DeadAcres.UI
             {
                 ShowNotice("Se hace tarde: Jack se va al anochecer");
             }
+        }
+
+        private void OnPlayerHealthChanged(float current, float max) =>
+            SetText(healthLabel, $"Vida {Mathf.CeilToInt(current)}");
+
+        private void OnRvHealthChanged(float current, float max) =>
+            SetText(rvLabel, $"Caravana {Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}");
+
+        private void OnMatchEnded(MatchState state)
+        {
+            SetText(hintLabel, string.Empty);
+            SetText(noticeLabel, string.Empty);
+            noticeTimeLeft = 0f;
+
+            if (state.Outcome == MatchOutcome.Victory)
+            {
+                SetText(bannerLabel, $"¡VICTORIA!\nSobreviviste {state.NightsSurvived} noches\n\n[Enter] Jugar de nuevo");
+                return;
+            }
+
+            string reason = state.DefeatReason == DefeatReason.RvDestroyed
+                ? "La caravana fue destruida"
+                : "No sobreviviste a la noche";
+            SetText(bannerLabel, $"DERROTA\n{reason}\nNoches superadas: {state.NightsSurvived}\n\n[Enter] Reintentar");
         }
 
         private void OnGoldChanged(int gold) => SetText(goldLabel, wallet != null ? $"Oro {gold}" : string.Empty);
@@ -326,8 +371,9 @@ namespace DeadAcres.UI
         }
 
         internal void Configure(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
-            PlayerInteractor playerInteractor, FarmWorld farmWorld, PlayerWallet walletOwner, Text clock, Text phase,
-            Text plants, Text gold, Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
+            PlayerInteractor playerInteractor, FarmWorld farmWorld, PlayerWallet walletOwner, Health player, Health rv,
+            MatchDirector matchDirector, Text clock, Text phase, Text plants, Text gold, Text health, Text rvText,
+            Text banner, Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
         {
             dayNight = cycle;
             phaseChanged = phaseChannel;
@@ -335,7 +381,13 @@ namespace DeadAcres.UI
             interactor = playerInteractor;
             world = farmWorld;
             playerWallet = walletOwner;
+            playerHealth = player;
+            rvHealth = rv;
+            match = matchDirector;
             goldLabel = gold;
+            healthLabel = health;
+            rvLabel = rvText;
+            bannerLabel = banner;
             clockLabel = clock;
             phaseLabel = phase;
             plantsLabel = plants;

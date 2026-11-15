@@ -34,6 +34,11 @@ namespace DeadAcres.Items
         [SerializeField, Min(0)] private int buyPrice;
         [SerializeField, Min(0)] private int sellPrice;
 
+        [Header("Solo armas")]
+        [SerializeField, Min(0f)] private float weaponDamage = 20f;
+        [SerializeField, Min(1f)] private float weaponRange = 60f;
+        [SerializeField, Min(0.02f)] private float fireInterval = 0.25f;
+
         [Header("Solo colocables y semillas")]
         [SerializeField] private GameObject placedPrefab;
 
@@ -41,6 +46,12 @@ namespace DeadAcres.Items
         [SerializeField] private Vector2Int footprint = Vector2Int.one;
 
         [SerializeField] private PlaceableCategory placeableCategory = PlaceableCategory.Object;
+
+        public float WeaponDamage => weaponDamage;
+        public float WeaponRange => weaponRange;
+
+        /// <summary>Segundos mínimos entre disparos.</summary>
+        public float FireInterval => fireInterval;
 
         public string Id => id;
         public string DisplayName => displayName;
@@ -64,6 +75,13 @@ namespace DeadAcres.Items
             maxStack = Mathf.Max(1, stack);
             footprint = size == default ? Vector2Int.one : size;
             placeableCategory = category;
+        }
+
+        internal void ConfigureWeapon(float damage, float range, float interval)
+        {
+            weaponDamage = Mathf.Max(0f, damage);
+            weaponRange = Mathf.Max(1f, range);
+            fireInterval = Mathf.Max(0.02f, interval);
         }
 
         internal void ConfigurePrices(int buy, int sell)

@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using DeadAcres.Building;
+using DeadAcres.Combat;
 using DeadAcres.DayNight;
 using DeadAcres.Economy;
 using DeadAcres.Items;
+using DeadAcres.Match;
 using DeadAcres.Player;
 using DeadAcres.UI;
 using UnityEngine;
@@ -21,7 +23,7 @@ namespace DeadAcres.EditorTools
 
         public static HudView Build(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
             PlayerInteractor interactor, FarmWorld world, PlayerWallet wallet, Shopkeeper shopkeeper,
-            PlayerInputReader input)
+            PlayerInputReader input, Health playerHealth, Health rvHealth, MatchDirector match)
         {
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null)
@@ -57,6 +59,15 @@ namespace DeadAcres.EditorTools
             gold.color = new Color(1f, 0.86f, 0.35f);
             UiFactory.Place(gold.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(24f, -54f), new Vector2(400f, 36f));
 
+            Text health = UiFactory.CreateText("Health", root, font, 28, TextAnchor.LowerLeft);
+            UiFactory.Place(health.rectTransform, Vector2.zero, Vector2.zero, new Vector2(24f, 24f), new Vector2(300f, 40f));
+
+            Text rv = UiFactory.CreateText("RV", root, font, 24, TextAnchor.UpperCenter);
+            UiFactory.Place(rv.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -18f), new Vector2(500f, 34f));
+
+            Text banner = UiFactory.CreateText("Banner", root, font, 44, TextAnchor.MiddleCenter);
+            UiFactory.Place(banner.rectTransform, UiFactory.Center, UiFactory.Center, new Vector2(0f, 120f), new Vector2(1200f, 360f));
+
             Image crosshair = UiFactory.CreateImage("Crosshair", root, new Color(1f, 1f, 1f, 0.85f));
             UiFactory.Place(crosshair.rectTransform, UiFactory.Center, UiFactory.Center, Vector2.zero, new Vector2(6f, 6f));
 
@@ -73,8 +84,8 @@ namespace DeadAcres.EditorTools
             List<HudView.SlotWidgets> slots = CreateHotbar(root, font);
 
             var hud = canvasObject.AddComponent<HudView>();
-            hud.Configure(cycle, phaseChannel, inventory, interactor, world, wallet, clock, phase, plants, gold,
-                selectedItem, hint, notice, slots);
+            hud.Configure(cycle, phaseChannel, inventory, interactor, world, wallet, playerHealth, rvHealth, match,
+                clock, phase, plants, gold, health, rv, banner, selectedItem, hint, notice, slots);
 
             // La tienda va la última: se dibuja por encima del HUD.
             BuildShop(canvasObject, font, cycle, shopkeeper, input);

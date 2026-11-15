@@ -66,9 +66,11 @@ namespace DeadAcres.DayNight
         /// <summary>Botón "Listo".</summary>
         public bool TrySkipDay() => clock.TrySkipDay();
 
+        /// <param name="waveSource">Componente que implementa IWaveStatus (el WaveDirector), o null.</param>
         internal void Configure(DayNightConfig newConfig, PhaseEventChannel phaseChannel,
-            NightResultEventChannel nightChannel, Transform sunTransform)
+            NightResultEventChannel nightChannel, Transform sunTransform, MonoBehaviour waveSource = null)
         {
+            waveStatusSource = waveSource;
             config = newConfig;
             phaseChanged = phaseChannel;
             nightCompleted = nightChannel;
