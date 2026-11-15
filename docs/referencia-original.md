@@ -39,3 +39,8 @@ Notas tomadas de un gameplay del build de Unity del original (vídeo: https://yo
 ## Lo que no se sabe
 
 Casi todos los números. Solo se oyen tres precios: muro 5, fogata 100, torreta 200 de oro. Tiempos de crecimiento, rendimientos, vida de enemigos y fórmula de oleadas hay que definirlos y balancearlos aquí. Los valores que hay ahora en `DefaultDataGenerator` son provisionales.
+
+## Diferencias decididas respecto al original
+
+- Cosechar exige una herramienta, la hoz dentada, y se hace con la acción primaria.
+- De noche los cultivos crecen a una décima de la velocidad del día.

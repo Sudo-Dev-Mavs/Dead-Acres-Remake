@@ -9,6 +9,7 @@ namespace DeadAcres.Player
         None = 0,
         Till = 1,
         Plant = 2,
+        Harvest = 3,
     }
 
     /// <summary>
@@ -32,7 +33,7 @@ namespace DeadAcres.Player
         /// <summary>Cultivo que ya hay en la parcela. Null si no hay.</summary>
         public readonly CropDefinition PlotCrop;
 
-        /// <summary>Lo que se mira y admite Interactuar (Jack...). Tiene prioridad sobre cosechar.</summary>
+        /// <summary>Lo que se mira y admite Interactuar (Jack...).</summary>
         public readonly IInteractable Interactable;
 
         public InteractionContext(IInteractable interactable) : this()
@@ -53,7 +54,8 @@ namespace DeadAcres.Player
             PlotCrop = plotCrop;
         }
 
-        public bool CanHarvest => HasPlot && PlotCrop != null && Stage == PlotStage.Ripe;
+        /// <summary>Hay un cultivo maduro en la celda. Cosecharlo requiere la hoz (Primary == Harvest).</summary>
+        public bool IsRipe => HasPlot && PlotCrop != null && Stage == PlotStage.Ripe;
 
         public bool Equals(InteractionContext other)
         {

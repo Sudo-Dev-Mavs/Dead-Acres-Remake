@@ -84,9 +84,10 @@ namespace DeadAcres.EditorTools
             data.RvDestroyed = EditorPaths.LoadOrCreate<VoidEventChannel>($"{Root}/Events/RvDestroyedChannel.asset");
             data.Victory = EditorPaths.LoadOrCreate<VoidEventChannel>($"{Root}/Events/VictoryChannel.asset");
 
-            // 5 zombis la primera noche y 3 más cada noche; salen repartidos en 100 s.
+            // 12 zombis la primera noche y 5 más cada noche; salen repartidos en 60 s (uno cada ~5 s
+            // la primera noche). Con 5 en 100 s la noche se sentía vacía.
             data.Waves = EditorPaths.LoadOrCreate<WaveConfig>($"{Root}/WaveConfig.asset");
-            data.Waves.Configure(firstNight: 5, perNight: 3, delay: 6f, window: 100f);
+            data.Waves.Configure(firstNight: 12, perNight: 5, delay: 3f, window: 60f);
             EditorUtility.SetDirty(data.Waves);
             data.ZombiePrefab = CreateZombiePrefab(data.Session);
 
@@ -100,6 +101,10 @@ namespace DeadAcres.EditorTools
         {
             ItemDefinition hoe = CreateItem("tool_hoe", "Azada", ItemKind.Tool, 1,
                 new Color(0.60f, 0.60f, 0.66f), ToolKind.Hoe);
+
+            // Sin la hoz no se puede cosechar.
+            ItemDefinition sickle = CreateItem("tool_sickle", "Hoz dentada", ItemKind.Tool, 1,
+                new Color(0.85f, 0.80f, 0.55f), ToolKind.Sickle);
 
             // Un colocable sencillo para probar la colocación en rejilla (fantasma, Q/E, límites).
             var wallColor = new Color(0.55f, 0.38f, 0.22f);
@@ -146,6 +151,7 @@ namespace DeadAcres.EditorTools
             {
                 new KeyValuePair<ItemDefinition, int>(pistol, 1),
                 new KeyValuePair<ItemDefinition, int>(hoe, 1),
+                new KeyValuePair<ItemDefinition, int>(sickle, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 8),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 4),
                 new KeyValuePair<ItemDefinition, int>(wall, 12),

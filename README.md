@@ -20,13 +20,15 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 |---|---|---|
 | Moverse / mirar | WASD / ratón | stick izq. / stick der. |
 | Saltar / correr | Espacio / Shift | A / L3 |
-| Usar lo que llevas: disparar, arar, plantar o colocar | Clic izq. | RT |
+| Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada) o colocar | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
-| Cosechar / hablar con Jack | F | X |
+| Hablar con Jack | F | X |
 | "Listo" (terminar el día) | R | Start |
 | Hotbar | 1-9 y rueda | LB / RB |
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
+
+Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noche los cultivos crecen a una décima de la velocidad del día.
 
 De noche llegan zombis desde todas las direcciones. Van a por la caravana, persiguen al jugador si lo tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman. Con la partida terminada, Enter la reinicia.
 

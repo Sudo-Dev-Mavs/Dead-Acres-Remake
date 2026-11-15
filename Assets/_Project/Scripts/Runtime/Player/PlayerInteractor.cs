@@ -7,8 +7,9 @@ using UnityEngine;
 namespace DeadAcres.Player
 {
     /// <summary>
-    /// Convierte el input del jugador local en intenciones: arar, plantar, cosechar, hablar con
-    /// lo que tenga delante (<see cref="IInteractable"/>) y dar el día por terminado. No modifica estado por su cuenta: llama a <see cref="FarmField"/>
+    /// Convierte el input del jugador local en intenciones: arar (azada), plantar (semillas) y
+    /// cosechar (hoz dentada) con la acción primaria, hablar con lo que tenga delante
+    /// (<see cref="IInteractable"/>) con Interactuar, y dar el día por terminado. No modifica estado por su cuenta: llama a <see cref="FarmField"/>
     /// y <see cref="FarmCommands"/>, que son quienes validan. En co-op esas llamadas pasarán a ser
     /// peticiones al host y este componente no cambia.
     /// Colocar objetos es cosa de PlacementController; aquí solo se usan la azada y las semillas.
@@ -117,6 +118,13 @@ namespace DeadAcres.Player
                         primary = PrimaryActionKind.Till;
                     }
                 }
+                else if (selected.Item.Tool == ToolKind.Sickle)
+                {
+                    if (farm.Field.CanHarvest(cell) == FarmActionResult.Ok)
+                    {
+                        primary = PrimaryActionKind.Harvest;
+                    }
+                }
                 else if (TryGetCropFor(selected.Item, out CropDefinition crop)
                          && farm.Field.CanPlant(cell, crop) == FarmActionResult.Ok)
                 {
@@ -174,6 +182,15 @@ namespace DeadAcres.Player
             {
                 result = farm.Field.Till(context.Cell);
             }
+            else if (selected.Item.Tool == ToolKind.Sickle)
+            {
+                result = FarmCommands.HarvestInto(farm.Field, context.Cell, Inventory,
+                    out ItemDefinition produce, out int amount);
+                if (result == FarmActionResult.Ok)
+                {
+                    Harvested?.Invoke(produce, amount);
+                }
+            }
             else if (TryGetCropFor(selected.Item, out CropDefinition crop))
             {
                 result = FarmCommands.PlantFromSlot(farm.Field, context.Cell, crop, Inventory, Inventory.SelectedIndex);
@@ -198,23 +215,7 @@ namespace DeadAcres.Player
             if (context.Interactable != null)
             {
                 context.Interactable.Interact(gameObject);
-                return;
             }
-
-            if (farm == null || !context.HasTarget)
-            {
-                return;
-            }
-
-            FarmActionResult result = FarmCommands.HarvestInto(farm.Field, context.Cell, Inventory,
-                out ItemDefinition produce, out int amount);
-
-            if (result == FarmActionResult.Ok)
-            {
-                Harvested?.Invoke(produce, amount);
-            }
-
-            Report(result);
         }
 
         private void SkipDay()

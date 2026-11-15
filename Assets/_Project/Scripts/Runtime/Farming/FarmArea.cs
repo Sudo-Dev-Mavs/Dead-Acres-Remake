@@ -14,8 +14,11 @@ namespace DeadAcres.Farming
         [SerializeField] private FarmWorld world;
         [SerializeField] private CropCatalog catalog;
 
-        [Tooltip("Opcional. Si se asigna, los cultivos no crecen mientras el reloj está en pausa.")]
+        [Tooltip("Opcional. Si se asigna, los cultivos no crecen con el reloj en pausa y crecen más despacio de noche.")]
         [SerializeField] private DayNightCycle dayNight;
+
+        [Tooltip("Velocidad de crecimiento durante la noche respecto al día (0,1 = una décima).")]
+        [SerializeField, Range(0f, 1f)] private float nightGrowthMultiplier = 0.1f;
 
         private FarmField field;
 
@@ -39,12 +42,19 @@ namespace DeadAcres.Farming
 
         private void Update()
         {
-            if (dayNight != null && dayNight.Clock != null && dayNight.Clock.IsPaused)
+            DayNightClock clock = dayNight != null ? dayNight.Clock : null;
+            if (clock == null)
+            {
+                Field.Tick(Time.deltaTime);
+                return;
+            }
+
+            if (clock.IsPaused)
             {
                 return;
             }
 
-            Field.Tick(Time.deltaTime);
+            Field.Tick(Time.deltaTime * GrowthRules.GetTimeScale(clock.Phase, nightGrowthMultiplier));
         }
 
         /// <returns>False si el punto cae fuera de la rejilla.</returns>

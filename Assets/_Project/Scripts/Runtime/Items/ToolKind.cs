@@ -7,5 +7,8 @@ namespace DeadAcres.Items
 
         /// <summary>Azada: ara una celda de la granja.</summary>
         Hoe = 1,
+
+        /// <summary>Hoz dentada: cosecha un cultivo maduro. Sin ella no se puede cosechar.</summary>
+        Sickle = 2,
     }
 }

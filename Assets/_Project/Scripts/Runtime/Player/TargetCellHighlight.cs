@@ -68,7 +68,7 @@ namespace DeadAcres.Player
                 interactor.Farm.CellToWorld(context.Cell) + Vector3.up * HeightAboveGround,
                 Quaternion.identity);
 
-            bool actionable = context.Primary != PrimaryActionKind.None || context.CanHarvest;
+            bool actionable = context.Primary != PrimaryActionKind.None;
             Color color = actionable ? actionColor : idleColor;
             block.SetColor(BaseColorId, color);
             block.SetColor(ColorId, color);
