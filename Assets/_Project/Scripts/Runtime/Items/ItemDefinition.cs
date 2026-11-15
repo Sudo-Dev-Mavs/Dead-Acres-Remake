@@ -39,6 +39,10 @@ namespace DeadAcres.Items
         [SerializeField, Min(1f)] private float weaponRange = 60f;
         [SerializeField, Min(0.02f)] private float fireInterval = 0.25f;
 
+        [Header("Solo consumibles de reparación")]
+        [Tooltip("Vida que repara al usarlo sobre un objeto (cinta americana). 0 = no repara.")]
+        [SerializeField, Min(0f)] private float repairAmount;
+
         [Header("Solo colocables y semillas")]
         [SerializeField] private GameObject placedPrefab;
 
@@ -53,6 +57,7 @@ namespace DeadAcres.Items
         /// <summary>Segundos mínimos entre disparos.</summary>
         public float FireInterval => fireInterval;
 
+        public float RepairAmount => repairAmount;
         public string Id => id;
         public string DisplayName => displayName;
         public Sprite Icon => icon;
@@ -83,6 +88,8 @@ namespace DeadAcres.Items
             weaponRange = Mathf.Max(1f, range);
             fireInterval = Mathf.Max(0.02f, interval);
         }
+
+        internal void ConfigureRepair(float amount) => repairAmount = Mathf.Max(0f, amount);
 
         internal void ConfigurePrices(int buy, int sell)
         {

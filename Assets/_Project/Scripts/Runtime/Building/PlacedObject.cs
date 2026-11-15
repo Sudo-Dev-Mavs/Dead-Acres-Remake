@@ -1,4 +1,5 @@
 using DeadAcres.GameMode;
+using DeadAcres.Items;
 using UnityEngine;
 
 namespace DeadAcres.Building
@@ -15,10 +16,16 @@ namespace DeadAcres.Building
         private bool released;
 
         public int OccupantId => occupantId;
+        public FarmWorld World => world;
+
+        /// <summary>Ítem con el que se colocó (lo que devuelve el martillo). Puede ser null.</summary>
+        public ItemDefinition Item { get; private set; }
         public PlaceableCategory Category => category;
 
-        public void Bind(FarmWorld farmWorld, int id, PlaceableCategory placeableCategory)
+        public void Bind(FarmWorld farmWorld, int id, PlaceableCategory placeableCategory,
+            ItemDefinition sourceItem = null)
         {
+            Item = sourceItem;
             world = farmWorld;
             occupantId = id;
             category = placeableCategory;

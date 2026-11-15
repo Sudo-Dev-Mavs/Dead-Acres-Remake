@@ -29,6 +29,7 @@ namespace DeadAcres.Player
         public event Action SecondaryPressed;
         public event Action InteractPressed;
         public event Action ReadyPressed;
+        public event Action InventoryPressed;
 
         /// <summary>-1 = Q (antihorario), +1 = E (horario).</summary>
         public event Action<int> RotatePressed;
@@ -74,6 +75,7 @@ namespace DeadAcres.Player
             Button("Secondary", () => SecondaryPressed?.Invoke(), "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
             Button("Interact", () => InteractPressed?.Invoke(), "<Keyboard>/f", "<Gamepad>/buttonWest");
             Button("Ready", () => ReadyPressed?.Invoke(), "<Keyboard>/r", "<Gamepad>/start");
+            Button("Inventory", () => InventoryPressed?.Invoke(), "<Keyboard>/tab", "<Gamepad>/select");
             Button("RotateLeft", () => RotatePressed?.Invoke(-1), "<Keyboard>/q", "<Gamepad>/dpad/left");
             Button("RotateRight", () => RotatePressed?.Invoke(1), "<Keyboard>/e", "<Gamepad>/dpad/right");
             Button("HotbarNext", () => HotbarCycled?.Invoke(1), "<Gamepad>/rightShoulder", null);

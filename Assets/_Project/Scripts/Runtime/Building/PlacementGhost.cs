@@ -38,7 +38,9 @@ namespace DeadAcres.Building
 
             foreach (MeshFilter source in filterBuffer)
             {
-                if (source.sharedMesh == null) continue;
+                // Las piezas desactivadas en el prefab (el rayo de la torreta, la onda del TNT) no forman
+                // parte de su aspecto colocado.
+                if (source.sharedMesh == null || !source.gameObject.activeSelf) continue;
 
                 var part = new GameObject(source.name);
                 part.transform.SetParent(root, false);

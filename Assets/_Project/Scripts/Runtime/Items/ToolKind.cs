@@ -10,5 +10,8 @@ namespace DeadAcres.Items
 
         /// <summary>Hoz dentada: cosecha un cultivo maduro. Sin ella no se puede cosechar.</summary>
         Sickle = 2,
+
+        /// <summary>Martillo: recoge un objeto colocado y lo devuelve al inventario.</summary>
+        Hammer = 3,
     }
 }

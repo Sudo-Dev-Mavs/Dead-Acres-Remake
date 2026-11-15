@@ -88,6 +88,9 @@ namespace DeadAcres.EditorTools
             worldObject.transform.position = GridOrigin;
             var world = worldObject.AddComponent<FarmWorld>();
             world.Configure(data.Session, GridSize, GridSize, GridCellSize);
+
+            // La caravana da energía a 14 m: alcanza la esquina de la rejilla más cercana.
+            rvHealth.gameObject.AddComponent<PowerSource>().Configure(world, 14f);
             var farm = worldObject.AddComponent<FarmArea>();
             farm.Configure(world, data.Crops, cycle);
 
@@ -114,7 +117,8 @@ namespace DeadAcres.EditorTools
                 data.RvDestroyed, data.Victory);
 
             HudBuilder.Build(cycle, data.PhaseChanged, inventory, interactor, world,
-                interactor.GetComponent<PlayerWallet>(), jack, playerInput, playerHealth, rvHealth, match, waves);
+                interactor.GetComponent<PlayerWallet>(), jack, playerInput, playerHealth, rvHealth, match, waves,
+                interactor.GetComponent<PlayerBuildTools>());
 
             // La tienda tiene botones: hace falta un EventSystem con el módulo del Input System.
             var eventSystem = new GameObject("EventSystem");
@@ -173,6 +177,7 @@ namespace DeadAcres.EditorTools
                 EditorPaths.LoadOrCreateMaterial("Greybox_Impact", new Color(1f, 0.85f, 0.2f)));
 
             player.AddComponent<PlayerWeapon>().Configure(input, inventory, cameraObject.transform, viewModel, impact);
+            player.AddComponent<PlayerBuildTools>().Configure(input, inventory, cameraObject.transform);
 
             player.AddComponent<PlacementController>()
                 .Configure(input, inventory, world, camera, ghostValid, ghostInvalid);

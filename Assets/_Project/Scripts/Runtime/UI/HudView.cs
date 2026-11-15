@@ -40,6 +40,7 @@ namespace DeadAcres.UI
         [SerializeField] private Health rvHealth;
         [SerializeField] private MatchDirector match;
         [SerializeField] private WaveDirector waves;
+        [SerializeField] private PlayerBuildTools buildTools;
 
         [Header("Widgets")]
         [SerializeField] private Text clockLabel;
@@ -91,6 +92,7 @@ namespace DeadAcres.UI
             if (rvHealth != null) rvHealth.HealthChanged += OnRvHealthChanged;
             if (match != null) match.Ended += OnMatchEnded;
             if (waves != null) waves.ReinforcementsIncoming += OnReinforcementsIncoming;
+            if (buildTools != null) buildTools.Message += ShowNotice;
         }
 
         private void OnDisable()
@@ -120,6 +122,7 @@ namespace DeadAcres.UI
             if (rvHealth != null) rvHealth.HealthChanged -= OnRvHealthChanged;
             if (match != null) match.Ended -= OnMatchEnded;
             if (waves != null) waves.ReinforcementsIncoming -= OnReinforcementsIncoming;
+            if (buildTools != null) buildTools.Message -= ShowNotice;
         }
 
         private void Start()
@@ -381,7 +384,7 @@ namespace DeadAcres.UI
 
         internal void Configure(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
             PlayerInteractor playerInteractor, FarmWorld farmWorld, PlayerWallet walletOwner, Health player, Health rv,
-            MatchDirector matchDirector, WaveDirector waveDirector, Text clock, Text phase, Text plants, Text gold, Text health, Text rvText,
+            MatchDirector matchDirector, WaveDirector waveDirector, PlayerBuildTools tools, Text clock, Text phase, Text plants, Text gold, Text health, Text rvText,
             Text banner, Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
         {
             dayNight = cycle;
@@ -394,6 +397,7 @@ namespace DeadAcres.UI
             rvHealth = rv;
             match = matchDirector;
             waves = waveDirector;
+            buildTools = tools;
             goldLabel = gold;
             healthLabel = health;
             rvLabel = rvText;

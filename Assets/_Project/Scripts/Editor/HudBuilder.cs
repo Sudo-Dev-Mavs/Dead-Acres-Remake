@@ -24,7 +24,8 @@ namespace DeadAcres.EditorTools
 
         public static HudView Build(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
             PlayerInteractor interactor, FarmWorld world, PlayerWallet wallet, Shopkeeper shopkeeper,
-            PlayerInputReader input, Health playerHealth, Health rvHealth, MatchDirector match, WaveDirector waves)
+            PlayerInputReader input, Health playerHealth, Health rvHealth, MatchDirector match, WaveDirector waves,
+            PlayerBuildTools buildTools)
         {
             Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             if (font == null)
@@ -86,10 +87,11 @@ namespace DeadAcres.EditorTools
 
             var hud = canvasObject.AddComponent<HudView>();
             hud.Configure(cycle, phaseChannel, inventory, interactor, world, wallet, playerHealth, rvHealth, match,
-                waves, clock, phase, plants, gold, health, rv, banner, selectedItem, hint, notice, slots);
+                waves, buildTools, clock, phase, plants, gold, health, rv, banner, selectedItem, hint, notice, slots);
 
-            // La tienda va la última: se dibuja por encima del HUD.
+            // Las ventanas van las últimas: se dibujan por encima del HUD.
             BuildShop(canvasObject, font, cycle, shopkeeper, input);
+            BuildInventory(canvasObject, font, cycle, input, inventory);
             return hud;
         }
 
@@ -126,6 +128,75 @@ namespace DeadAcres.EditorTools
             var shop = canvasObject.AddComponent<ShopView>();
             shop.Configure(shopkeeper, cycle, input, dim.gameObject, buyList, sellList, gold, message, close, font);
             dim.gameObject.SetActive(false);
+        }
+
+        private static void BuildInventory(GameObject canvasObject, Font font, DayNightCycle cycle,
+            PlayerInputReader input, PlayerInventory inventory)
+        {
+            const float slot = 72f;
+            const float gap = 8f;
+            const float left = 94f;
+
+            Image dim = UiFactory.CreateImage("Inventory", canvasObject.transform, new Color(0f, 0f, 0f, 0.6f), true);
+            UiFactory.Stretch(dim.rectTransform);
+
+            Image window = UiFactory.CreateImage("Window", dim.transform, new Color(0.12f, 0.13f, 0.15f, 0.97f), true);
+            UiFactory.Place(window.rectTransform, UiFactory.Center, UiFactory.Center, Vector2.zero, new Vector2(900f, 560f));
+            Transform root = window.transform;
+
+            Text title = UiFactory.CreateText("Title", root, font, 30, TextAnchor.UpperLeft, false);
+            title.text = "Inventario";
+            UiFactory.Place(title.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(30f, -20f), new Vector2(400f, 40f));
+
+            Text close = UiFactory.CreateText("CloseHint", root, font, 20, TextAnchor.UpperRight, false);
+            close.text = "[Tab] Cerrar";
+            close.color = new Color(1f, 1f, 1f, 0.7f);
+            UiFactory.Place(close.rectTransform, UiFactory.TopRight, UiFactory.TopRight, new Vector2(-30f, -26f), new Vector2(300f, 30f));
+
+            CreateSectionLabel(root, font, "Hotbar (teclas 1-9)", left, -78f);
+            CreateSectionLabel(root, font, "Mochila", left, -208f);
+
+            int total = Inventory.HotbarSize + Inventory.DefaultBackpackSize;
+            var slots = new List<InventoryView.SlotWidgets>(total);
+            for (int i = 0; i < total; i++)
+            {
+                // Fila de la hotbar arriba; debajo, la mochila en filas de 8.
+                bool hotbar = Inventory.IsHotbar(i);
+                int column = hotbar ? i : (i - Inventory.HotbarSize) % 8;
+                int row = hotbar ? 0 : (i - Inventory.HotbarSize) / 8;
+                float x = left + column * (slot + gap);
+                float y = hotbar ? -110f : -240f - row * (slot + gap);
+
+                Image frame = UiFactory.CreateImage($"Slot {i}", root, new Color(1f, 1f, 1f, 0.10f), true);
+                UiFactory.Place(frame.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(x, y), new Vector2(slot, slot));
+                var button = frame.gameObject.AddComponent<Button>();
+                button.targetGraphic = frame;
+
+                Image icon = UiFactory.CreateImage("Icon", frame.transform, Color.white);
+                UiFactory.Stretch(icon.rectTransform, 14f);
+                icon.enabled = false;
+
+                Text count = UiFactory.CreateText("Count", frame.transform, font, 20, TextAnchor.LowerRight);
+                UiFactory.Place(count.rectTransform, UiFactory.BottomRight, UiFactory.BottomRight, new Vector2(-6f, 3f), new Vector2(60f, 24f));
+
+                slots.Add(new InventoryView.SlotWidgets { button = button, frame = frame, icon = icon, count = count });
+            }
+
+            Text info = UiFactory.CreateText("Info", root, font, 20, TextAnchor.MiddleLeft, false);
+            info.color = new Color(1f, 0.9f, 0.45f);
+            UiFactory.Place(info.rectTransform, Vector2.zero, Vector2.zero, new Vector2(30f, 20f), new Vector2(840f, 34f));
+
+            var view = canvasObject.AddComponent<InventoryView>();
+            view.Configure(input, inventory, cycle, dim.gameObject, info, slots);
+            dim.gameObject.SetActive(false);
+        }
+
+        private static void CreateSectionLabel(Transform root, Font font, string text, float x, float y)
+        {
+            Text label = UiFactory.CreateText($"{text} label", root, font, 20, TextAnchor.UpperLeft, false);
+            label.text = text;
+            label.color = new Color(1f, 1f, 1f, 0.7f);
+            UiFactory.Place(label.rectTransform, UiFactory.TopLeft, UiFactory.TopLeft, new Vector2(x, y), new Vector2(500f, 28f));
         }
 
         private static RectTransform CreateColumn(Transform root, Font font, string header, float x)
