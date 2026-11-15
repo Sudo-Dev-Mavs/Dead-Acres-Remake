@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d52ecde359c14080b844d78656c18cd3, type: 3}
+  m_Name: Item_placeable_lamp
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Items.ItemDefinition
+  id: placeable_lamp
+  displayName: "Luz port\xE1til"
+  icon: {fileID: 0}
+  tint: {r: 0.95, g: 0.95, b: 0.8, a: 1}
+  kind: 3
+  maxStack: 99
+  tool: 0
+  buyPrice: 40
+  sellPrice: 15
+  weaponDamage: 20
+  weaponRange: 60
+  fireInterval: 0.25
+  repairAmount: 0
+  placedPrefab: {fileID: 6858170720068812677, guid: 9fc70a8efa1711e6d814f650784a6bc0, type: 3}
+  footprint: {x: 1, y: 1}
+  placeableCategory: 1
