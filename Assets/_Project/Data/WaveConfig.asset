@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b601394f1ca0180884a3c4032b92298, type: 3}
   m_Name: WaveConfig
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Enemies.WaveConfig
-  firstNightCount: 5
-  extraPerNight: 3
-  initialDelay: 6
-  spawnWindow: 100
+  firstNightCount: 12
+  extraPerNight: 5
+  initialDelay: 3
+  spawnWindow: 60
