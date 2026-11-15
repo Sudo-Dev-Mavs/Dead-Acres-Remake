@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7667a53a07a8e83eb583734ec21a38a, type: 3}
+  m_Name: DayNightConfig
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.DayNight.DayNightConfig
+  dawnDuration: 15
+  firstDayDuration: 360
+  dayDuration: 240
+  duskDuration: 30
+  minNightDuration: 180
+  maxNightDuration: 300

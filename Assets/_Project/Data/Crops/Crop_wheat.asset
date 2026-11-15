@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ab902f2fd761d99c856058b3637bba2, type: 3}
+  m_Name: Crop_wheat
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Farming.CropDefinition
+  id: wheat
+  displayName: Trigo
+  seedItem: {fileID: 11400000, guid: b0acb00843f49a2eb920eb3e69615972, type: 2}
+  produceItem: {fileID: 11400000, guid: a0a73dbf1f8ca943b989eefb8f71c8ba, type: 2}
+  growSeconds: 75
+  regrowSeconds: 60
+  yieldMin: 1
+  yieldMax: 2
+  ripeColor: {r: 0.9, g: 0.76, b: 0.3, a: 1}
+  ripeHeight: 0.9

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ab902f2fd761d99c856058b3637bba2, type: 3}
+  m_Name: Crop_tomato
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Farming.CropDefinition
+  id: tomato
+  displayName: Tomate
+  seedItem: {fileID: 11400000, guid: 5d0695369fcccd5409d5669006abf985, type: 2}
+  produceItem: {fileID: 11400000, guid: 81e942dc55f24df85b759de44fe9c2b9, type: 2}
+  growSeconds: 90
+  regrowSeconds: 60
+  yieldMin: 2
+  yieldMax: 3
+  ripeColor: {r: 0.92, g: 0.28, b: 0.12, a: 1}
+  ripeHeight: 0.8
