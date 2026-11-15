@@ -101,9 +101,74 @@ namespace DeadAcres.Tests
             runner.NotifyEnemyRemoved();
 
             Assert.IsTrue(runner.IsWaveCleared);
-            Assert.IsFalse(runner.IsActive);
+            Assert.IsTrue(runner.IsActive, "La oleada sigue abierta hasta el amanecer: pueden llegar refuerzos.");
             runner.NotifyEnemyRemoved();
             Assert.AreEqual(0, runner.Alive, "Nunca baja de cero.");
+        }
+
+        [Test]
+        public void Runner_Reinforcements_OnlyAfterTheFieldIsEmpty()
+        {
+            var runner = new WaveRunner();
+            Assert.IsFalse(runner.AddReinforcements(3, 6f, 3f), "Sin oleada no hay refuerzos.");
+
+            runner.Begin(2, 0f, 0f);
+            runner.Tick(0.1f);
+            Assert.IsFalse(runner.AddReinforcements(3, 6f, 3f), "Quedan zombis vivos.");
+            Assert.AreEqual(1f, runner.NightTimeScale, 0.0001f);
+
+            runner.NotifyEnemyRemoved();
+            runner.NotifyEnemyRemoved();
+            Assert.IsTrue(runner.AddReinforcements(3, 6f, 3f));
+
+            Assert.IsFalse(runner.IsWaveCleared, "Con refuerzos en camino la noche no puede acabar.");
+            Assert.AreEqual(3f, runner.NightTimeScale, 0.0001f);
+            Assert.AreEqual(1, runner.ReinforcementGroups);
+            Assert.AreEqual(5, runner.Total);
+        }
+
+        [Test]
+        public void Runner_Reinforcements_SpawnOverTheirOwnWindow_AndKeepTheNightFast()
+        {
+            var runner = new WaveRunner();
+            runner.Begin(1, 0f, 0f);
+            runner.Tick(0.1f);
+            runner.NotifyEnemyRemoved();
+            runner.AddReinforcements(3, 6f, 3f); // uno ya, otro a los 3 s, otro a los 6 s
+
+            Assert.AreEqual(1, runner.Tick(0.1f));
+            Assert.AreEqual(0, runner.Tick(2f));
+            Assert.AreEqual(1, runner.Tick(1f));
+            Assert.AreEqual(1, runner.Tick(3f));
+            Assert.AreEqual(0, runner.Tick(100f));
+            Assert.AreEqual(4, runner.Spawned);
+
+            runner.NotifyEnemyRemoved();
+            runner.NotifyEnemyRemoved();
+            runner.NotifyEnemyRemoved();
+
+            Assert.IsTrue(runner.IsWaveCleared);
+            Assert.AreEqual(3f, runner.NightTimeScale, 0.0001f, "El resto de la noche sigue acelerado.");
+
+            runner.Abort();
+            Assert.AreEqual(1f, runner.NightTimeScale, 0.0001f);
+            runner.Begin(1, 0f, 0f);
+            Assert.AreEqual(0, runner.ReinforcementGroups, "Cada noche empieza de cero.");
+        }
+
+        [Test]
+        public void ReinforcementRules_SizeAndTiming()
+        {
+            config.ConfigureReinforcements(fraction: 0.25f, minCount: 3, maxGroups: 2, window: 6f,
+                minRemaining: 15f, fastForward: 3f, radiusFactor: 0.6f);
+
+            Assert.AreEqual(3, WaveMath.GetReinforcementCount(config, 8), "25 % de 8 = 2 → se aplica el mínimo.");
+            Assert.AreEqual(6, WaveMath.GetReinforcementCount(config, 22), "25 % de 22 = 5,5 → 6");
+
+            Assert.IsTrue(WaveMath.ShouldSendReinforcements(config, 0, 40f));
+            Assert.IsTrue(WaveMath.ShouldSendReinforcements(config, 1, 15f));
+            Assert.IsFalse(WaveMath.ShouldSendReinforcements(config, 2, 40f), "Ya se mandaron los dos grupos.");
+            Assert.IsFalse(WaveMath.ShouldSendReinforcements(config, 0, 14f), "Queda muy poca noche.");
         }
 
         [Test]

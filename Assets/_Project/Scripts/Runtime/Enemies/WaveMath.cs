@@ -23,6 +23,22 @@ namespace DeadAcres.Enemies
             return Mathf.Max(1, Mathf.RoundToInt(count));
         }
 
+        /// <summary>Tamaño de un grupo de refuerzo para una oleada de <paramref name="waveCount"/> enemigos.</summary>
+        public static int GetReinforcementCount(WaveConfig config, int waveCount)
+        {
+            int byFraction = Mathf.RoundToInt(waveCount * config.ReinforcementFraction);
+            return Mathf.Max(config.ReinforcementMinCount, byFraction);
+        }
+
+        /// <summary>
+        /// ¿Toca mandar refuerzos? Sí cuando la noche está en curso, no se ha llegado al máximo de
+        /// grupos y todavía queda suficiente noche por delante.
+        /// </summary>
+        public static bool ShouldSendReinforcements(WaveConfig config, int groupsSent, float nightSecondsRemaining)
+        {
+            return groupsSent < config.MaxReinforcementGroups && nightSecondsRemaining >= config.MinNightRemaining;
+        }
+
         /// <summary>Multiplicador de vida extra por noche. Solo Endless; en Campaña siempre 1.</summary>
         public static float GetHealthMultiplier(GameModeRules rules, int nightNumber)
         {

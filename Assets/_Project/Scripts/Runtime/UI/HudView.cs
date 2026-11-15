@@ -4,6 +4,7 @@ using DeadAcres.Building;
 using DeadAcres.Combat;
 using DeadAcres.DayNight;
 using DeadAcres.Economy;
+using DeadAcres.Enemies;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
@@ -38,6 +39,7 @@ namespace DeadAcres.UI
         [SerializeField] private Health playerHealth;
         [SerializeField] private Health rvHealth;
         [SerializeField] private MatchDirector match;
+        [SerializeField] private WaveDirector waves;
 
         [Header("Widgets")]
         [SerializeField] private Text clockLabel;
@@ -88,6 +90,7 @@ namespace DeadAcres.UI
             if (playerHealth != null) playerHealth.HealthChanged += OnPlayerHealthChanged;
             if (rvHealth != null) rvHealth.HealthChanged += OnRvHealthChanged;
             if (match != null) match.Ended += OnMatchEnded;
+            if (waves != null) waves.ReinforcementsIncoming += OnReinforcementsIncoming;
         }
 
         private void OnDisable()
@@ -116,6 +119,7 @@ namespace DeadAcres.UI
             if (playerHealth != null) playerHealth.HealthChanged -= OnPlayerHealthChanged;
             if (rvHealth != null) rvHealth.HealthChanged -= OnRvHealthChanged;
             if (match != null) match.Ended -= OnMatchEnded;
+            if (waves != null) waves.ReinforcementsIncoming -= OnReinforcementsIncoming;
         }
 
         private void Start()
@@ -179,6 +183,9 @@ namespace DeadAcres.UI
 
         private void OnRvHealthChanged(float current, float max) =>
             SetText(rvLabel, $"Caravana {Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}");
+
+        private void OnReinforcementsIncoming(int count) =>
+            ShowNotice($"¡Llegan {count} más! La noche se acelera");
 
         private void OnMatchEnded(MatchState state)
         {
@@ -374,7 +381,7 @@ namespace DeadAcres.UI
 
         internal void Configure(DayNightCycle cycle, PhaseEventChannel phaseChannel, PlayerInventory inventory,
             PlayerInteractor playerInteractor, FarmWorld farmWorld, PlayerWallet walletOwner, Health player, Health rv,
-            MatchDirector matchDirector, Text clock, Text phase, Text plants, Text gold, Text health, Text rvText,
+            MatchDirector matchDirector, WaveDirector waveDirector, Text clock, Text phase, Text plants, Text gold, Text health, Text rvText,
             Text banner, Text selectedItem, Text hint, Text notice, List<SlotWidgets> slotWidgets)
         {
             dayNight = cycle;
@@ -386,6 +393,7 @@ namespace DeadAcres.UI
             playerHealth = player;
             rvHealth = rv;
             match = matchDirector;
+            waves = waveDirector;
             goldLabel = gold;
             healthLabel = health;
             rvLabel = rvText;

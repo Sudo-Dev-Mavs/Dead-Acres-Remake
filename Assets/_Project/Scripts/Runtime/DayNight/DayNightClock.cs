@@ -51,7 +51,7 @@ namespace DeadAcres.DayNight
                 return;
             }
 
-            PhaseElapsed += deltaTime;
+            PhaseElapsed += GetStep(deltaTime);
 
             switch (Phase)
             {
@@ -84,6 +84,28 @@ namespace DeadAcres.DayNight
 
             EnterPhase(GamePhase.Dusk);
             return true;
+        }
+
+        /// <summary>
+        /// De noche, el sistema de oleadas puede acelerar el tiempo, pero solo hasta la duración
+        /// mínima: a partir de ahí (enemigos aún vivos) el reloj vuelve a ir a velocidad normal,
+        /// para que el tope máximo siga siendo tiempo real.
+        /// </summary>
+        private float GetStep(float deltaTime)
+        {
+            if (Phase != GamePhase.Night)
+            {
+                return deltaTime;
+            }
+
+            float scale = waveStatus.NightTimeScale;
+            float untilMinimum = config.MinNightDuration - PhaseElapsed;
+            if (scale <= 1f || untilMinimum <= 0f)
+            {
+                return deltaTime;
+            }
+
+            return Math.Min(deltaTime * scale, Math.Max(deltaTime, untilMinimum));
         }
 
         private void TickNight()

@@ -59,7 +59,7 @@ namespace DeadAcres.EditorTools
             var data = new GeneratedData();
 
             data.DayNight = EditorPaths.LoadOrCreate<DayNightConfig>($"{Root}/DayNightConfig.asset");
-            data.DayNight.Configure(dawn: 15f, firstDay: 360f, day: 240f, dusk: 30f, minNight: 180f, maxNight: 300f);
+            data.DayNight.Configure(dawn: 15f, firstDay: 360f, day: 240f, dusk: 30f, minNight: 120f, maxNight: 300f);
             EditorUtility.SetDirty(data.DayNight);
 
             CreateDifficulty("Easy", "Para aprender el juego. Los zombis caen antes.", 0.7f, 0.75f);
@@ -88,6 +88,12 @@ namespace DeadAcres.EditorTools
             // la primera noche). Con 5 en 100 s la noche se sentía vacía.
             data.Waves = EditorPaths.LoadOrCreate<WaveConfig>($"{Root}/WaveConfig.asset");
             data.Waves.Configure(firstNight: 12, perNight: 5, delay: 3f, window: 60f);
+
+            // Si se despeja la oleada con al menos 15 s de noche por delante: llega un grupo de
+            // refuerzo (25 % de la oleada, mínimo 3, hasta 2 grupos) a 0,6 del radio y el resto
+            // de la noche pasa al triple de velocidad.
+            data.Waves.ConfigureReinforcements(fraction: 0.25f, minCount: 3, maxGroups: 2, window: 6f,
+                minRemaining: 15f, fastForward: 3f, radiusFactor: 0.6f);
             EditorUtility.SetDirty(data.Waves);
             data.ZombiePrefab = CreateZombiePrefab(data.Session);
 

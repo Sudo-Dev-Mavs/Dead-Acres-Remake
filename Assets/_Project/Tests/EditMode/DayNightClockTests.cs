@@ -10,6 +10,8 @@ namespace DeadAcres.Tests
         private sealed class FakeWave : IWaveStatus
         {
             public bool IsWaveCleared { get; set; }
+
+            public float NightTimeScale { get; set; } = 1f;
         }
 
         private DayNightConfig config;
@@ -137,6 +139,57 @@ namespace DeadAcres.Tests
 
             Assert.AreEqual(phaseEventsBefore, phases.Count);
             Assert.IsFalse(clock.IsRunning);
+        }
+
+        [Test]
+        public void Night_FastForward_ShortensOnlyTheWaitUntilTheMinimum()
+        {
+            AdvanceToNight(); // mínimo 30 s, máximo 50 s
+            clock.Tick(6f);
+            wave.NightTimeScale = 3f;
+
+            clock.Tick(4f); // cuenta como 12 s → 18 s de reloj
+            Assert.AreEqual(18f, clock.PhaseElapsed, 0.0001f);
+
+            clock.Tick(10f); // serían 30 s más: se queda en el mínimo, no lo salta
+            Assert.AreEqual(30f, clock.PhaseElapsed, 0.0001f);
+            Assert.AreEqual(GamePhase.Night, clock.Phase, "Con enemigos vivos la noche no termina.");
+
+            clock.Tick(5f); // pasado el mínimo vuelve a ir a velocidad normal
+            Assert.AreEqual(35f, clock.PhaseElapsed, 0.0001f);
+
+            wave.IsWaveCleared = true;
+            clock.Tick(0.1f);
+            Assert.AreEqual(GamePhase.Dawn, clock.Phase);
+        }
+
+        [Test]
+        public void Night_FastForward_EndsTheNightSoonerWhenCleared()
+        {
+            AdvanceToNight();
+            wave.IsWaveCleared = true;
+            wave.NightTimeScale = 3f;
+
+            clock.Tick(9.9f);
+            Assert.AreEqual(GamePhase.Night, clock.Phase);
+
+            clock.Tick(0.2f); // 10,1 s reales × 3 ≥ 30 s de mínimo
+
+            Assert.AreEqual(GamePhase.Dawn, clock.Phase);
+            Assert.IsFalse(nights[0].EndedByTimeout);
+        }
+
+        [Test]
+        public void FastForward_DoesNotAffectTheDay()
+        {
+            clock.Begin();
+            clock.Tick(10f); // → Día 1 (60 s)
+            wave.NightTimeScale = 3f;
+
+            clock.Tick(20f);
+
+            Assert.AreEqual(GamePhase.Day, clock.Phase);
+            Assert.AreEqual(20f, clock.PhaseElapsed, 0.0001f);
         }
 
         private void AdvanceToNight()
