@@ -19,8 +19,8 @@ MonoBehaviour:
   kind: 3
   maxStack: 99
   tool: 0
-  buyPrice: 0
-  sellPrice: 0
+  buyPrice: 5
+  sellPrice: 2
   placedPrefab: {fileID: 8337925426759417779, guid: 8801ce03505ca13e88d79a6f0b3867e5, type: 3}
   footprint: {x: 1, y: 1}
   placeableCategory: 1
