@@ -24,6 +24,7 @@ MonoBehaviour:
   weaponDamage: 20
   weaponRange: 60
   fireInterval: 0.25
+  rarity: 1
   healAmount: 0
   repairAmount: 0
   placedPrefab: {fileID: 8013989516032788309, guid: 20d6965662f00ec0a970f0c741615c4b, type: 3}
