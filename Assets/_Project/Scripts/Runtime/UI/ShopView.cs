@@ -20,7 +20,7 @@ namespace DeadAcres.UI
         private const float RowHeight = 38f;
         private const float RowSpacing = 4f;
         private const float RowWidth = 500f;
-        private const int MaxRows = 13;
+        private const int RowsPerPage = 12;
 
         [Header("Fuentes de datos")]
         [SerializeField] private Shopkeeper shopkeeper;
@@ -41,6 +41,8 @@ namespace DeadAcres.UI
         private Inventory inventory;
         private Wallet wallet;
         private GameObject pendingPlayer;
+        private int buyPage;
+        private int sellPage;
 
         public bool IsOpen { get; private set; }
 
@@ -114,6 +116,8 @@ namespace DeadAcres.UI
             wallet = playerWallet.Wallet;
             IsOpen = true;
 
+            buyPage = 0;
+            sellPage = 0;
             UiModal.Enter(playerInput, dayNight);
             SetMessage(string.Empty);
             panel.SetActive(true);
@@ -144,18 +148,43 @@ namespace DeadAcres.UI
             ClearRows(buyList);
             itemBuffer.Clear();
             shopkeeper.Catalog.GetAvailable(day, itemBuffer);
-            for (int i = 0; i < itemBuffer.Count && i < MaxRows; i++)
+            buyPage = ListPaging.WrapPage(buyPage, itemBuffer.Count, RowsPerPage);
+            for (int i = buyPage * RowsPerPage, row = 0; i < itemBuffer.Count && row < RowsPerPage; i++, row++)
             {
-                AddBuyRow(i, itemBuffer[i], day);
+                AddBuyRow(row, itemBuffer[i], day);
             }
+
+            AddPageButton(buyList, buyPage, itemBuffer.Count, () => buyPage++);
 
             ClearRows(sellList);
             itemBuffer.Clear();
             CollectSellableItems(itemBuffer);
-            for (int i = 0; i < itemBuffer.Count && i < MaxRows; i++)
+            sellPage = ListPaging.WrapPage(sellPage, itemBuffer.Count, RowsPerPage);
+            for (int i = sellPage * RowsPerPage, row = 0; i < itemBuffer.Count && row < RowsPerPage; i++, row++)
             {
-                AddSellRow(i, itemBuffer[i]);
+                AddSellRow(row, itemBuffer[i]);
             }
+
+            AddPageButton(sellList, sellPage, itemBuffer.Count, () => sellPage++);
+        }
+
+        /// <summary>Si la lista no cabe en una página, añade debajo un botón para pasar a la siguiente.</summary>
+        private void AddPageButton(RectTransform list, int page, int itemCount, System.Action advance)
+        {
+            int pages = ListPaging.GetPageCount(itemCount, RowsPerPage);
+            if (pages <= 1)
+            {
+                return;
+            }
+
+            Button next = UiFactory.CreateButton("NextPage", list, font, $"Más  ({page + 1}/{pages})");
+            UiFactory.Place(next.GetComponent<RectTransform>(), UiFactory.TopLeft, UiFactory.TopLeft,
+                new Vector2(0f, -RowsPerPage * (RowHeight + RowSpacing)), new Vector2(RowWidth, RowHeight - 4f));
+            next.onClick.AddListener(() =>
+            {
+                advance();
+                Rebuild();
+            });
         }
 
         private void CollectSellableItems(List<ItemDefinition> results)

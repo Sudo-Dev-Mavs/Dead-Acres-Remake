@@ -215,6 +215,11 @@ namespace DeadAcres.Player
             if (context.Interactable != null)
             {
                 context.Interactable.Interact(gameObject);
+
+                // El mismo objeto puede ofrecer ahora otra cosa (o nada): se recalcula y se avisa
+                // aunque siga siendo el mismo interactuable.
+                context = BuildContext();
+                ContextChanged?.Invoke(context);
             }
         }
 

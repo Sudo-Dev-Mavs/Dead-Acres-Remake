@@ -6,6 +6,7 @@ using DeadAcres.DayNight;
 using DeadAcres.Economy;
 using DeadAcres.Enemies;
 using DeadAcres.Farming;
+using DeadAcres.Items;
 using DeadAcres.Match;
 using DeadAcres.Player;
 using UnityEditor;
@@ -111,6 +112,7 @@ namespace DeadAcres.EditorTools
             // Los zombis aparecen en un círculo alrededor de la caravana y van a por ella.
             waves.Configure(data.Waves, data.Session, data.PhaseChanged, data.NightCompleted, data.ZombiePrefab,
                 rvHealth, new List<Health> { playerHealth }, rvHealth.transform, 45f, cycle);
+            CreateAnimals(data);
 
             var match = systems.AddComponent<MatchDirector>();
             match.Configure(data.Session, cycle, data.NightCompleted, rvHealth, playerHealth, playerInput,
@@ -185,6 +187,27 @@ namespace DeadAcres.EditorTools
             var interactor = player.AddComponent<PlayerInteractor>();
             interactor.Configure(input, inventory, cameraObject.transform, farm, cycle);
             return interactor;
+        }
+
+        /// <summary>
+        /// Animales de regalo: una oveja y dos gallinas dentro de la rejilla, cerca de donde
+        /// empieza el jugador, para que se les pueda hacer un corral. El resto se compra.
+        /// </summary>
+        private static void CreateAnimals(DefaultDataGenerator.GeneratedData data)
+        {
+            var parent = new GameObject("Animals").transform;
+            SpawnAnimal(data.SheepItem, parent, new Vector3(7.5f, 0f, 8.5f));
+            SpawnAnimal(data.ChickenItem, parent, new Vector3(5.5f, 0f, 7.5f));
+            SpawnAnimal(data.ChickenItem, parent, new Vector3(9.5f, 0f, 7.5f));
+        }
+
+        private static void SpawnAnimal(ItemDefinition item, Transform parent, Vector3 position)
+        {
+            var animal = (GameObject)PrefabUtility.InstantiatePrefab(item.PlacedPrefab, parent);
+            animal.transform.position = position;
+
+            // No ocupa celda, pero el martillo lo recoge como ítem para poder moverlo.
+            animal.AddComponent<PlacedObject>().ConfigureItem(item);
         }
 
         /// <summary>Jack provisional: una cápsula junto a la caravana. De noche se oculta.</summary>

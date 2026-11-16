@@ -7,9 +7,9 @@ using UnityEngine;
 namespace DeadAcres.Player
 {
     /// <summary>
-    /// Herramientas de construcción del jugador local, con la acción primaria:
-    /// el martillo recoge un objeto colocado (y lo devuelve al inventario) y la cinta americana
-    /// repara lo que se mire del bando del jugador, gastando una unidad.
+    /// Herramientas y consumibles del jugador local, con la acción primaria:
+    /// el martillo recoge un objeto colocado (y lo devuelve al inventario), la cinta americana
+    /// repara lo que se mire del bando del jugador y la comida cura al propio jugador.
     /// </summary>
     public sealed class PlayerBuildTools : MonoBehaviour
     {
@@ -39,6 +39,12 @@ namespace DeadAcres.Player
                 return;
             }
 
+            if (selected.Item.HealAmount > 0f)
+            {
+                Eat(selected.Item);
+                return;
+            }
+
             bool isHammer = selected.Item.Tool == ToolKind.Hammer;
             bool isRepair = selected.Item.RepairAmount > 0f;
             if (!isHammer && !isRepair)
@@ -60,6 +66,24 @@ namespace DeadAcres.Player
             {
                 Repair(hit.collider.GetComponentInParent<Health>(), selected.Item);
             }
+        }
+
+        private void Eat(ItemDefinition food)
+        {
+            if (!TryGetComponent(out Health health) || health.IsDead)
+            {
+                return;
+            }
+
+            if (health.Current >= health.Max)
+            {
+                Message?.Invoke("Ya tienes la vida completa");
+                return;
+            }
+
+            health.Heal(food.HealAmount);
+            Inventory.RemoveAt(Inventory.SelectedIndex, 1);
+            Message?.Invoke($"{food.DisplayName}: +{Mathf.CeilToInt(food.HealAmount)} de vida");
         }
 
         private void PickUp(PlacedObject placed)

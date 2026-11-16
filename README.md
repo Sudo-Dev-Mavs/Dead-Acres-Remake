@@ -20,9 +20,9 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 |---|---|---|
 | Moverse / mirar | WASD / ratón | stick izq. / stick der. |
 | Saltar / correr | Espacio / Shift | A / L3 |
-| Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada), colocar, recoger (martillo) o reparar (cinta) | Clic izq. | RT |
+| Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada), colocar, recoger (martillo), reparar (cinta) o comer | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
-| Hablar con Jack | F | X |
+| Hablar con Jack, recoger huevos y lana, abrir y cerrar puertas | F | X |
 | "Listo" (terminar el día) | R | Start |
 | Inventario (mover entre hotbar y mochila) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
@@ -37,7 +37,15 @@ La noche dura entre 2 y 5 minutos. Si despejas la oleada antes de los 2 minutos,
 
 Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan cerca de la caravana o de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado y la cinta americana lo repara.
 
-Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y vende semillas y muros; su catálogo crece cada día. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
+Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
+
+Animales: empiezas con una oveja y dos gallinas dentro de la zona cultivable; Jack vende más. Cuando tienen producto listo les aparece un cubo amarillo encima: F para recoger el huevo o la lana. Son colocables: el martillo los recoge para moverlos. Pasean cerca de donde se colocan sin atravesar vallas ni muros, y de noche los zombis los atacan si pasan cerca, así que conviene hacerles un corral.
+
+Árboles frutales (manzano, naranjo, limonero): se plantan como cualquier semilla, tardan más y dan más fruta.
+
+Más colocables: valla (baja: frena a los zombis y se dispara por encima), puerta (F la abre y la cierra), fogata (luz sin energía, más que la antorcha), pozo y molino (decoración; el molino ocupa 2×2).
+
+Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y vende semillas y muros; su catálogo crece cada día (si no cabe en pantalla, el botón "Más" pasa de página). Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
 
 ## Estructura
 
@@ -52,15 +60,16 @@ Assets/_Project/
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
     Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
-                     PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight
+                     PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, Gate, Spinner
+    Animals          ProductionTimer (puro) + Animal
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
     Economy          Wallet + ShopCommands (puros), ShopCatalog, Shopkeeper (Jack)
     Enemies          WaveRunner + WaveMath (puros), WaveConfig, WaveDirector, ZombieBrain
     Match            MatchState (puro) + MatchDirector: victoria y derrota
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
-                     PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo y cinta)
-    UI               HudView, ShopView, InventoryView, UiModal, UiFactory
+                     PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo, cinta y comer)
+    UI               HudView, ShopView, InventoryView, UiModal, UiFactory, ListPaging (puro)
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
   Data/, Scenes/, Art/, Prefabs/   generados desde el menú Dead Acres
