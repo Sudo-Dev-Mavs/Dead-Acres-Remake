@@ -46,7 +46,10 @@ namespace DeadAcres.Loot
 
         /// <summary>Tira el botín. Con la misma semilla sale siempre lo mismo.</summary>
         /// <returns>Oro encontrado.</returns>
-        public int Roll(System.Random rng, List<ItemStack> results)
+        public int Roll(System.Random rng, List<ItemStack> results) => Roll(rng, results, maxWeapons);
+
+        /// <param name="weaponLimit">Armas como mucho en esta tirada (el reparto entre autos lo decide LootDirector).</param>
+        public int Roll(System.Random rng, List<ItemStack> results, int weaponLimit)
         {
             results.Clear();
             for (int i = 0; i < guaranteed.Count; i++)
@@ -69,7 +72,7 @@ namespace DeadAcres.Loot
             for (int roll = 0; roll < rolls && pool.Count > 0; roll++)
             {
                 // Con el cupo de armas lleno, las que queden dejan de poder salir.
-                if (weapons >= maxWeapons)
+                if (weapons >= weaponLimit)
                 {
                     pool.RemoveAll(entry => entry.item.Kind == ItemKind.Weapon);
                     if (pool.Count == 0) break;

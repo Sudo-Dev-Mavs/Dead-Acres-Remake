@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using DeadAcres.Settings;
 using DeadAcres.Core.Session;
 using DeadAcres.Difficulty;
 using DeadAcres.GameMode;
 using DeadAcres.Saving;
+using DeadAcres.Settings;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,28 +11,40 @@ using UnityEngine.UI;
 namespace DeadAcres.UI
 {
     /// <summary>
-    /// Menú principal: continuar la partida guardada o empezar una nueva eligiendo dificultad y
-    /// modo. Monta su interfaz por código y deja la elección en la <see cref="GameSession"/>.
+    /// Menú principal: un panel a la izquierda sobre la partida de demostración. Va por páginas
+    /// con botón de volver: Jugar → modo → dificultad → ranura de guardado, o cargar una partida.
+    /// Monta su interfaz por código y deja la elección en la <see cref="GameSession"/>.
     /// </summary>
     public sealed class MainMenuView : MonoBehaviour
     {
+        private enum Page
+        {
+            Root,
+            Play,
+            Difficulty,
+            NewSlot,
+            LoadSlot,
+        }
+
+        private const float PanelWidth = 700f;
+        private const float WideButton = 620f;
+
         [SerializeField] private GameSession session;
         [SerializeField] private List<DifficultyProfile> difficulties = new List<DifficultyProfile>();
         [SerializeField] private List<GameModeRules> modes = new List<GameModeRules>();
         [SerializeField] private string gameSceneName = "Greybox";
 
-        private int difficultyIndex;
-        private int modeIndex;
-        private SaveData save;
-        private bool confirmNewGame;
-
-        private Button continueButton;
-        private Button newGameButton;
-        private Button difficultyButton;
-        private Button modeButton;
-        private OptionsPanel options;
-        private Text summary;
+        private readonly SaveData[] slots = new SaveData[SaveFile.SlotCount];
+        private Font font;
+        private RectTransform content;
+        private Text heading;
         private Text message;
+        private InputField nameField;
+        private OptionsPanel options;
+        private GameModeRules chosenMode;
+        private DifficultyProfile chosenDifficulty;
+        private string typedName = string.Empty;
+        private int confirmSlot = -1;
 
         private void Awake()
         {
@@ -41,21 +53,184 @@ namespace DeadAcres.UI
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             GameSettings.Apply();
-
-            difficultyIndex = Mathf.Max(0, session != null ? difficulties.IndexOf(session.Difficulty) : 0);
-            modeIndex = Mathf.Max(0, session != null ? modes.IndexOf(session.Mode) : 0);
-            SaveFile.TryRead(out save);
+            SaveFile.MigrateLegacy();
 
             Build();
-            Refresh();
+            ShowPage(Page.Root);
         }
 
         // En Start: el EventSystem se registra como actual en su OnEnable.
         private void Start() => UiModal.EnsureUiInput();
 
-        private void Continue()
+        // ---------- páginas
+
+        private void ShowPage(Page page)
         {
-            if (save == null || session == null)
+            // Lo que se estuviera escribiendo se conserva al cambiar de página.
+            if (nameField != null) typedName = nameField.text;
+            nameField = null;
+
+            for (int i = content.childCount - 1; i >= 0; i--)
+            {
+                GameObject child = content.GetChild(i).gameObject;
+                child.SetActive(false);
+                Destroy(child);
+            }
+
+            message.text = string.Empty;
+            switch (page)
+            {
+                case Page.Play: BuildPlayPage(); break;
+                case Page.Difficulty: BuildDifficultyPage(); break;
+                case Page.NewSlot: BuildSlotPage(false); break;
+                case Page.LoadSlot: BuildSlotPage(true); break;
+                default: BuildRootPage(); break;
+            }
+        }
+
+        private void BuildRootPage()
+        {
+            heading.text = string.Empty;
+            AddButton("Jugar", 0, () => ShowPage(Page.Play));
+            AddButton("Opciones", 1, () => options.Show());
+            AddButton("Salir", 2, Quit);
+        }
+
+        private void BuildPlayPage()
+        {
+            heading.text = "Jugar";
+            ReadSlots();
+
+            int row = 0;
+            foreach (GameModeRules mode in modes)
+            {
+                if (mode == null) continue;
+                GameModeRules picked = mode;
+                AddButton(mode.DisplayName, row++, () =>
+                {
+                    chosenMode = picked;
+                    ShowPage(Page.Difficulty);
+                });
+            }
+
+            Button load = AddButton("Cargar partida", row++, () => ShowPage(Page.LoadSlot));
+            load.interactable = System.Array.Exists(slots, slot => slot != null);
+            AddButton("Volver", row++, () => ShowPage(Page.Root));
+
+            var lines = new System.Text.StringBuilder();
+            foreach (GameModeRules mode in modes)
+            {
+                if (mode != null) lines.AppendLine($"{mode.DisplayName}: {DescribeMode(mode)}");
+            }
+
+            AddNote(lines.ToString(), row);
+        }
+
+        private void BuildDifficultyPage()
+        {
+            heading.text = chosenMode != null ? $"{chosenMode.DisplayName}  ·  Dificultad" : "Dificultad";
+
+            int row = 0;
+            foreach (DifficultyProfile difficulty in difficulties)
+            {
+                if (difficulty == null) continue;
+                DifficultyProfile picked = difficulty;
+                AddButton(difficulty.DisplayName, row++, () =>
+                {
+                    chosenDifficulty = picked;
+                    confirmSlot = -1;
+                    ShowPage(Page.NewSlot);
+                });
+            }
+
+            AddButton("Volver", row++, () => ShowPage(Page.Play));
+
+            var lines = new System.Text.StringBuilder();
+            foreach (DifficultyProfile difficulty in difficulties)
+            {
+                if (difficulty != null) lines.AppendLine($"{difficulty.DisplayName}: {difficulty.FlavorText}");
+            }
+
+            AddNote(lines.ToString(), row);
+        }
+
+        private void BuildSlotPage(bool loading)
+        {
+            ReadSlots();
+            int row = 0;
+
+            if (loading)
+            {
+                heading.text = "Cargar partida";
+            }
+            else
+            {
+                heading.text = "Elige dónde guardar";
+                nameField = AddNameField(row++);
+                nameField.text = typedName;
+            }
+
+            for (int i = 0; i < slots.Length; i++)
+            {
+                int slot = i;
+                string label = SaveSummary.Describe(slot, slots[slot]);
+                if (!loading && confirmSlot == slot)
+                {
+                    label = $"Ranura {slot + 1}: se sobrescribirá y se perderá esa partida. Pulsa otra vez";
+                }
+
+                Button button = AddButton(label, row++, () =>
+                {
+                    if (loading) LoadGame(slot);
+                    else PickSlotForNewGame(slot);
+                }, true);
+                if (loading) button.interactable = slots[slot] != null;
+            }
+
+            AddButton("Volver", row++, () =>
+            {
+                confirmSlot = -1;
+                ShowPage(loading ? Page.Play : Page.Difficulty);
+            });
+
+            if (!loading)
+            {
+                AddNote("La partida se guarda sola en su ranura cada amanecer.\nHay cinco ranuras en total, para todos los modos.", row);
+            }
+        }
+
+        // ---------- acciones
+
+        private void PickSlotForNewGame(int slot)
+        {
+            // Ranura ocupada: se avisa y hace falta un segundo clic sobre la misma.
+            if (slots[slot] != null && confirmSlot != slot)
+            {
+                confirmSlot = slot;
+                ShowPage(Page.NewSlot);
+                return;
+            }
+
+            if (session == null || !CanLoadGameScene())
+            {
+                return;
+            }
+
+            session.Select(chosenDifficulty != null ? chosenDifficulty : First(difficulties),
+                chosenMode != null ? chosenMode : First(modes));
+            session.SaveSlot = slot;
+            session.SaveName = SaveSummary.CleanName(nameField != null ? nameField.text : typedName, slot);
+            session.ContinueFromSave = false;
+
+            // La partida anterior de esa ranura se borra ya: la nueva guardará en su primer amanecer.
+            SaveFile.Delete(slot);
+            SceneManager.LoadScene(gameSceneName);
+        }
+
+        private void LoadGame(int slot)
+        {
+            SaveData save = slots[slot];
+            if (save == null || session == null || !CanLoadGameScene())
             {
                 return;
             }
@@ -63,47 +238,22 @@ namespace DeadAcres.UI
             // La partida sigue con la dificultad y el modo con los que se guardó.
             DifficultyProfile difficulty = difficulties.Find(d => d != null && d.DisplayName == save.difficulty);
             GameModeRules mode = modes.Find(m => m != null && m.DisplayName == save.mode);
-            session.Select(difficulty != null ? difficulty : Selected(difficulties, difficultyIndex),
-                mode != null ? mode : Selected(modes, modeIndex));
+            session.Select(difficulty != null ? difficulty : First(difficulties), mode != null ? mode : First(modes));
+            session.SaveSlot = slot;
+            session.SaveName = save.name;
             session.ContinueFromSave = true;
-            LoadGame();
-        }
-
-        private void NewGame()
-        {
-            if (session == null)
-            {
-                return;
-            }
-
-            // Empezar de cero borra la partida guardada: se pide un segundo clic.
-            if (save != null && !confirmNewGame)
-            {
-                confirmNewGame = true;
-                Refresh();
-                return;
-            }
-
-            session.Select(Selected(difficulties, difficultyIndex), Selected(modes, modeIndex));
-            session.ContinueFromSave = false;
-            if (!CanLoadGame())
-            {
-                return;
-            }
-
-            SaveFile.Delete();
             SceneManager.LoadScene(gameSceneName);
         }
 
-        private void LoadGame()
+        private void ReadSlots()
         {
-            if (CanLoadGame())
+            for (int i = 0; i < slots.Length; i++)
             {
-                SceneManager.LoadScene(gameSceneName);
+                SaveFile.TryRead(i, out slots[i]);
             }
         }
 
-        private bool CanLoadGame()
+        private bool CanLoadGameScene()
         {
             if (Application.CanStreamedLevelBeLoaded(gameSceneName))
             {
@@ -112,25 +262,6 @@ namespace DeadAcres.UI
 
             message.text = "Falta la escena de juego: vuelve a generar las escenas.";
             return false;
-        }
-
-        private void NextDifficulty()
-        {
-            if (difficulties.Count > 0) difficultyIndex = (difficultyIndex + 1) % difficulties.Count;
-            confirmNewGame = false;
-            Refresh();
-        }
-
-        private void OpenOptions()
-        {
-            if (options != null) options.Show();
-        }
-
-        private void NextMode()
-        {
-            if (modes.Count > 0) modeIndex = (modeIndex + 1) % modes.Count;
-            confirmNewGame = false;
-            Refresh();
         }
 
         private void Quit()
@@ -145,81 +276,106 @@ namespace DeadAcres.UI
             Application.Quit();
         }
 
-        private static T Selected<T>(List<T> list, int index) where T : class
+        private static string DescribeMode(GameModeRules mode)
         {
-            return list.Count > 0 ? list[Mathf.Clamp(index, 0, list.Count - 1)] : null;
+            if (mode.IsOneLife)
+            {
+                return $"{mode.NightsToWin} noches con 1 de vida, tú y la caravana. Si pierdes, la partida se borra.";
+            }
+
+            return mode.IsEndless ? "sin final: aguanta todas las noches que puedas." : $"sobrevive {mode.NightsToWin} noches.";
         }
 
-        private void Refresh()
-        {
-            continueButton.interactable = save != null;
-            MenuUi.SetLabel(continueButton, save != null
-                ? $"Continuar  ·  Día {save.dayNumber}  ({save.difficulty}, {save.mode})"
-                : "Continuar  (no hay partida guardada)");
+        private static T First<T>(List<T> list) where T : class => list.Count > 0 ? list[0] : null;
 
-            MenuUi.SetLabel(newGameButton, confirmNewGame
-                ? "Se borrará la partida guardada. Pulsa otra vez"
-                : "Nueva partida");
-
-            DifficultyProfile difficulty = Selected(difficulties, difficultyIndex);
-            GameModeRules mode = Selected(modes, modeIndex);
-            MenuUi.SetLabel(difficultyButton, $"Dificultad: {(difficulty != null ? difficulty.DisplayName : "-")}");
-            MenuUi.SetLabel(modeButton, $"Modo: {(mode != null ? mode.DisplayName : "-")}");
-
-            string modeLine = mode == null
-                ? string.Empty
-                : mode.IsEndless ? "Sin final: aguanta todas las noches que puedas." : $"Sobrevive {mode.NightsToWin} noches.";
-            summary.text = difficulty != null ? $"{difficulty.FlavorText}\n{modeLine}" : modeLine;
-        }
+        // ---------- montaje
 
         private void Build()
         {
-            Font font = MenuUi.LoadFont();
+            font = MenuUi.LoadFont();
             Canvas canvas = MenuUi.CreateCanvas("MainMenu", transform, 0);
 
-            Image background = UiFactory.CreateImage("Background", canvas.transform, new Color(0.06f, 0.09f, 0.07f, 1f), true);
-            UiFactory.Stretch(background.rectTransform);
-            Transform root = background.transform;
+            // Panel a la izquierda, de arriba abajo; el resto de la pantalla es la escena de fondo.
+            Image panel = UiFactory.CreateImage("Panel", canvas.transform, new Color(0.04f, 0.06f, 0.05f, 0.9f), true);
+            RectTransform panelRect = panel.rectTransform;
+            panelRect.anchorMin = new Vector2(0f, 0f);
+            panelRect.anchorMax = new Vector2(0f, 1f);
+            panelRect.pivot = new Vector2(0f, 0.5f);
+            panelRect.anchoredPosition = Vector2.zero;
+            panelRect.sizeDelta = new Vector2(PanelWidth, 0f);
+            Transform root = panel.transform;
 
-            Text title = UiFactory.CreateText("Title", root, font, 96, TextAnchor.MiddleCenter);
+            Text title = UiFactory.CreateText("Title", root, font, 84, TextAnchor.MiddleCenter);
             title.text = "DEAD ACRES";
             title.color = new Color(0.85f, 0.92f, 0.70f);
-            UiFactory.Place(title.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -110f), new Vector2(1200f, 120f));
+            UiFactory.Place(title.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -70f), new Vector2(PanelWidth, 100f));
 
-            Text subtitle = UiFactory.CreateText("Subtitle", root, font, 26, TextAnchor.MiddleCenter);
+            Text subtitle = UiFactory.CreateText("Subtitle", root, font, 24, TextAnchor.MiddleCenter);
             subtitle.text = "Granja de día. Zombis de noche.";
             subtitle.color = new Color(0.75f, 0.75f, 0.70f);
-            UiFactory.Place(subtitle.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -230f), new Vector2(1200f, 40f));
+            UiFactory.Place(subtitle.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -170f), new Vector2(PanelWidth, 36f));
 
-            const float top = -330f;
-            continueButton = MenuUi.AddButton(root, font, "Continuar", 0, top);
-            continueButton.onClick.AddListener(Continue);
-            newGameButton = MenuUi.AddButton(root, font, "Nueva partida", 1, top);
-            newGameButton.onClick.AddListener(NewGame);
-            difficultyButton = MenuUi.AddButton(root, font, "Dificultad", 2, top);
-            difficultyButton.onClick.AddListener(NextDifficulty);
-            modeButton = MenuUi.AddButton(root, font, "Modo", 3, top);
-            modeButton.onClick.AddListener(NextMode);
-            MenuUi.AddButton(root, font, "Opciones", 4, top).onClick.AddListener(OpenOptions);
-            MenuUi.AddButton(root, font, "Salir", 5, top).onClick.AddListener(Quit);
+            heading = UiFactory.CreateText("Heading", root, font, 30, TextAnchor.MiddleCenter);
+            heading.color = new Color(1f, 0.86f, 0.35f);
+            UiFactory.Place(heading.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -236f), new Vector2(PanelWidth, 40f));
 
-            // Las etiquetas largas (continuar, confirmar) necesitan más ancho que el resto.
-            foreach (Button wide in new[] { continueButton, newGameButton })
-            {
-                var rect = wide.GetComponent<RectTransform>();
-                rect.sizeDelta = new Vector2(760f, rect.sizeDelta.y);
-            }
-
-            summary = UiFactory.CreateText("Summary", root, font, 22, TextAnchor.UpperCenter);
-            summary.color = new Color(0.85f, 0.85f, 0.80f);
-            UiFactory.Place(summary.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter,
-                new Vector2(0f, top - 6 * (MenuUi.ButtonHeight + MenuUi.ButtonSpacing) - 10f), new Vector2(1200f, 70f));
+            content = UiFactory.CreateRect("Content", root);
+            UiFactory.Place(content, UiFactory.TopCenter, UiFactory.TopCenter, new Vector2(0f, -300f), new Vector2(PanelWidth, 700f));
 
             message = UiFactory.CreateText("Message", root, font, 20, TextAnchor.MiddleCenter);
             message.color = new Color(1f, 0.6f, 0.45f);
-            UiFactory.Place(message.rectTransform, UiFactory.BottomCenter, UiFactory.BottomCenter, new Vector2(0f, 40f), new Vector2(1200f, 30f));
+            UiFactory.Place(message.rectTransform, UiFactory.BottomCenter, UiFactory.BottomCenter, new Vector2(0f, 30f), new Vector2(PanelWidth - 40f, 30f));
 
             options = OptionsPanel.Create(canvas.transform, font);
+        }
+
+        private Button AddButton(string label, int row, UnityEngine.Events.UnityAction onClick, bool wide = false)
+        {
+            Button button = MenuUi.AddButton(content, font, label, row, 0f);
+            if (wide)
+            {
+                var rect = button.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(WideButton, rect.sizeDelta.y);
+                var text = button.GetComponentInChildren<Text>();
+                if (text != null) text.fontSize = 18;
+            }
+
+            button.onClick.AddListener(onClick);
+            return button;
+        }
+
+        private void AddNote(string text, int row)
+        {
+            Text note = UiFactory.CreateText("Note", content, font, 19, TextAnchor.UpperCenter);
+            note.text = text;
+            note.color = new Color(0.82f, 0.82f, 0.78f);
+            note.horizontalOverflow = HorizontalWrapMode.Wrap;
+            UiFactory.Place(note.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter,
+                new Vector2(0f, -row * (MenuUi.ButtonHeight + MenuUi.ButtonSpacing) - 12f), new Vector2(WideButton, 220f));
+        }
+
+        private InputField AddNameField(int row)
+        {
+            Image background = UiFactory.CreateImage("NameField", content, new Color(1f, 1f, 1f, 0.14f), true);
+            UiFactory.Place(background.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter,
+                new Vector2(0f, -row * (MenuUi.ButtonHeight + MenuUi.ButtonSpacing)), new Vector2(WideButton, MenuUi.ButtonHeight));
+
+            Text text = UiFactory.CreateText("Text", background.transform, font, 22, TextAnchor.MiddleLeft, false);
+            text.supportRichText = false;
+            UiFactory.Stretch(text.rectTransform, 12f);
+
+            Text placeholder = UiFactory.CreateText("Placeholder", background.transform, font, 22, TextAnchor.MiddleLeft, false);
+            placeholder.text = "Nombre de la partida (opcional)";
+            placeholder.color = new Color(1f, 1f, 1f, 0.45f);
+            UiFactory.Stretch(placeholder.rectTransform, 12f);
+
+            var field = background.gameObject.AddComponent<InputField>();
+            field.targetGraphic = background;
+            field.textComponent = text;
+            field.placeholder = placeholder;
+            field.characterLimit = SaveSummary.MaxNameLength;
+            field.lineType = InputField.LineType.SingleLine;
+            return field;
         }
 
         internal void Configure(GameSession gameSession, List<DifficultyProfile> difficultyProfiles,

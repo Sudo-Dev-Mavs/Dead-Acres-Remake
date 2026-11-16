@@ -35,9 +35,11 @@ En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
 
 Opciones (en el menú principal y en la pausa): volumen general, de efectos y de música; sensibilidad del ratón y del mando; invertir el eje vertical; campo de visión; pantalla completa, resolución, sincronía vertical y límite de FPS; y la pestaña de controles. Se guardan en las preferencias del jugador, no en la partida.
 
-Menú principal: continuar la partida guardada o empezar una nueva eligiendo dificultad (Fácil, Media, Difícil, Infierno) y modo (Campaña o Endless). Empezar una nueva borra la guardada.
+Menú principal: el panel va a la izquierda y detrás se ve una partida de demostración (caravana, muros, torretas, huerto y zombis que llegan y caen). Tiene tres botones: **Jugar**, **Opciones** y **Salir**. Jugar va por páginas, todas con "Volver": modo (Campaña, Endless, One Life o Cargar partida) → dificultad (Fácil, Media, Difícil, Infierno) → ranura de guardado.
 
-Guardado: la partida se guarda sola cada amanecer a partir del segundo día (día, oro, inventario, parcelas y cultivos, todo lo colocado, animales, vida, autos ya registrados). "Continuar" retoma desde ese amanecer; lo hecho después se pierde. El archivo es `savegame.json` en `Application.persistentDataPath`. No se guardan el estado de las puertas ni el producto a medias de los animales.
+Modos: en **Campaña** se gana al superar la quinta noche; **Endless** no tiene final; **One Life** es una campaña en la que el jugador y la caravana tienen 1 de vida (cualquier golpe acaba la partida) y perder borra la partida guardada.
+
+Guardado: hay **5 ranuras en total**, para todos los modos. Al empezar una partida eliges la ranura y, si quieres, le pones nombre; si la ranura ya tenía una partida, el menú avisa de que se sobrescribirá y pide un segundo clic. La partida se guarda sola en su ranura cada amanecer a partir del segundo día (día, oro, inventario, parcelas y cultivos, todo lo colocado, animales, vida, autos ya registrados). "Cargar partida" retoma desde ese amanecer; lo hecho después se pierde. Los archivos son `save_slot_1.json` a `save_slot_5.json` en `Application.persistentDataPath`. No se guardan el estado de las puertas ni el producto a medias de los animales. Si se da Play directamente en la escena de juego (sin pasar por el menú) no hay ranura y no se guarda.
 
 Pausa (Esc o P): detiene el juego entero y permite volver al menú principal.
 
@@ -53,7 +55,7 @@ El día dura 2 minutos. La noche dura como mucho 5: el reloj nunca se detiene a 
 
 La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) suelta zombis fuertes desde la segunda noche: uno más cada noche. Aguantan cuatro veces más que uno normal, pegan más y son más lentos.
 
-Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y tres cosas al azar (semillas, cinta, antorchas, muros, alguna luz). Con suerte sale un arma, como mucho una por auto y nunca por encima de rareza Raro.
+Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y tres cosas al azar (semillas, cinta, antorchas, muros, alguna luz). En toda la partida sale como mucho un arma entre los cinco autos, nunca por encima de rareza Raro, y no está asegurada: solo un auto elegido al azar puede tenerla, y le sale más o menos la mitad de las veces.
 
 Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando). El HUD muestra las balas junto al nombre del arma.
 
@@ -91,11 +93,12 @@ Assets/_Project/
     Items            ItemDefinition, ItemRarity, ItemStack, Inventory (puro: hotbar 9 + mochila), ItemCatalog (búsqueda por Id)
     Audio            AudioLibrary (clips por función), GameAudio (escucha eventos), WorldSound (3D), VolumeSteps (puro)
     Settings         GameSettings (preferencias), GameInput (acciones y teclas), StepCycle (puro)
-    Saving           SaveData (datos planos), SaveMapper (puro), SaveFile (JSON en disco), SaveGameController
+    Saving           SaveData (datos planos), SaveMapper + SaveSummary (puros), SaveFile (5 ranuras en JSON),
+                     SaveGameController
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
     Animals          ProductionTimer (puro) + Animal
-    Loot             LootTable (tirada con semilla), LootContainer (autos abandonados)
+    Loot             LootTable (tirada con semilla), LootContainer (autos abandonados), LootDirector (cupo de armas)
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
     Economy          Wallet + ShopCommands + ShopStock (puros), ShopCatalog, Shopkeeper (Jack)
@@ -104,7 +107,8 @@ Assets/_Project/
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
                      PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo, cinta y comer)
     UI               HudView, ShopView, InventoryView, UiModal, UiFactory, ListPaging (puro),
-                     MainMenuView, PauseMenuView, OptionsPanel, MenuUi
+                     MainMenuView, MenuDemoDirector + MenuCameraOrbit (fondo del menú), PauseMenuView,
+                     OptionsPanel, MenuUi
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
   Audio/             .wav provisionales

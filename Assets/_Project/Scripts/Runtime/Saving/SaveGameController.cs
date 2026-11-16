@@ -7,6 +7,7 @@ using DeadAcres.DayNight;
 using DeadAcres.Farming;
 using DeadAcres.Items;
 using DeadAcres.Loot;
+using DeadAcres.Match;
 using DeadAcres.Player;
 using UnityEngine;
 
@@ -31,6 +32,9 @@ namespace DeadAcres.Saving
         [SerializeField] private Health playerHealth;
         [SerializeField] private Health rvHealth;
 
+        [Tooltip("Para borrar la partida al perder en el modo de una vida.")]
+        [SerializeField] private MatchDirector match;
+
         private SaveData pendingLoad;
 
         /// <summary>Se acaba de guardar la partida (al amanecer de este día).</summary>
@@ -45,7 +49,7 @@ namespace DeadAcres.Saving
             }
 
             session.ContinueFromSave = false;
-            if (SaveFile.TryRead(out pendingLoad) && dayNight != null)
+            if (SaveFile.TryRead(session.SaveSlot, out pendingLoad) && dayNight != null)
             {
                 dayNight.SetStartDay(pendingLoad.dayNumber);
             }
@@ -54,11 +58,23 @@ namespace DeadAcres.Saving
         private void OnEnable()
         {
             if (phaseChanged != null) phaseChanged.Subscribe(OnPhaseChanged);
+            if (match != null) match.Ended += OnMatchEnded;
         }
 
         private void OnDisable()
         {
             if (phaseChanged != null) phaseChanged.Unsubscribe(OnPhaseChanged);
+            if (match != null) match.Ended -= OnMatchEnded;
+        }
+
+        // Una vida: perder borra la partida guardada. No hay vuelta atrás.
+        private void OnMatchEnded(MatchState state)
+        {
+            if (state.Outcome == MatchOutcome.Defeat && session != null && session.Mode != null
+                && session.Mode.IsOneLife)
+            {
+                SaveFile.Delete(session.SaveSlot);
+            }
         }
 
         // En Start y con orden tardío: el HUD y las vistas ya escuchan, así que se enteran de lo
@@ -84,7 +100,13 @@ namespace DeadAcres.Saving
                 return;
             }
 
-            if (SaveFile.Write(Capture(change.DayNumber)))
+            // Sin ranura (Play directo en la escena de juego) no se guarda.
+            if (session == null || !SaveFile.IsValidSlot(session.SaveSlot))
+            {
+                return;
+            }
+
+            if (SaveFile.Write(session.SaveSlot, Capture(change.DayNumber)))
             {
                 Saved?.Invoke(change.DayNumber);
                 if (playerInventory != null) playerInventory.Notify("Partida guardada");
@@ -94,8 +116,12 @@ namespace DeadAcres.Saving
         private SaveData Capture(int dayNumber)
         {
             var data = new SaveData { dayNumber = dayNumber };
+            LootDirector loot = FindAnyObjectByType<LootDirector>();
+            if (loot != null) data.lootSeed = loot.Seed;
+
             if (session != null)
             {
+                data.name = SaveSummary.CleanName(session.SaveName, session.SaveSlot);
                 data.difficulty = session.Difficulty != null ? session.Difficulty.DisplayName : string.Empty;
                 data.mode = session.Mode != null ? session.Mode.DisplayName : string.Empty;
             }
@@ -164,6 +190,10 @@ namespace DeadAcres.Saving
             if (playerHealth != null && data.playerHealth > 0f) playerHealth.Restore(data.playerHealth);
             if (rvHealth != null && data.rvHealth > 0f) rvHealth.Restore(data.rvHealth);
 
+            // El mismo auto afortunado que antes de guardar (0: partida de antes de que existiera).
+            LootDirector loot = FindAnyObjectByType<LootDirector>();
+            if (loot != null && data.lootSeed != 0) loot.ApplySeed(data.lootSeed);
+
             var emptied = new HashSet<string>(data.emptiedContainers);
             foreach (LootContainer container in FindObjectsByType<LootContainer>(FindObjectsSortMode.None))
             {
@@ -228,8 +258,9 @@ namespace DeadAcres.Saving
 
         internal void Configure(GameSession gameSession, DayNightCycle cycle, PhaseEventChannel phaseChannel,
             ItemCatalog itemCatalog, CropCatalog cropCatalog, FarmWorld farmWorld, FarmArea farmArea,
-            PlayerInventory inventory, PlayerWallet wallet, Health player, Health rv)
+            PlayerInventory inventory, PlayerWallet wallet, Health player, Health rv, MatchDirector matchDirector = null)
         {
+            match = matchDirector;
             session = gameSession;
             dayNight = cycle;
             phaseChanged = phaseChannel;

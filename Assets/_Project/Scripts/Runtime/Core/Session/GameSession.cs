@@ -27,6 +27,15 @@ namespace DeadAcres.Core.Session
         /// </summary>
         public bool ContinueFromSave { get; set; }
 
+        /// <summary>
+        /// Ranura (0 a 4) en la que guarda esta partida. -1: sin ranura (al dar Play directamente
+        /// en la escena de juego), y entonces no se guarda.
+        /// </summary>
+        public int SaveSlot { get; set; } = -1;
+
+        /// <summary>Nombre que el jugador le puso a la partida.</summary>
+        public string SaveName { get; set; }
+
         public void Select(DifficultyProfile selectedDifficulty, GameModeRules selectedMode)
         {
             // La elección vive solo en memoria: en el juego compilado no debe descargarse este

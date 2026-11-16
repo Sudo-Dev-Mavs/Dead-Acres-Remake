@@ -47,6 +47,18 @@ namespace DeadAcres.Match
             }
         }
 
+        // En Start: cada Health ya fijó su vida normal en su Awake.
+        private void Start()
+        {
+            if (session == null || session.Mode == null || !session.Mode.IsOneLife)
+            {
+                return;
+            }
+
+            if (playerHealth != null) playerHealth.OverrideMaxHealth(1f);
+            if (rvHealth != null) rvHealth.OverrideMaxHealth(1f);
+        }
+
         private void OnEnable()
         {
             if (nightCompleted != null) nightCompleted.Subscribe(OnNightCompleted);

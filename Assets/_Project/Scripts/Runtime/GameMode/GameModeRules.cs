@@ -26,6 +26,9 @@ namespace DeadAcres.GameMode
         [Tooltip("Noches a sobrevivir para ganar. 0 = Endless.")]
         [SerializeField, Min(0)] private int nightsToWin = 5;
 
+        [Tooltip("Modo de una vida: jugador y caravana con 1 de vida.")]
+        [SerializeField] private bool oneLife;
+
         [Header("Solo Endless")]
         [Tooltip("Crecimiento compuesto del número de enemigos por noche (0,12 = +12 %).")]
         [SerializeField, Min(0f)] private float enemyCountGrowthPerNight = 0.12f;
@@ -36,11 +39,16 @@ namespace DeadAcres.GameMode
         public string DisplayName => displayName;
         public int NightsToWin => nightsToWin;
         public bool IsEndless => nightsToWin <= 0;
+
+        /// <summary>Una vida: el jugador y la caravana caen de un golpe y morir borra la partida guardada.</summary>
+        public bool IsOneLife => oneLife;
         public float EnemyCountGrowthPerNight => enemyCountGrowthPerNight;
         public float EnemyHealthGrowthPerNight => enemyHealthGrowthPerNight;
 
         public int GetLimit(PlaceableCategory category) =>
             category == PlaceableCategory.Plant ? plantLimit : objectLimit;
+
+        internal void ConfigureOneLife(bool enabled) => oneLife = enabled;
 
         internal void Configure(string name, int plants, int objects, int nights,
             float countGrowth = 0.12f, float healthGrowth = 0.05f)
