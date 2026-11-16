@@ -130,6 +130,9 @@ namespace DeadAcres.Building
             return Occupy(new RectInt(xMin, zMin, xMax - xMin, zMax - zMin));
         }
 
+        /// <summary>Celdas que ocupa un ocupante (para guardar la partida).</summary>
+        public bool TryGetFootprint(int occupantId, out RectInt rect) => footprints.TryGetValue(occupantId, out rect);
+
         public bool Release(int occupantId)
         {
             if (!footprints.TryGetValue(occupantId, out RectInt rect)) return false;

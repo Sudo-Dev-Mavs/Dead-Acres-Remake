@@ -28,8 +28,11 @@ namespace DeadAcres.UI
             FirstPersonController.SetCursorLocked(true);
         }
 
-        // Sin acciones asignadas, el módulo de UI del Input System no recibe clics.
-        private static void EnsureUiInput()
+        /// <summary>
+        /// Sin acciones asignadas, el módulo de UI del Input System no recibe clics. Lo llaman
+        /// las ventanas al abrirse y el menú principal al arrancar.
+        /// </summary>
+        public static void EnsureUiInput()
         {
             EventSystem eventSystem = EventSystem.current;
             if (eventSystem == null)

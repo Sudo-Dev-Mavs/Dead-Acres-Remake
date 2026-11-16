@@ -21,8 +21,18 @@ namespace DeadAcres.Core.Session
         public DifficultyProfile Difficulty => difficulty ? difficulty : defaultDifficulty;
         public GameModeRules Mode => mode ? mode : defaultMode;
 
+        /// <summary>
+        /// El menú lo pone a true al elegir "Continuar": la escena de juego carga la partida
+        /// guardada al arrancar y lo vuelve a apagar.
+        /// </summary>
+        public bool ContinueFromSave { get; set; }
+
         public void Select(DifficultyProfile selectedDifficulty, GameModeRules selectedMode)
         {
+            // La elección vive solo en memoria: en el juego compilado no debe descargarse este
+            // asset al cambiar de escena.
+            if (!Application.isEditor) hideFlags |= HideFlags.DontUnloadUnusedAsset;
+
             difficulty = selectedDifficulty;
             mode = selectedMode;
         }

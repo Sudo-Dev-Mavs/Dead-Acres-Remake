@@ -183,6 +183,80 @@ namespace DeadAcres.Farming
             return FarmActionResult.Ok;
         }
 
+        /// <summary>Estado completo de una parcela, para guardar la partida.</summary>
+        public readonly struct PlotSnapshot
+        {
+            public readonly Vector2Int Cell;
+            public readonly CropDefinition Crop;
+            public readonly float Elapsed;
+            public readonly bool Regrowing;
+            public readonly bool Ripe;
+
+            public PlotSnapshot(Vector2Int cell, CropDefinition crop, float elapsed, bool regrowing, bool ripe)
+            {
+                Cell = cell;
+                Crop = crop;
+                Elapsed = elapsed;
+                Regrowing = regrowing;
+                Ripe = ripe;
+            }
+        }
+
+        public void CapturePlots(List<PlotSnapshot> results)
+        {
+            foreach (KeyValuePair<Vector2Int, Plot> pair in plots)
+            {
+                Plot plot = pair.Value;
+                results.Add(new PlotSnapshot(plot.Cell, plot.Crop, plot.Elapsed, plot.Regrowing,
+                    plot.Stage == PlotStage.Ripe));
+            }
+        }
+
+        /// <summary>
+        /// Al cargar una partida: deja la parcela arada y, si llevaba planta, la planta en el
+        /// punto de crecimiento en el que estaba. Pasa por las mismas reglas que arar y plantar.
+        /// </summary>
+        /// <returns>False si la celda ya no admite la parcela o la planta.</returns>
+        public bool RestorePlot(PlotSnapshot snapshot)
+        {
+            FarmActionResult tilled = Till(snapshot.Cell);
+            if (tilled != FarmActionResult.Ok && tilled != FarmActionResult.AlreadyTilled)
+            {
+                return false;
+            }
+
+            if (snapshot.Crop == null)
+            {
+                return true;
+            }
+
+            if (Plant(snapshot.Cell, snapshot.Crop) != FarmActionResult.Ok)
+            {
+                return false;
+            }
+
+            Plot plot = plots[snapshot.Cell];
+            plot.Regrowing = snapshot.Regrowing && snapshot.Crop.Regrows;
+            plot.Duration = plot.Regrowing ? snapshot.Crop.RegrowSeconds : snapshot.Crop.GrowSeconds;
+
+            if (snapshot.Ripe)
+            {
+                plot.Elapsed = plot.Duration;
+                plot.Stage = PlotStage.Ripe;
+                plot.Step = GrowthSteps - 1;
+                growing.Remove(plot);
+            }
+            else
+            {
+                // Un pelo por debajo del final: madura en el siguiente Tick, no aquí.
+                plot.Elapsed = Mathf.Clamp(snapshot.Elapsed, 0f, Mathf.Max(0f, plot.Duration - 0.01f));
+                plot.Step = ComputeStep(plot);
+            }
+
+            PlotChanged?.Invoke(snapshot.Cell);
+            return true;
+        }
+
         /// <summary>Arranca la planta (martillo, zombis...). La parcela vuelve a tierra arada.</summary>
         /// <returns>False si no había planta.</returns>
         public bool ClearCrop(Vector2Int cell)

@@ -39,6 +39,9 @@ namespace DeadAcres.EditorTools
             public WaveConfig Waves;
             public ZombieBrain ZombiePrefab;
             public ZombieBrain StrongZombiePrefab;
+            public ItemCatalog Items;
+            public List<DifficultyProfile> Difficulties;
+            public List<GameModeRules> Modes;
             public LootTable CarLoot;
             public LootTable SpecialCarLoot;
             public ItemDefinition SheepItem;
@@ -67,15 +70,22 @@ namespace DeadAcres.EditorTools
             EditorPaths.EnsureFolder($"{Root}/Loot");
 
             var data = new GeneratedData();
+            createdItems.Clear();
 
             data.DayNight = EditorPaths.LoadOrCreate<DayNightConfig>($"{Root}/DayNightConfig.asset");
             data.DayNight.Configure(dawn: 15f, firstDay: 360f, day: 240f, dusk: 30f, minNight: 120f, maxNight: 300f);
             EditorUtility.SetDirty(data.DayNight);
 
-            CreateDifficulty("Easy", "Para aprender el juego. Los zombis caen antes.", 0.7f, 0.75f);
-            DifficultyProfile medium = CreateDifficulty("Medium", "La experiencia base.", 1f, 1f);
-            CreateDifficulty("Hard", "Los zombis aguantan más y pegan más fuerte.", 1.5f, 1.2f);
-            CreateDifficulty("Hell", "Solo para veteranos de la granja.", 2.2f, 1.6f);
+            // El primer nombre es el del asset (no cambia); el segundo, el que ve el jugador y el
+            // que se escribe en la partida guardada.
+            DifficultyProfile medium = CreateDifficulty("Medium", "Media", "La experiencia base.", 1f, 1f);
+            data.Difficulties = new List<DifficultyProfile>
+            {
+                CreateDifficulty("Easy", "Fácil", "Para aprender el juego. Los zombis caen antes.", 0.7f, 0.75f),
+                medium,
+                CreateDifficulty("Hard", "Difícil", "Los zombis aguantan más y pegan más fuerte.", 1.5f, 1.2f),
+                CreateDifficulty("Hell", "Infierno", "Solo para veteranos de la granja.", 2.2f, 1.6f),
+            };
 
             var campaign = EditorPaths.LoadOrCreate<GameModeRules>($"{Root}/GameModes/GameMode_Campaign.asset");
             campaign.Configure("Campaña", plants: 100, objects: 100, nights: 5);
@@ -84,6 +94,8 @@ namespace DeadAcres.EditorTools
             var endless = EditorPaths.LoadOrCreate<GameModeRules>($"{Root}/GameModes/GameMode_Endless.asset");
             endless.Configure("Endless", plants: 500, objects: 500, nights: 0);
             EditorUtility.SetDirty(endless);
+
+            data.Modes = new List<GameModeRules> { campaign, endless };
 
             data.Session = EditorPaths.LoadOrCreate<GameSession>($"{Root}/GameSession.asset");
             data.Session.ConfigureDefaults(medium, campaign);
@@ -117,6 +129,11 @@ namespace DeadAcres.EditorTools
                 new Color(0.45f, 0.25f, 0.50f), speed: 1.6f, damage: 20f, attackInterval: 1.2f);
 
             GenerateItemsAndCrops(data);
+
+            // Todos los ítems, para encontrarlos por Id al cargar una partida.
+            data.Items = EditorPaths.LoadOrCreate<ItemCatalog>($"{Root}/ItemCatalog.asset");
+            data.Items.Configure(createdItems);
+            EditorUtility.SetDirty(data.Items);
 
             AssetDatabase.SaveAssets();
             return data;
@@ -312,6 +329,8 @@ namespace DeadAcres.EditorTools
             return crop;
         }
 
+        private static readonly List<ItemDefinition> createdItems = new List<ItemDefinition>();
+
         private static ItemDefinition CreateItem(string id, string name, ItemKind kind, int maxStack,
             Color color, ToolKind tool = ToolKind.None, GameObject placedPrefab = null, Vector2Int footprint = default)
         {
@@ -319,6 +338,7 @@ namespace DeadAcres.EditorTools
             item.Configure(name, kind, maxStack, footprint);
             item.ConfigureExtras(id, color, tool, placedPrefab);
             EditorUtility.SetDirty(item);
+            createdItems.Add(item);
             return item;
         }
 
@@ -584,10 +604,11 @@ namespace DeadAcres.EditorTools
             return prefab.GetComponent<ZombieBrain>();
         }
 
-        private static DifficultyProfile CreateDifficulty(string name, string flavor, float health, float damage)
+        private static DifficultyProfile CreateDifficulty(string assetName, string displayName, string flavor,
+            float health, float damage)
         {
-            var profile = EditorPaths.LoadOrCreate<DifficultyProfile>($"{Root}/Difficulty/Difficulty_{name}.asset");
-            profile.Configure(name, flavor, health, damage);
+            var profile = EditorPaths.LoadOrCreate<DifficultyProfile>($"{Root}/Difficulty/Difficulty_{assetName}.asset");
+            profile.Configure(displayName, flavor, health, damage);
             EditorUtility.SetDirty(profile);
             return profile;
         }

@@ -158,6 +158,35 @@ namespace DeadAcres.Items
         }
 
         /// <summary>Arrastrar en la UI: intercambia ranuras, o junta pilas del mismo ítem.</summary>
+        /// <summary>Al cargar una partida: vacía todas las ranuras.</summary>
+        public void Clear()
+        {
+            for (int i = 0; i < slots.Length; i++)
+            {
+                if (!slots[i].IsEmpty)
+                {
+                    slots[i] = ItemStack.Empty;
+                    SlotChanged?.Invoke(i);
+                }
+            }
+        }
+
+        /// <summary>Al cargar una partida: pone una ranura tal cual estaba (como mucho una pila).</summary>
+        /// <returns>False si la ranura no existe.</returns>
+        public bool SetSlot(int index, ItemDefinition item, int count)
+        {
+            if (index < 0 || index >= slots.Length)
+            {
+                return false;
+            }
+
+            slots[index] = item != null && count > 0
+                ? new ItemStack(item, Math.Min(count, Math.Max(1, item.MaxStack)))
+                : ItemStack.Empty;
+            SlotChanged?.Invoke(index);
+            return true;
+        }
+
         public void Move(int from, int to)
         {
             if (from == to || from < 0 || to < 0 || from >= slots.Length || to >= slots.Length || slots[from].IsEmpty)

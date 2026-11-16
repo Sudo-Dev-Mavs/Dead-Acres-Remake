@@ -1,5 +1,6 @@
 using DeadAcres.Core.Session;
 using DeadAcres.GameMode;
+using DeadAcres.Items;
 using UnityEngine;
 
 namespace DeadAcres.Building
@@ -28,6 +29,40 @@ namespace DeadAcres.Building
             Grid = new PlacementGrid(width, depth, transform.position, cellSize);
             Limiter = new PlacementLimiter(session.Mode);
             Power = new PowerMap();
+        }
+
+        /// <summary>
+        /// Coloca un objeto en la rejilla: respeta el límite del modo y la ocupación. Lo usan el
+        /// jugador al construir y la carga de partida.
+        /// </summary>
+        /// <returns>El objeto colocado, o null si no cabe o se alcanzó el límite.</returns>
+        public GameObject TryPlace(ItemDefinition item, RectInt rect, Quaternion rotation)
+        {
+            if (item == null || !item.IsPlaceable || item.PlacedPrefab == null)
+            {
+                return null;
+            }
+
+            if (!Limiter.TryRegister(item.PlaceableCategory))
+            {
+                return null;
+            }
+
+            int occupantId = Grid.Occupy(rect);
+            if (occupantId == PlacementGrid.NoOccupant)
+            {
+                Limiter.Unregister(item.PlaceableCategory);
+                return null;
+            }
+
+            GameObject placed = Instantiate(item.PlacedPrefab, Grid.RectCenterToWorld(rect), rotation);
+            if (!placed.TryGetComponent(out PlacedObject marker))
+            {
+                marker = placed.AddComponent<PlacedObject>();
+            }
+
+            marker.Bind(this, occupantId, item.PlaceableCategory, item);
+            return placed;
         }
 
         internal void Configure(GameSession newSession, int newWidth, int newDepth, float newCellSize)

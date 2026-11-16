@@ -92,6 +92,18 @@ namespace DeadAcres.Combat
             HealthChanged?.Invoke(currentHealth, maxHealth);
         }
 
+        /// <summary>Al cargar una partida: deja la vida en este valor (entre 1 y el máximo).</summary>
+        public void Restore(float current)
+        {
+            if (IsDead)
+            {
+                return;
+            }
+
+            currentHealth = Mathf.Clamp(current, 1f, maxHealth);
+            HealthChanged?.Invoke(currentHealth, maxHealth);
+        }
+
         internal void Configure(Faction newFaction, float newBaseMaxHealth, GameSession newSession)
         {
             faction = newFaction;
