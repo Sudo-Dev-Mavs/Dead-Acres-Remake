@@ -1,3 +1,4 @@
+using DeadAcres.Settings;
 using UnityEngine;
 
 namespace DeadAcres.Player
@@ -67,6 +68,27 @@ namespace DeadAcres.Player
         }
 
         /// <summary>Al abrir tienda o inventario: libera el ratón y deja de girar la cámara.</summary>
+        private const float StepLength = 2.2f;
+        private float stepDistance;
+        private Camera viewCamera;
+
+        /// <summary>El jugador dio un paso (para el sonido).</summary>
+        public event System.Action Stepped;
+
+        private void Start()
+        {
+            viewCamera = cameraPivot != null ? cameraPivot.GetComponentInChildren<Camera>() : null;
+            ApplySettings();
+            GameSettings.Changed += ApplySettings;
+        }
+
+        private void OnDestroy() => GameSettings.Changed -= ApplySettings;
+
+        private void ApplySettings()
+        {
+            if (viewCamera != null) viewCamera.fieldOfView = GameSettings.FieldOfView;
+        }
+
         public static void SetCursorLocked(bool locked)
         {
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
@@ -80,8 +102,9 @@ namespace DeadAcres.Player
                 return;
             }
 
-            Vector2 delta = input.LookMouseDelta * mouseSensitivity + input.LookStick * (stickDegreesPerSecond * dt);
-            float ySign = invertY ? 1f : -1f;
+            Vector2 delta = input.LookMouseDelta * (mouseSensitivity * GameSettings.MouseSensitivity)
+                            + input.LookStick * (stickDegreesPerSecond * GameSettings.StickSensitivity * dt);
+            float ySign = invertY || GameSettings.InvertY ? 1f : -1f;
 
             pitch = Mathf.Clamp(pitch + delta.y * ySign, -maxPitch, maxPitch);
             cameraPivot.localRotation = Quaternion.Euler(pitch, 0f, 0f);
@@ -109,6 +132,17 @@ namespace DeadAcres.Player
             verticalVelocity += gravity * dt;
 
             controller.Move((horizontal + Vector3.up * verticalVelocity) * dt);
+
+            // Un paso cada cierta distancia andada con los pies en el suelo.
+            if (controller.isGrounded)
+            {
+                stepDistance += new Vector2(horizontal.x, horizontal.z).magnitude * dt;
+                if (stepDistance >= StepLength)
+                {
+                    stepDistance = 0f;
+                    Stepped?.Invoke();
+                }
+            }
         }
 
         private void OnJumpPressed() => jumpRequested = true;

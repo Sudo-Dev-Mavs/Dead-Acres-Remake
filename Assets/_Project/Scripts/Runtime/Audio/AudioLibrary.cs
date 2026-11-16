@@ -15,6 +15,10 @@ namespace DeadAcres.Audio
         [SerializeField] private AudioClip zombieDeath;
         [SerializeField] private AudioClip hurt;
         [SerializeField] private AudioClip rvHit;
+        [SerializeField] private AudioClip reload;
+        [SerializeField] private AudioClip turretShot;
+        [SerializeField] private AudioClip explosion;
+        [SerializeField] private AudioClip step;
 
         [Header("Granja y construcción")]
         [SerializeField] private AudioClip till;
@@ -38,6 +42,10 @@ namespace DeadAcres.Audio
         public AudioClip ZombieDeath => zombieDeath;
         public AudioClip Hurt => hurt;
         public AudioClip RvHit => rvHit;
+        public AudioClip Reload => reload;
+        public AudioClip TurretShot => turretShot;
+        public AudioClip Explosion => explosion;
+        public AudioClip Step => step;
         public AudioClip Till => till;
         public AudioClip Plant => plant;
         public AudioClip Harvest => harvest;
@@ -58,6 +66,10 @@ namespace DeadAcres.Audio
             zombieDeath = load("zombie_death");
             hurt = load("hurt");
             rvHit = load("rv_hit");
+            reload = load("reload");
+            turretShot = load("turret_shot");
+            explosion = load("explosion");
+            step = load("step");
             till = load("till");
             plant = load("plant");
             harvest = load("harvest");

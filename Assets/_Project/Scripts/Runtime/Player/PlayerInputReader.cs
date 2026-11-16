@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using DeadAcres.Settings;
 using UnityEngine.InputSystem;
 
 namespace DeadAcres.Player
@@ -60,41 +61,48 @@ namespace DeadAcres.Player
 
         private void Awake()
         {
-            Actions = new InputActionMap("Player");
+            // Las acciones y sus teclas por defecto viven en GameInput: el menú de opciones usa
+            // las mismas para enseñarlas y cambiarlas.
+            Actions = GameInput.Create();
+            GameInput.LoadOverrides(Actions);
 
-            move = Actions.AddAction("Move", InputActionType.Value);
-            move.AddCompositeBinding("2DVector")
-                .With("Up", "<Keyboard>/w")
-                .With("Down", "<Keyboard>/s")
-                .With("Left", "<Keyboard>/a")
-                .With("Right", "<Keyboard>/d");
-            move.AddBinding("<Gamepad>/leftStick");
+            move = Actions.FindAction("Move");
+            lookMouse = Actions.FindAction("LookMouse");
+            lookStick = Actions.FindAction("LookStick");
+            sprint = Actions.FindAction("Sprint");
+            scroll = Actions.FindAction("Scroll");
+            primary = Actions.FindAction("Primary");
 
-            lookMouse = Actions.AddAction("LookMouse", InputActionType.Value, "<Mouse>/delta");
-            lookStick = Actions.AddAction("LookStick", InputActionType.Value, "<Gamepad>/rightStick");
-            sprint = Actions.AddAction("Sprint", InputActionType.Button, "<Keyboard>/leftShift");
-            sprint.AddBinding("<Gamepad>/leftStickPress");
-            scroll = Actions.AddAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
-
-            Button("Jump", () => JumpPressed?.Invoke(), "<Keyboard>/space", "<Gamepad>/buttonSouth");
-            primary = Button("Primary", () => PrimaryPressed?.Invoke(), "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
-            Button("Secondary", () => SecondaryPressed?.Invoke(), "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
-            Button("Interact", () => InteractPressed?.Invoke(), "<Keyboard>/f", "<Gamepad>/buttonWest");
-            Button("Ready", () => ReadyPressed?.Invoke(), "<Keyboard>/enter", "<Gamepad>/start");
-            Button("Inventory", () => InventoryPressed?.Invoke(), "<Keyboard>/tab", "<Gamepad>/select");
-            Button("Reload", () => ReloadPressed?.Invoke(), "<Keyboard>/r", "<Gamepad>/buttonNorth");
-            Button("RotateLeft", () => RotatePressed?.Invoke(-1), "<Keyboard>/q", "<Gamepad>/dpad/left");
-            Button("RotateRight", () => RotatePressed?.Invoke(1), "<Keyboard>/e", "<Gamepad>/dpad/right");
-            Button("HotbarNext", () => HotbarCycled?.Invoke(1), "<Gamepad>/rightShoulder", null);
-            Button("HotbarPrevious", () => HotbarCycled?.Invoke(-1), "<Gamepad>/leftShoulder", null);
+            Hook("Jump", () => JumpPressed?.Invoke());
+            Hook("Primary", () => PrimaryPressed?.Invoke());
+            Hook("Secondary", () => SecondaryPressed?.Invoke());
+            Hook("Interact", () => InteractPressed?.Invoke());
+            Hook("Reload", () => ReloadPressed?.Invoke());
+            Hook("Ready", () => ReadyPressed?.Invoke());
+            Hook("Inventory", () => InventoryPressed?.Invoke());
+            Hook("RotateLeft", () => RotatePressed?.Invoke(-1));
+            Hook("RotateRight", () => RotatePressed?.Invoke(1));
+            Hook("HotbarNext", () => HotbarCycled?.Invoke(1));
+            Hook("HotbarPrevious", () => HotbarCycled?.Invoke(-1));
 
             for (int i = 0; i < hotbarSlots.Length; i++)
             {
                 int slot = i;
-                hotbarSlots[i] = Button($"Slot{i + 1}", () => HotbarSlotPressed?.Invoke(slot), $"<Keyboard>/{i + 1}", null);
+                hotbarSlots[i] = Hook($"Slot{i + 1}", () => HotbarSlotPressed?.Invoke(slot));
             }
 
             scroll.performed += OnScroll;
+            GameInput.BindingsChanged += ReloadBindings;
+        }
+
+        // El jugador cambió teclas en las opciones (con este componente apagado, en pausa).
+        private void ReloadBindings() => GameInput.LoadOverrides(Actions);
+
+        /// <summary>Nombre legible de la tecla de una acción ("Enter", "R"...), para el HUD.</summary>
+        public string GetKeyName(string actionName)
+        {
+            InputAction action = Actions != null ? Actions.FindAction(actionName) : null;
+            return action != null ? GameInput.GetDisplayName(action, GameInput.FindBinding(action, false)) : "-";
         }
 
         private void OnEnable() => Actions.Enable();
@@ -103,6 +111,7 @@ namespace DeadAcres.Player
 
         private void OnDestroy()
         {
+            GameInput.BindingsChanged -= ReloadBindings;
             Actions.Dispose();
         }
 
@@ -115,10 +124,9 @@ namespace DeadAcres.Player
             HotbarCycled?.Invoke(value < 0f ? 1 : -1);
         }
 
-        private InputAction Button(string name, Action onPressed, string keyboardOrMouse, string gamepad)
+        private InputAction Hook(string actionName, Action onPressed)
         {
-            InputAction action = Actions.AddAction(name, InputActionType.Button, keyboardOrMouse);
-            if (gamepad != null) action.AddBinding(gamepad);
+            InputAction action = Actions.FindAction(actionName, true);
 
             // La lambda se crea una sola vez aquí, no por pulsación.
             action.performed += _ => onPressed();

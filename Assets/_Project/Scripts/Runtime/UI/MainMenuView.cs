@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using DeadAcres.Audio;
+using DeadAcres.Settings;
 using DeadAcres.Core.Session;
 using DeadAcres.Difficulty;
 using DeadAcres.GameMode;
@@ -30,7 +30,7 @@ namespace DeadAcres.UI
         private Button newGameButton;
         private Button difficultyButton;
         private Button modeButton;
-        private Button volumeButton;
+        private OptionsPanel options;
         private Text summary;
         private Text message;
 
@@ -40,7 +40,7 @@ namespace DeadAcres.UI
             Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            VolumeSetting.Apply();
+            GameSettings.Apply();
 
             difficultyIndex = Mathf.Max(0, session != null ? difficulties.IndexOf(session.Difficulty) : 0);
             modeIndex = Mathf.Max(0, session != null ? modes.IndexOf(session.Mode) : 0);
@@ -121,7 +121,10 @@ namespace DeadAcres.UI
             Refresh();
         }
 
-        private void CycleVolume() => MenuUi.SetLabel(volumeButton, VolumeSteps.Format(VolumeSetting.Cycle()));
+        private void OpenOptions()
+        {
+            if (options != null) options.Show();
+        }
 
         private void NextMode()
         {
@@ -197,8 +200,7 @@ namespace DeadAcres.UI
             difficultyButton.onClick.AddListener(NextDifficulty);
             modeButton = MenuUi.AddButton(root, font, "Modo", 3, top);
             modeButton.onClick.AddListener(NextMode);
-            volumeButton = MenuUi.AddButton(root, font, VolumeSteps.Format(VolumeSetting.Current), 4, top);
-            volumeButton.onClick.AddListener(CycleVolume);
+            MenuUi.AddButton(root, font, "Opciones", 4, top).onClick.AddListener(OpenOptions);
             MenuUi.AddButton(root, font, "Salir", 5, top).onClick.AddListener(Quit);
 
             // Las etiquetas largas (continuar, confirmar) necesitan más ancho que el resto.
@@ -216,6 +218,8 @@ namespace DeadAcres.UI
             message = UiFactory.CreateText("Message", root, font, 20, TextAnchor.MiddleCenter);
             message.color = new Color(1f, 0.6f, 0.45f);
             UiFactory.Place(message.rectTransform, UiFactory.BottomCenter, UiFactory.BottomCenter, new Vector2(0f, 40f), new Vector2(1200f, 30f));
+
+            options = OptionsPanel.Create(canvas.transform, font);
         }
 
         internal void Configure(GameSession gameSession, List<DifficultyProfile> difficultyProfiles,

@@ -62,7 +62,7 @@ namespace DeadAcres.Enemies
         public event Action<int> StrongIncoming;
 
         /// <summary>Murió un zombi (no cuenta a los que se queman al amanecer).</summary>
-        public event Action ZombieKilled;
+        public event Action<Vector3> ZombieKilled;
 
         /// <summary>Llega un grupo de refuerzo de este tamaño y la noche se acelera.</summary>
         public event Action<int> ReinforcementsIncoming;
@@ -282,7 +282,7 @@ namespace DeadAcres.Enemies
             zombie.Died -= OnZombieDied;
             alive.Remove(zombie);
             runner.NotifyEnemyRemoved();
-            ZombieKilled?.Invoke();
+            ZombieKilled?.Invoke(zombie.transform.position);
             Destroy(zombie.gameObject, 0.15f);
         }
 

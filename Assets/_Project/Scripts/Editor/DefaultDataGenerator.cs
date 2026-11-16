@@ -690,6 +690,11 @@ namespace DeadAcres.EditorTools
             root.AddComponent<PlacedStatusLabel>();
             var turret = root.AddComponent<Turret>();
             turret.Configure(consumer, head.transform, beam.transform, status.GetComponent<Renderer>());
+
+            // Cada torreta suena desde donde está.
+            var shotSource = root.AddComponent<AudioSource>();
+            WorldSound.Configure(shotSource);
+            turret.ConfigureSound(shotSource, LoadClip("turret_shot"), 0.45f);
             configureStats(turret);
             return SavePlaceable(root);
         }
@@ -728,7 +733,7 @@ namespace DeadAcres.EditorTools
                 EditorPaths.LoadOrCreateMaterial("Greybox_Flame", new Color(1f, 0.55f, 0.15f));
             blast.SetActive(false);
 
-            root.AddComponent<TntScarecrow>().Configure(blast);
+            root.AddComponent<TntScarecrow>().Configure(blast, LoadClip("explosion"));
             return SavePlaceable(root);
         }
 

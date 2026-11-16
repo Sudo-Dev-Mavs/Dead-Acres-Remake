@@ -1,4 +1,4 @@
-using DeadAcres.Audio;
+using DeadAcres.Settings;
 using DeadAcres.DayNight;
 using DeadAcres.Match;
 using DeadAcres.Player;
@@ -22,12 +22,16 @@ namespace DeadAcres.UI
 
         private GameObject panel;
         private Text message;
-        private Button volumeButton;
+        private OptionsPanel options;
         private bool inputWasEnabled;
 
         public bool IsOpen { get; private set; }
 
-        private void Awake() => BuildPanel();
+        private void Awake()
+        {
+            GameSettings.Apply();
+            BuildPanel();
+        }
 
         private void OnDisable() => Close();
 
@@ -36,9 +40,25 @@ namespace DeadAcres.UI
 
         private void Update()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null || !(keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame))
+            // Mientras las opciones esperan una tecla para asignarla, esa pulsación es suya.
+            if (options != null && options.IsCapturingInput)
             {
+                return;
+            }
+
+            Keyboard keyboard = Keyboard.current;
+            Gamepad gamepad = Gamepad.current;
+            bool pressed = (keyboard != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.pKey.wasPressedThisFrame))
+                           || (gamepad != null && gamepad.startButton.wasPressedThisFrame);
+            if (!pressed)
+            {
+                return;
+            }
+
+            // Con las opciones abiertas, la tecla de pausa solo las cierra.
+            if (options != null && options.IsOpen)
+            {
+                options.Hide();
                 return;
             }
 
@@ -83,6 +103,7 @@ namespace DeadAcres.UI
 
             IsOpen = false;
             Time.timeScale = 1f;
+            if (options != null) options.Hide();
             if (panel != null) panel.SetActive(false);
 
             // Con la partida terminada el input sigue apagado: lo decide MatchDirector.
@@ -94,7 +115,10 @@ namespace DeadAcres.UI
             UiModal.Exit(playerInput, dayNight);
         }
 
-        private void CycleVolume() => MenuUi.SetLabel(volumeButton, VolumeSteps.Format(VolumeSetting.Cycle()));
+        private void OpenOptions()
+        {
+            if (options != null) options.Show();
+        }
 
         private void GoToMenu()
         {
@@ -146,8 +170,7 @@ namespace DeadAcres.UI
 
             const float top = -160f;
             MenuUi.AddButton(window.transform, font, "Continuar  [Esc]", 0, top).onClick.AddListener(Close);
-            volumeButton = MenuUi.AddButton(window.transform, font, VolumeSteps.Format(VolumeSetting.Current), 1, top);
-            volumeButton.onClick.AddListener(CycleVolume);
+            MenuUi.AddButton(window.transform, font, "Opciones", 1, top).onClick.AddListener(OpenOptions);
             MenuUi.AddButton(window.transform, font, "Menú principal", 2, top).onClick.AddListener(GoToMenu);
             MenuUi.AddButton(window.transform, font, "Salir del juego", 3, top).onClick.AddListener(Quit);
 
@@ -155,6 +178,8 @@ namespace DeadAcres.UI
             message.color = new Color(1f, 0.6f, 0.45f);
             UiFactory.Place(message.rectTransform, UiFactory.BottomCenter, UiFactory.BottomCenter, new Vector2(0f, 18f), new Vector2(580f, 30f));
 
+            // La ventana de opciones va encima de la de pausa, en el mismo canvas.
+            options = OptionsPanel.Create(canvas.transform, font);
             panel.SetActive(false);
         }
 

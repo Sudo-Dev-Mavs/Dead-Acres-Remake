@@ -23,13 +23,17 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 | Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada), colocar, recoger (martillo), reparar (cinta) o comer | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
 | Hablar con Jack, recoger huevos y lana, abrir y cerrar puertas | F | X |
-| "Listo" (terminar el día) | Enter | Start |
+| "Listo" (terminar el día) | Enter | cruceta arriba |
 | Recargar | R | Y |
 | Inventario (mover entre hotbar y mochila) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
-| Pausa | Esc o P | — |
+| Pausa | Esc o P | Start |
+
+Estas son las teclas por defecto: todas las acciones de juego se pueden cambiar, para teclado/ratón y para mando, en **Opciones → Controles**.
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
+
+Opciones (en el menú principal y en la pausa): volumen general, de efectos y de música; sensibilidad del ratón y del mando; invertir el eje vertical; campo de visión; pantalla completa, resolución, sincronía vertical y límite de FPS; y la pestaña de controles. Se guardan en las preferencias del jugador, no en la partida.
 
 Menú principal: continuar la partida guardada o empezar una nueva eligiendo dificultad (Fácil, Media, Difícil, Infierno) y modo (Campaña o Endless). Empezar una nueva borra la guardada.
 
@@ -37,7 +41,7 @@ Guardado: la partida se guarda sola cada amanecer a partir del segundo día (dí
 
 Pausa (Esc o P): detiene el juego entero y permite volver al menú principal.
 
-Sonido: efectos y dos bucles de música (día y noche) provisionales, sintetizados con `Tools/generate_placeholder_audio.py`. Para cambiar uno, sustituye su `.wav` en `Assets/_Project/Audio/` conservando el nombre. El botón de volumen está en el menú principal y en el de pausa.
+Sonido: efectos y dos bucles de música (día y noche) provisionales, sintetizados con `Tools/generate_placeholder_audio.py`. Para cambiar uno, sustituye su `.wav` en `Assets/_Project/Audio/` conservando el nombre. Lo que pasa en el mundo suena con posición (zombis que mueren, torretas, TNT, golpes a la caravana): se oye más flojo y hacia su lado cuanto más lejos esté. Lo del propio jugador (disparos, recarga, pasos, avisos) suena sin posición.
 
 Se puede arar, plantar y colocar en todo el suelo, salvo en una franja de 3 bloques alrededor de la caravana (la losa marrón). Empiezas solo con la pistola, la azada, la hoz dentada y unas semillas de fresa: el martillo, los muros y todo lo demás se compra a Jack.
 
@@ -85,7 +89,8 @@ Assets/_Project/
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
     Items            ItemDefinition, ItemRarity, ItemStack, Inventory (puro: hotbar 9 + mochila), ItemCatalog (búsqueda por Id)
-    Audio            AudioLibrary (clips por función), GameAudio (escucha eventos), VolumeSetting, VolumeSteps (puro)
+    Audio            AudioLibrary (clips por función), GameAudio (escucha eventos), WorldSound (3D), VolumeSteps (puro)
+    Settings         GameSettings (preferencias), GameInput (acciones y teclas), StepCycle (puro)
     Saving           SaveData (datos planos), SaveMapper (puro), SaveFile (JSON en disco), SaveGameController
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
@@ -99,7 +104,7 @@ Assets/_Project/
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
                      PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo, cinta y comer)
     UI               HudView, ShopView, InventoryView, UiModal, UiFactory, ListPaging (puro),
-                     MainMenuView, PauseMenuView, MenuUi
+                     MainMenuView, PauseMenuView, OptionsPanel, MenuUi
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
   Audio/             .wav provisionales

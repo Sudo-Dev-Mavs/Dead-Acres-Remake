@@ -1,4 +1,5 @@
 using DeadAcres.Combat;
+using DeadAcres.Settings;
 using UnityEngine;
 
 namespace DeadAcres.Defenses
@@ -17,6 +18,9 @@ namespace DeadAcres.Defenses
 
         [Tooltip("Opcional. Hijo desactivado que se muestra un instante al explotar.")]
         [SerializeField] private GameObject blastVisual;
+
+        [Tooltip("Opcional. Suena en el sitio al explotar.")]
+        [SerializeField] private AudioClip explosionClip;
 
         private readonly Collider[] hits = new Collider[64];
         private float nextScanTime;
@@ -56,6 +60,12 @@ namespace DeadAcres.Defenses
                 }
             }
 
+            // El espantapájaros se destruye ya: el sonido se queda sonando en su sitio.
+            if (explosionClip != null)
+            {
+                AudioSource.PlayClipAtPoint(explosionClip, transform.position, GameSettings.EffectsVolume);
+            }
+
             if (blastVisual != null)
             {
                 blastVisual.transform.SetParent(null, true);
@@ -72,6 +82,10 @@ namespace DeadAcres.Defenses
             return enemy != null && enemy.Faction == Faction.Enemy && !enemy.IsDead;
         }
 
-        internal void Configure(GameObject blast) => blastVisual = blast;
+        internal void Configure(GameObject blast, AudioClip explosion = null)
+        {
+            blastVisual = blast;
+            explosionClip = explosion;
+        }
     }
 }

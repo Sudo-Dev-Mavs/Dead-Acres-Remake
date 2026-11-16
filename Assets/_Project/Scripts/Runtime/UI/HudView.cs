@@ -305,6 +305,13 @@ namespace DeadAcres.UI
             SetText(widgets.count, stack.Count > 1 ? stack.Count.ToString() : string.Empty);
         }
 
+        private string ReadyKeyName()
+        {
+            return interactor != null && interactor.TryGetComponent(out PlayerInputReader input)
+                ? input.GetKeyName("Ready")
+                : "Enter";
+        }
+
         private void RefreshSelectedLabel()
         {
             ItemStack stack = playerInventory.Inventory.Selected;
@@ -371,12 +378,12 @@ namespace DeadAcres.UI
             return string.Empty;
         }
 
-        private static string GetPhaseName(GamePhase phase)
+        private string GetPhaseName(GamePhase phase)
         {
             switch (phase)
             {
                 case GamePhase.Dawn: return "Amanecer";
-                case GamePhase.Day: return "Día  ·  [Enter] Listo";
+                case GamePhase.Day: return $"Día  ·  [{ReadyKeyName()}] Listo";
                 case GamePhase.Dusk: return "Atardecer";
                 default: return "Noche";
             }

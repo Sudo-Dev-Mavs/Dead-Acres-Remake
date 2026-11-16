@@ -128,6 +128,24 @@ time = t(1.5)
 saw = 2 * ((time * 68) % 1.0) - 1
 save("strong", fade(lowpass(saw, 0.75) * (0.6 + 0.4 * sine(11, time)) * np.minimum(time / 0.3, 1.0), 0.02, 0.4), 0.8)
 
+time = t(0.14)
+save("turret_shot", fade(noise(time) * np.exp(-time * 55) + 0.7 * sine(160, time) * np.exp(-time * 40), 0.001, 0.02), 0.8)
+
+time = t(1.0)
+boom = sweep(95, 35, time) * np.exp(-time * 4.5) + 0.8 * lowpass(noise(time), 0.93) * np.exp(-time * 6)
+save("explosion", fade(boom + 0.5 * noise(time) * np.exp(-time * 45), 0.001, 0.2), 0.95)
+
+time = t(0.11)
+save("step", fade(lowpass(noise(time), 0.9) * np.exp(-time * 38) + 0.5 * sine(70, time) * np.exp(-time * 45), 0.002, 0.03), 0.5)
+
+
+def click(freq, seconds):
+    time = t(seconds)
+    return fade(sine(freq, time) * np.exp(-time * 70) + 0.5 * noise(time) * np.exp(-time * 120), 0.001, 0.01)
+
+
+save("reload", sequence([click(900, 0.07), np.zeros(int(RATE * 0.16)), click(1400, 0.06), np.zeros(int(RATE * 0.05)), click(650, 0.09)]), 0.6)
+
 # ---------- música (bucles que empalman: cada frecuencia da un número entero de ciclos)
 
 LOOP = 12.0
