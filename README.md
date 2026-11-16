@@ -50,6 +50,8 @@ La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) sue
 
 Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y un par de cosas al azar (semillas, cinta, antorchas, muros, alguna luz). El más lejano guarda un rifle de caza; Jack también lo vende desde el cuarto día.
 
+Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita.
+
 Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan a 6 bloques o menos de la caravana, o cerca de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).

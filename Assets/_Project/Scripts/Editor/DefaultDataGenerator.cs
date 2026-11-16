@@ -207,10 +207,44 @@ namespace DeadAcres.EditorTools
             pistol.ConfigureWeapon(damage: 20f, range: 60f, interval: 0.25f);
 
             // El arma mejor: aparece en el auto más lejano y, con suerte, en la tienda.
-            ItemDefinition rifle = CreateItem("weapon_rifle", "Rifle de caza", ItemKind.Weapon, 1,
-                new Color(0.40f, 0.28f, 0.18f));
-            rifle.ConfigureWeapon(damage: 60f, range: 90f, interval: 0.7f);
-            rifle.ConfigurePrices(buy: 300, sell: 0);
+            ItemDefinition rifle = CreateWeapon("weapon_rifle", "Rifle de caza", ItemRarity.UltraRare, 300,
+                damage: 60f, range: 90f, interval: 0.7f);
+
+            // Resto del arsenal. Todas con munición infinita por ahora: lo que las distingue es
+            // daño por bala, cadencia, alcance y precisión. Entre paréntesis, daño por segundo
+            // aproximado disparando sin parar (la pistola inicial ronda 80).
+            //
+            // Pistolas y subfusiles: poco daño por bala, mucha cadencia, corto alcance.
+            CreateWeapon("weapon_auto_pistol", "Pistola automática", ItemRarity.Rare, 180,
+                damage: 14f, range: 50f, interval: 0.11f, automatic: true, spread: 2.5f);          // ~127
+            CreateWeapon("weapon_magnum", "Revólver Magnum .44", ItemRarity.UltraRare, 320,
+                damage: 75f, range: 70f, interval: 0.6f);                                           // ~125, un zombi normal por bala
+            CreateWeapon("weapon_uzi", "Uzi", ItemRarity.Rare, 260,
+                damage: 11f, range: 40f, interval: 0.07f, automatic: true, spread: 3.5f);          // ~157
+
+            // Escopetas: varios perdigones por disparo; de cerca rinden mucho, de lejos casi nada.
+            CreateWeapon("weapon_shotgun_single", "Escopeta monotiro", ItemRarity.Common, 150,
+                damage: 14f, range: 22f, interval: 1.3f, pellets: 8, spread: 6f);                  // ~86
+            CreateWeapon("weapon_shotgun_pump", "Escopeta de corredera", ItemRarity.Rare, 280,
+                damage: 14f, range: 24f, interval: 0.85f, pellets: 8, spread: 5.5f);               // ~132
+            CreateWeapon("weapon_shotgun_double", "Escopeta de doble cañón", ItemRarity.UltraRare, 380,
+                damage: 13f, range: 20f, interval: 1.5f, pellets: 16, spread: 8f);                 // ~139, 208 de golpe
+            CreateWeapon("weapon_shotgun_semi", "Escopeta semiautomática", ItemRarity.Epic, 520,
+                damage: 13f, range: 24f, interval: 0.45f, pellets: 8, spread: 5.5f);               // ~231
+            CreateWeapon("weapon_shotgun_auto", "Escopeta automática", ItemRarity.Legendary, 800,
+                damage: 12f, range: 22f, interval: 0.28f, automatic: true, pellets: 7, spread: 6f); // ~300
+
+            // Rifles de asalto: automáticos, precisos y de largo alcance.
+            CreateWeapon("weapon_ak47", "AK-47", ItemRarity.Epic, 650,
+                damage: 28f, range: 70f, interval: 0.11f, automatic: true, spread: 2f);            // ~255
+            CreateWeapon("weapon_m4", "M4", ItemRarity.Epic, 680,
+                damage: 24f, range: 75f, interval: 0.085f, automatic: true, spread: 1.2f);         // ~282
+            CreateWeapon("weapon_xm7", "SIG XM7", ItemRarity.Legendary, 950,
+                damage: 38f, range: 85f, interval: 0.1f, automatic: true, spread: 1f);             // ~380
+
+            // Francotirador pesado: tumba a un zombi fuerte (240) de un tiro, pero dispara despacio.
+            CreateWeapon("weapon_heavy_sniper", "Francotirador pesado", ItemRarity.Legendary, 900,
+                damage: 260f, range: 150f, interval: 1.6f);                                         // ~162
 
             // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura,
             // precio de la semilla, precio de venta del fruto.
@@ -299,7 +333,7 @@ namespace DeadAcres.EditorTools
             // Rareza del resto: lo que no se nombra aquí es común (muro, valla, antorcha, cinta,
             // martillo, pozo y las herramientas iniciales).
             SetRarity(ItemRarity.Rare, gate, campfire, lamp, windmill, chicken, egg);
-            SetRarity(ItemRarity.UltraRare, tnt, turret, sheep, wool, rifle);
+            SetRarity(ItemRarity.UltraRare, tnt, turret, sheep, wool);
             SetRarity(ItemRarity.Epic, generator);
 
             data.StartingItems = new List<KeyValuePair<ItemDefinition, int>>
@@ -342,6 +376,16 @@ namespace DeadAcres.EditorTools
             }
 
             return clip;
+        }
+
+        private static ItemDefinition CreateWeapon(string id, string name, ItemRarity rarity, int price, float damage,
+            float range, float interval, bool automatic = false, int pellets = 1, float spread = 0f)
+        {
+            ItemDefinition weapon = CreateItem(id, name, ItemKind.Weapon, 1, new Color(0.25f, 0.25f, 0.28f));
+            weapon.ConfigureWeapon(damage, range, interval, automatic, pellets, spread);
+            weapon.ConfigurePrices(buy: price, sell: 0);
+            weapon.ConfigureRarity(rarity);
+            return weapon;
         }
 
         private static void SetRarity(ItemRarity rarity, params ItemDefinition[] items)

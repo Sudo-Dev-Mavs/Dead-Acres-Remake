@@ -39,6 +39,15 @@ namespace DeadAcres.Items
         [SerializeField, Min(1f)] private float weaponRange = 60f;
         [SerializeField, Min(0.02f)] private float fireInterval = 0.25f;
 
+        [Tooltip("Dispara sola mientras se mantiene pulsado.")]
+        [SerializeField] private bool automatic;
+
+        [Tooltip("Proyectiles por disparo (escopetas). Cada uno hace el daño de arriba.")]
+        [SerializeField, Min(1)] private int pellets = 1;
+
+        [Tooltip("Apertura del cono de dispersión, en grados desde el centro.")]
+        [SerializeField, Min(0f)] private float spreadDegrees;
+
         [Tooltip("Cuánto beneficia al jugador: decide con qué frecuencia lo trae la tienda.")]
         [SerializeField] private ItemRarity rarity = ItemRarity.Common;
 
@@ -63,6 +72,9 @@ namespace DeadAcres.Items
 
         /// <summary>Segundos mínimos entre disparos.</summary>
         public float FireInterval => fireInterval;
+        public bool IsAutomatic => automatic;
+        public int Pellets => pellets;
+        public float SpreadDegrees => spreadDegrees;
 
         public float RepairAmount => repairAmount;
         public float HealAmount => healAmount;
@@ -91,11 +103,15 @@ namespace DeadAcres.Items
             placeableCategory = category;
         }
 
-        internal void ConfigureWeapon(float damage, float range, float interval)
+        internal void ConfigureWeapon(float damage, float range, float interval, bool isAutomatic = false,
+            int pelletCount = 1, float spread = 0f)
         {
             weaponDamage = Mathf.Max(0f, damage);
             weaponRange = Mathf.Max(1f, range);
             fireInterval = Mathf.Max(0.02f, interval);
+            automatic = isAutomatic;
+            pellets = Mathf.Max(1, pelletCount);
+            spreadDegrees = Mathf.Max(0f, spread);
         }
 
         internal void ConfigureRepair(float amount) => repairAmount = Mathf.Max(0f, amount);
