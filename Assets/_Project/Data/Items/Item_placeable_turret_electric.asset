@@ -19,14 +19,16 @@ MonoBehaviour:
   kind: 3
   maxStack: 99
   tool: 0
-  buyPrice: 850
-  sellPrice: 340
+  buyPrice: 1275
+  sellPrice: 510
   weaponDamage: 20
   weaponRange: 60
   fireInterval: 0.25
   automatic: 0
   pellets: 1
   spreadDegrees: 0
+  magazineSize: 0
+  reloadSeconds: 0
   rarity: 4
   repairGoldCost: 15
   healAmount: 0

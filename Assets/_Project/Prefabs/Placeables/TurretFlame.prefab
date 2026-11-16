@@ -379,6 +379,7 @@ MonoBehaviour:
   faction: 0
   baseMaxHealth: 180
   session: {fileID: 11400000, guid: dc42dfcab587b2dad88762cb966e50c0, type: 2}
+  maxHitFraction: 0
 --- !u!114 &3730177065359153904
 MonoBehaviour:
   m_ObjectHideFlags: 0

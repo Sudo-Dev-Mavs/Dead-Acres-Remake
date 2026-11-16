@@ -27,6 +27,8 @@ MonoBehaviour:
   automatic: 0
   pellets: 1
   spreadDegrees: 0
+  magazineSize: 0
+  reloadSeconds: 0
   rarity: 0
   repairGoldCost: 0
   healAmount: 2

@@ -23,6 +23,8 @@ MonoBehaviour:
     availableFromDay: 1
   - item: {fileID: 11400000, guid: 6f6836bc88e4705d592cf5215cdaebca, type: 2}
     availableFromDay: 1
+  - item: {fileID: 11400000, guid: aaefdcf14482526169185e90c79b75de, type: 2}
+    availableFromDay: 1
   - item: {fileID: 11400000, guid: db643971fa7bd6c309fb2a619cd8effd, type: 2}
     availableFromDay: 1
   - item: {fileID: 11400000, guid: 6cc7850d9a35ded6cb5bc84f8fb0ba79, type: 2}

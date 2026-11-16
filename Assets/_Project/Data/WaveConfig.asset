@@ -26,3 +26,5 @@ MonoBehaviour:
   strongFromNight: 2
   strongPerNight: 1
   strongMaxCount: 8
+  healthGrowthPerNight: 0.2
+  damageGrowthPerNight: 0.15
