@@ -28,6 +28,7 @@ MonoBehaviour:
   pellets: 8
   spreadDegrees: 5.5
   rarity: 3
+  repairGoldCost: 0
   healAmount: 0
   repairAmount: 0
   placedPrefab: {fileID: 0}

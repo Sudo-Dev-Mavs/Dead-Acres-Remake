@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d52ecde359c14080b844d78656c18cd3, type: 3}
+  m_Name: Item_placeable_turret_electric
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Items.ItemDefinition
+  id: placeable_turret_electric
+  displayName: "Torreta el\xE9ctrica"
+  icon: {fileID: 0}
+  tint: {r: 0.25, g: 0.35, b: 0.6, a: 1}
+  kind: 3
+  maxStack: 99
+  tool: 0
+  buyPrice: 850
+  sellPrice: 340
+  weaponDamage: 20
+  weaponRange: 60
+  fireInterval: 0.25
+  automatic: 0
+  pellets: 1
+  spreadDegrees: 0
+  rarity: 4
+  repairGoldCost: 15
+  healAmount: 0
+  repairAmount: 0
+  placedPrefab: {fileID: 8929072207747206976, guid: 932361e2c2313f7b9944bc42efd8fc67, type: 3}
+  footprint: {x: 1, y: 1}
+  placeableCategory: 1

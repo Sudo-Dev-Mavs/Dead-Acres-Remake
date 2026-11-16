@@ -377,6 +377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Building.PowerConsumer
   world: {fileID: 0}
+  demand: 1
 --- !u!114 &7613910105716444789
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -15,7 +15,7 @@ MonoBehaviour:
   id: placeable_turret
   displayName: Torreta
   icon: {fileID: 0}
-  tint: {r: 0.35, g: 0.4, b: 0.5, a: 1}
+  tint: {r: 0.3, g: 0.34, b: 0.42, a: 1}
   kind: 3
   maxStack: 99
   tool: 0
@@ -28,6 +28,7 @@ MonoBehaviour:
   pellets: 1
   spreadDegrees: 0
   rarity: 2
+  repairGoldCost: 5
   healAmount: 0
   repairAmount: 0
   placedPrefab: {fileID: 4607251323510834055, guid: e0dc50037bec2fe8bb52c93a228f0f10, type: 3}

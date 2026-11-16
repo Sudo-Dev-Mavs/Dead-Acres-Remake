@@ -117,7 +117,7 @@ Transform:
   m_GameObject: {fileID: 815967502137072362}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0.45}
+  m_LocalPosition: {x: 0, y: 0, z: 0.5}
   m_LocalScale: {x: 0.12, y: 0.12, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -279,7 +279,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0bc46e0f39e1b0ba3b952c2482ce5f09, type: 2}
+  - {fileID: 2100000, guid: 7468e84c4bc7fa1a99d0deaaa9bb34f5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -494,6 +494,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Building.PowerConsumer
   world: {fileID: 0}
+  demand: 2
 --- !u!114 &552263354932722532
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -510,9 +511,17 @@ MonoBehaviour:
   head: {fileID: 8134420730621214021}
   beam: {fileID: 2196742543113588606}
   statusLight: {fileID: 7741901867147416729}
+  mode: 0
   range: 12
   damage: 10
   fireInterval: 0.5
+  shotsPerVolley: 1
+  coneHalfAngle: 25
+  coneMaxTargets: 4
+  chainJumps: 4
+  chainJumpRange: 5
+  chainFalloff: 0.7
+  beamWidth: 0.05
   scanInterval: 0.25
   turnDegreesPerSecond: 540
   enemyMask:
