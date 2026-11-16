@@ -57,6 +57,13 @@ namespace DeadAcres.Player
             {
                 impactMarker.SetActive(false);
             }
+
+            // Armas automáticas: mientras se mantenga pulsado, Fire respeta la cadencia.
+            ItemStack selected = Inventory.Selected;
+            if (!selected.IsEmpty && selected.Item.IsAutomatic && input.isActiveAndEnabled && input.IsPrimaryHeld)
+            {
+                Fire();
+            }
         }
 
         private void Fire()
@@ -71,28 +78,48 @@ namespace DeadAcres.Player
             ItemDefinition weapon = selected.Item;
             nextFireTime = Time.time + weapon.FireInterval;
 
-            var ray = new Ray(eye.position, eye.forward);
-            if (!Physics.Raycast(ray, out RaycastHit hit, weapon.WeaponRange, hitMask, QueryTriggerInteraction.Ignore))
+            // Un rayo por proyectil: las escopetas reparten varios dentro de su cono.
+            bool hitEnemy = false;
+            bool hitAnything = false;
+            Vector3 lastPoint = Vector3.zero;
+            for (int i = 0; i < weapon.Pellets; i++)
             {
-                Fired?.Invoke(false);
-                return;
-            }
+                var ray = new Ray(eye.position, GetShotDirection(weapon.SpreadDegrees));
+                if (!Physics.Raycast(ray, out RaycastHit hit, weapon.WeaponRange, hitMask, QueryTriggerInteraction.Ignore))
+                {
+                    continue;
+                }
 
-            var target = hit.collider.GetComponentInParent<Health>();
-            bool hitEnemy = target != null && target.Faction == Faction.Enemy;
-            if (hitEnemy)
-            {
-                target.ApplyDamage(weapon.WeaponDamage);
+                hitAnything = true;
+                lastPoint = hit.point;
+                var target = hit.collider.GetComponentInParent<Health>();
+                if (target != null && target.Faction == Faction.Enemy)
+                {
+                    target.ApplyDamage(weapon.WeaponDamage);
+                    hitEnemy = true;
+                }
             }
 
             Fired?.Invoke(hitEnemy);
 
-            if (impactMarker != null)
+            if (hitAnything && impactMarker != null)
             {
-                impactMarker.transform.position = hit.point;
+                impactMarker.transform.position = lastPoint;
                 impactMarker.SetActive(true);
                 impactHideTime = Time.time + ImpactSeconds;
             }
+        }
+
+        // Dirección al azar dentro de un cono de esa apertura alrededor de la mira.
+        private Vector3 GetShotDirection(float spreadDegrees)
+        {
+            if (spreadDegrees <= 0f)
+            {
+                return eye.forward;
+            }
+
+            Vector2 offset = Random.insideUnitCircle * spreadDegrees;
+            return eye.rotation * (Quaternion.Euler(offset.y, offset.x, 0f) * Vector3.forward);
         }
 
         private void OnSelectionChanged(int _) => RefreshViewModel();

@@ -22,6 +22,7 @@ namespace DeadAcres.Player
         private InputAction lookStick;
         private InputAction sprint;
         private InputAction scroll;
+        private InputAction primary;
         private readonly InputAction[] hotbarSlots = new InputAction[9];
 
         public event Action JumpPressed;
@@ -52,6 +53,9 @@ namespace DeadAcres.Player
 
         public bool IsSprinting => sprint.IsPressed();
 
+        /// <summary>La acción primaria sigue pulsada (armas automáticas).</summary>
+        public bool IsPrimaryHeld => primary != null && primary.IsPressed();
+
         private void Awake()
         {
             Actions = new InputActionMap("Player");
@@ -71,7 +75,7 @@ namespace DeadAcres.Player
             scroll = Actions.AddAction("Scroll", InputActionType.Value, "<Mouse>/scroll/y");
 
             Button("Jump", () => JumpPressed?.Invoke(), "<Keyboard>/space", "<Gamepad>/buttonSouth");
-            Button("Primary", () => PrimaryPressed?.Invoke(), "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
+            primary = Button("Primary", () => PrimaryPressed?.Invoke(), "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
             Button("Secondary", () => SecondaryPressed?.Invoke(), "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
             Button("Interact", () => InteractPressed?.Invoke(), "<Keyboard>/f", "<Gamepad>/buttonWest");
             Button("Ready", () => ReadyPressed?.Invoke(), "<Keyboard>/r", "<Gamepad>/start");
