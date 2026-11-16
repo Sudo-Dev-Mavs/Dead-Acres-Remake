@@ -188,3 +188,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Building.PowerSource
   world: {fileID: 0}
   radius: 9
+  halfExtents: {x: 0, y: 0}
