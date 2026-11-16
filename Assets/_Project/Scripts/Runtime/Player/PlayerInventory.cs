@@ -24,6 +24,14 @@ namespace DeadAcres.Player
 
         public Inventory Inventory { get; private set; }
 
+        /// <summary>Aviso corto para este jugador ("+3 Fresa"): el HUD lo muestra.</summary>
+        public event Action<string> Notice;
+
+        public void Notify(string message)
+        {
+            if (!string.IsNullOrEmpty(message)) Notice?.Invoke(message);
+        }
+
         private void Awake()
         {
             Inventory = new Inventory(backpackSize);

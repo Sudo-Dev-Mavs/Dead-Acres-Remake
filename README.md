@@ -37,6 +37,10 @@ De noche llegan zombis desde todas las direcciones. Van a por la caravana, persi
 
 La noche dura entre 2 y 5 minutos. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad. Con la partida terminada, Enter la reinicia.
 
+La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) suelta zombis fuertes desde la segunda noche: uno más cada noche. Aguantan cuatro veces más que uno normal, pegan más y son más lentos.
+
+Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y un par de cosas al azar (semillas, cinta, antorchas, muros, alguna luz). El más lejano guarda un rifle de caza; Jack también lo vende desde el cuarto día.
+
 Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan a 6 bloques o menos de la caravana, o cerca de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
@@ -64,6 +68,7 @@ Assets/_Project/
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
     Animals          ProductionTimer (puro) + Animal
+    Loot             LootTable (tirada con semilla), LootContainer (autos abandonados)
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
     Economy          Wallet + ShopCommands (puros), ShopCatalog, Shopkeeper (Jack)

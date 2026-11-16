@@ -12,6 +12,7 @@ using DeadAcres.Enemies;
 using DeadAcres.Farming;
 using DeadAcres.GameMode;
 using DeadAcres.Items;
+using DeadAcres.Loot;
 using UnityEditor;
 using UnityEngine;
 
@@ -37,6 +38,9 @@ namespace DeadAcres.EditorTools
             public ShopCatalog Shop;
             public WaveConfig Waves;
             public ZombieBrain ZombiePrefab;
+            public ZombieBrain StrongZombiePrefab;
+            public LootTable CarLoot;
+            public LootTable SpecialCarLoot;
             public ItemDefinition SheepItem;
             public ItemDefinition ChickenItem;
             public VoidEventChannel RvDestroyed;
@@ -60,6 +64,7 @@ namespace DeadAcres.EditorTools
             EditorPaths.EnsureFolder($"{Root}/Items");
             EditorPaths.EnsureFolder($"{Root}/Crops");
             EditorPaths.EnsureFolder($"{Root}/Shop");
+            EditorPaths.EnsureFolder($"{Root}/Loot");
 
             var data = new GeneratedData();
 
@@ -99,8 +104,17 @@ namespace DeadAcres.EditorTools
             // de la noche pasa al triple de velocidad.
             data.Waves.ConfigureReinforcements(fraction: 0.25f, minCount: 3, maxGroups: 2, window: 6f,
                 minRemaining: 15f, fastForward: 3f, radiusFactor: 0.6f);
+
+            // La cripta suelta zombis fuertes desde la segunda noche: uno más cada noche, hasta 8.
+            data.Waves.ConfigureStrong(fromNight: 2, perNight: 1, maxCount: 8);
             EditorUtility.SetDirty(data.Waves);
-            data.ZombiePrefab = CreateZombiePrefab(data.Session);
+
+            // Zombi normal: 60 de vida, tres tiros de pistola. El fuerte aguanta cuatro veces más,
+            // pega más del doble y es más lento.
+            data.ZombiePrefab = CreateZombiePrefab("Zombie", data.Session, 60f, 1.8f, 0.35f,
+                new Color(0.35f, 0.55f, 0.30f), speed: 2.2f, damage: 8f, attackInterval: 1f);
+            data.StrongZombiePrefab = CreateZombiePrefab("ZombieStrong", data.Session, 240f, 2.3f, 0.45f,
+                new Color(0.45f, 0.25f, 0.50f), speed: 1.6f, damage: 20f, attackInterval: 1.2f);
 
             GenerateItemsAndCrops(data);
 
@@ -153,6 +167,12 @@ namespace DeadAcres.EditorTools
             ItemDefinition pistol = CreateItem("weapon_pistol", "Pistola", ItemKind.Weapon, 1,
                 new Color(0.25f, 0.25f, 0.28f));
             pistol.ConfigureWeapon(damage: 20f, range: 60f, interval: 0.25f);
+
+            // El arma mejor: aparece en el auto más lejano y Jack la trae a partir del cuarto día.
+            ItemDefinition rifle = CreateItem("weapon_rifle", "Rifle de caza", ItemKind.Weapon, 1,
+                new Color(0.40f, 0.28f, 0.18f));
+            rifle.ConfigureWeapon(damage: 60f, range: 90f, interval: 0.7f);
+            rifle.ConfigurePrices(buy: 300, sell: 0);
 
             // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura,
             // precio de la semilla, precio de venta del fruto.
@@ -235,6 +255,7 @@ namespace DeadAcres.EditorTools
                 new KeyValuePair<ItemDefinition, int>(sheep, 3),
                 new KeyValuePair<ItemDefinition, int>(windmill, 3),
                 new KeyValuePair<ItemDefinition, int>(generator, 3),
+                new KeyValuePair<ItemDefinition, int>(rifle, 4),
             });
             EditorUtility.SetDirty(data.Shop);
             data.StartingGold = 20;
@@ -242,6 +263,27 @@ namespace DeadAcres.EditorTools
             data.Crops = EditorPaths.LoadOrCreate<CropCatalog>($"{Root}/CropCatalog.asset");
             data.Crops.Configure(crops);
             EditorUtility.SetDirty(data.Crops);
+
+            // Autos abandonados: algo de oro y dos cosas al azar. Lo que anota la referencia del
+            // original: semillas, luces portátiles y un arma mejor.
+            var carEntries = new List<LootTable.Entry>
+            {
+                new LootTable.Entry(crops[0].SeedItem, 3, 6, 3f),
+                new LootTable.Entry(crops[1].SeedItem, 2, 4, 3f),
+                new LootTable.Entry(crops[2].SeedItem, 2, 3, 2f),
+                new LootTable.Entry(tape, 1, 2, 2f),
+                new LootTable.Entry(torch, 1, 2, 2f),
+                new LootTable.Entry(wall, 3, 6, 2f),
+                new LootTable.Entry(lamp, 1, 1, 1f),
+            };
+            data.CarLoot = EditorPaths.LoadOrCreate<LootTable>($"{Root}/Loot/Loot_Car.asset");
+            data.CarLoot.Configure(10, 30, 2, null, carEntries);
+            EditorUtility.SetDirty(data.CarLoot);
+
+            data.SpecialCarLoot = EditorPaths.LoadOrCreate<LootTable>($"{Root}/Loot/Loot_CarSpecial.asset");
+            data.SpecialCarLoot.Configure(30, 60, 2,
+                new List<LootTable.Entry> { new LootTable.Entry(rifle, 1, 1) }, new List<LootTable.Entry>(carEntries));
+            EditorUtility.SetDirty(data.SpecialCarLoot);
 
             data.StartingItems = new List<KeyValuePair<ItemDefinition, int>>
             {
@@ -511,31 +553,33 @@ namespace DeadAcres.EditorTools
         }
 
         /// <summary>Zombi provisional: cápsula verde con CharacterController, vida y cerebro.</summary>
-        private static ZombieBrain CreateZombiePrefab(GameSession session)
+        private static ZombieBrain CreateZombiePrefab(string prefabName, GameSession session, float maxHealth,
+            float height, float radius, Color color, float speed, float damage, float attackInterval)
         {
             const string folder = "Assets/_Project/Prefabs/Enemies";
             EditorPaths.EnsureFolder(folder);
 
-            var root = new GameObject("Zombie");
+            var root = new GameObject(prefabName);
             var controller = root.AddComponent<CharacterController>();
-            controller.height = 1.8f;
-            controller.radius = 0.35f;
-            controller.center = new Vector3(0f, 0.9f, 0f);
+            controller.height = height;
+            controller.radius = radius;
+            controller.center = new Vector3(0f, height * 0.5f, 0f);
 
             // El visual no lleva collider: el del CharacterController es el que recibe los disparos.
             GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
             body.name = "Visual";
             Object.DestroyImmediate(body.GetComponent<Collider>());
             body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.7f, 0.9f, 0.7f);
+            // La cápsula de Unity mide 2 de alto y 1 de ancho a escala 1.
+            body.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
+            body.transform.localScale = new Vector3(radius * 2f, height * 0.5f, radius * 2f);
             body.GetComponent<Renderer>().sharedMaterial =
-                EditorPaths.LoadOrCreateMaterial("Greybox_Zombie", new Color(0.35f, 0.55f, 0.30f));
+                EditorPaths.LoadOrCreateMaterial($"Greybox_{prefabName}", color);
 
-            root.AddComponent<Health>().Configure(Faction.Enemy, 60f, session);
-            root.AddComponent<ZombieBrain>();
+            root.AddComponent<Health>().Configure(Faction.Enemy, maxHealth, session);
+            root.AddComponent<ZombieBrain>().Configure(speed, damage, attackInterval);
 
-            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/Zombie.prefab");
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{prefabName}.prefab");
             Object.DestroyImmediate(root);
             return prefab.GetComponent<ZombieBrain>();
         }
