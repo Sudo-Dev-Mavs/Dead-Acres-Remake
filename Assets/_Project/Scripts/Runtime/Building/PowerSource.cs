@@ -12,6 +12,9 @@ namespace DeadAcres.Building
         [Tooltip("Mitad del tamaño de la fuente en X y Z: el radio se cuenta desde ese borde. Cero: desde el centro.")]
         [SerializeField] private Vector2 halfExtents;
 
+        [Tooltip("Consumo máximo que aguanta entre todos los aparatos que alimenta.")]
+        [SerializeField, Min(0f)] private float capacity = 20f;
+
         private int sourceId;
 
         public float Radius => radius;
@@ -30,7 +33,7 @@ namespace DeadAcres.Building
                 return;
             }
 
-            sourceId = world.Power.Add(transform.position, radius, halfExtents);
+            sourceId = world.Power.Add(transform.position, radius, halfExtents, capacity);
         }
 
         private void OnDestroy()
@@ -41,8 +44,10 @@ namespace DeadAcres.Building
             }
         }
 
-        internal void Configure(FarmWorld farmWorld, float newRadius, Vector2 newHalfExtents = default)
+        internal void Configure(FarmWorld farmWorld, float newRadius, Vector2 newHalfExtents = default,
+            float newCapacity = 20f)
         {
+            capacity = Mathf.Max(0f, newCapacity);
             world = farmWorld;
             radius = Mathf.Max(0.5f, newRadius);
             halfExtents = newHalfExtents;

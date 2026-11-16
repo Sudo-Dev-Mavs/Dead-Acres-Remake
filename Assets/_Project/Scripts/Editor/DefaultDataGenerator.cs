@@ -185,8 +185,45 @@ namespace DeadAcres.EditorTools
                 CreateTntScarecrowPrefab(data.Session), buy: 60, sell: 20);
 
             // 200 de oro: uno de los pocos precios que se oyen en el original.
-            ItemDefinition turret = CreatePlaceableItem("placeable_turret", "Torreta", new Color(0.35f, 0.40f, 0.50f),
-                CreateTurretPrefab(data.Session), buy: 200, sell: 80);
+            // Torretas. Todas necesitan energía: la caravana da 10 y cada generador 20. Columnas:
+            // rareza, precio, oro por reparación, vida, consumo; luego modo, alcance, daño y cadencia.
+            var orange = new Color(1f, 0.55f, 0.15f);
+            CreateTurret(data.Session, "placeable_turret", "Turret", "Torreta",
+                ItemRarity.UltraRare, 200, 5, 150f, 2f, new Color(0.30f, 0.34f, 0.42f), orange, 0.6f, 0.12f,
+                t => t.ConfigureStats(TurretMode.Single, 12f, 10f, 0.5f));                               // 20 de daño/s
+
+            // Doble cañón: dos disparos por ráfaga. Aguanta mucho.
+            CreateTurret(data.Session, "placeable_turret_double", "TurretDouble", "Torreta de doble cañón",
+                ItemRarity.UltraRare, 380, 9, 220f, 4f, new Color(0.25f, 0.30f, 0.30f), orange, 0.7f, 0.22f,
+                t => t.ConfigureStats(TurretMode.Single, 14f, 14f, 0.5f, shots: 2));                     // 56/s
+
+            // Escopeta: corto alcance, pega a todo lo que tenga delante (hasta 4).
+            CreateTurret(data.Session, "placeable_turret_shotgun", "TurretShotgun", "Torreta escopeta",
+                ItemRarity.UltraRare, 320, 8, 200f, 3f, new Color(0.45f, 0.30f, 0.20f), orange, 0.4f, 0.24f,
+                t => t.ConfigureStats(TurretMode.Cone, 8f, 22f, 1f, coneAngle: 25f, coneTargets: 4));    // 22/s a cada uno
+
+            // Lanzallamas: muy corto, daño continuo a todo el cono (hasta 8).
+            CreateTurret(data.Session, "placeable_turret_flame", "TurretFlame", "Torreta lanzallamas",
+                ItemRarity.Epic, 450, 10, 180f, 4f, new Color(0.55f, 0.20f, 0.12f), new Color(1f, 0.40f, 0.05f), 0.5f, 0.2f,
+                t => t.ConfigureStats(TurretMode.Cone, 6f, 5f, 0.15f, coneAngle: 35f, coneTargets: 8,
+                    newBeamWidth: 0.35f));                                                               // 33/s a cada uno
+
+            // Francotiradora: llega lejos y pega fuerte, pero tarda en recargar y es frágil.
+            CreateTurret(data.Session, "placeable_turret_sniper", "TurretSniper", "Torreta francotiradora",
+                ItemRarity.Epic, 420, 10, 120f, 3f, new Color(0.20f, 0.28f, 0.22f), new Color(1f, 0.95f, 0.6f), 1.1f, 0.08f,
+                t => t.ConfigureStats(TurretMode.Single, 30f, 120f, 2.5f));                              // 48/s; un zombi normal por tiro
+
+            // Automática: cadencia de rifle de asalto. La que más gasta de las de bala.
+            CreateTurret(data.Session, "placeable_turret_auto", "TurretAuto", "Torreta automática",
+                ItemRarity.Epic, 600, 12, 160f, 5f, new Color(0.22f, 0.24f, 0.28f), orange, 0.65f, 0.1f,
+                t => t.ConfigureStats(TurretMode.Single, 13f, 9f, 0.1f));                                // 90/s
+
+            // Eléctrica: el rayo salta hasta 4 zombis más, a 5 m como mucho cada salto, y pierde
+            // un 30 % de daño en cada uno (45, 31, 22, 15, 11).
+            CreateTurret(data.Session, "placeable_turret_electric", "TurretElectric", "Torreta eléctrica",
+                ItemRarity.Legendary, 850, 15, 140f, 6f, new Color(0.25f, 0.35f, 0.60f), new Color(0.55f, 0.80f, 1f), 0.35f, 0.16f,
+                t => t.ConfigureStats(TurretMode.Chain, 11f, 45f, 1.2f, jumps: 4, jumpRange: 5f, falloff: 0.7f,
+                    newBeamWidth: 0.08f));
 
             // Sin la hoz no se puede cosechar.
             ItemDefinition sickle = CreateItem("tool_sickle", "Hoz dentada", ItemKind.Tool, 1,
@@ -333,7 +370,7 @@ namespace DeadAcres.EditorTools
             // Rareza del resto: lo que no se nombra aquí es común (muro, valla, antorcha, cinta,
             // martillo, pozo y las herramientas iniciales).
             SetRarity(ItemRarity.Rare, gate, campfire, lamp, windmill, chicken, egg);
-            SetRarity(ItemRarity.UltraRare, tnt, turret, sheep, wool);
+            SetRarity(ItemRarity.UltraRare, tnt, sheep, wool);
             SetRarity(ItemRarity.Epic, generator);
 
             data.StartingItems = new List<KeyValuePair<ItemDefinition, int>>
@@ -409,6 +446,7 @@ namespace DeadAcres.EditorTools
             // Los assets se reutilizan entre generaciones: lo que no se vuelva a fijar más abajo
             // tiene que volver a su valor por defecto.
             item.ConfigureRarity(ItemRarity.Common);
+            item.ConfigureRepairCost(0);
             EditorUtility.SetDirty(item);
             createdItems.Add(item);
             return item;
@@ -587,6 +625,7 @@ namespace DeadAcres.EditorTools
             AddBox(root, "Head", new Vector3(0f, 1.9f, 0f), new Vector3(0.5f, 0.25f, 0.35f), "LampHead", new Color(0.95f, 0.95f, 0.80f), false);
             Light light = AddPointLight(root, new Vector3(0f, 2.1f, 0f), new Color(1f, 0.97f, 0.88f), 16f, 3f);
             var consumer = root.AddComponent<PowerConsumer>();
+            consumer.ConfigureDemand(1f);
             root.AddComponent<PoweredLight>().Configure(consumer, light);
             return SavePlaceable(root);
         }
@@ -601,24 +640,44 @@ namespace DeadAcres.EditorTools
         }
 
         /// <summary>Torreta: base fija, cabeza giratoria con cañón, luz de estado y rayo de disparo.</summary>
-        private static GameObject CreateTurretPrefab(GameSession session)
+        private static GameObject CreateTurretPrefab(GameSession session, string prefabName, float maxHealth,
+            float powerDemand, Color headColor, Color beamColor, float barrelLength, float barrelWidth,
+            System.Action<Turret> configureStats)
         {
-            GameObject root = NewPlaceable("Turret", 150f, session);
+            GameObject root = NewPlaceable(prefabName, maxHealth, session);
             AddBox(root, "Base", new Vector3(0f, 0.35f, 0f), new Vector3(0.8f, 0.7f, 0.8f), "Metal", new Color(0.45f, 0.47f, 0.50f));
 
             var head = new GameObject("Head");
             head.transform.SetParent(root.transform, false);
             head.transform.localPosition = new Vector3(0f, 0.95f, 0f);
-            AddBox(head, "Body", Vector3.zero, new Vector3(0.45f, 0.35f, 0.45f), "TurretHead", new Color(0.30f, 0.34f, 0.42f), false);
-            AddBox(head, "Barrel", new Vector3(0f, 0f, 0.45f), new Vector3(0.12f, 0.12f, 0.6f), "TurretHead", new Color(0.30f, 0.34f, 0.42f), false);
+            AddBox(head, "Body", Vector3.zero, new Vector3(0.45f, 0.35f, 0.45f), prefabName + "Head", headColor, false);
+            AddBox(head, "Barrel", new Vector3(0f, 0f, 0.2f + barrelLength * 0.5f),
+                new Vector3(barrelWidth, barrelWidth, barrelLength), prefabName + "Head", headColor, false);
 
             GameObject status = AddBox(root, "StatusLight", new Vector3(0f, 0.75f, -0.3f), new Vector3(0.14f, 0.14f, 0.14f), "Tint", Color.white, false);
-            GameObject beam = AddBox(root, "Beam", Vector3.zero, new Vector3(0.05f, 0.05f, 1f), "Flame", new Color(1f, 0.55f, 0.15f), false);
+            GameObject beam = AddBox(root, "Beam", Vector3.zero, new Vector3(0.05f, 0.05f, 1f), prefabName + "Beam", beamColor, false);
             beam.SetActive(false);
 
             var consumer = root.AddComponent<PowerConsumer>();
-            root.AddComponent<Turret>().Configure(consumer, head.transform, beam.transform, status.GetComponent<Renderer>());
+            consumer.ConfigureDemand(powerDemand);
+            var turret = root.AddComponent<Turret>();
+            turret.Configure(consumer, head.transform, beam.transform, status.GetComponent<Renderer>());
+            configureStats(turret);
             return SavePlaceable(root);
+        }
+
+        /// <summary>Crea el prefab y el ítem de una torreta con sus números.</summary>
+        private static ItemDefinition CreateTurret(GameSession session, string id, string prefabName, string name,
+            ItemRarity rarity, int price, int repairCost, float maxHealth, float powerDemand, Color headColor,
+            Color beamColor, float barrelLength, float barrelWidth, System.Action<Turret> configureStats)
+        {
+            GameObject prefab = CreateTurretPrefab(session, prefabName, maxHealth, powerDemand, headColor, beamColor,
+                barrelLength, barrelWidth, configureStats);
+
+            ItemDefinition item = CreatePlaceableItem(id, name, headColor, prefab, buy: price, sell: price * 2 / 5);
+            item.ConfigureRarity(rarity);
+            item.ConfigureRepairCost(repairCost);
+            return item;
         }
 
         /// <summary>Espantapájaros con TNT: explota cuando se le acerca un enemigo.</summary>

@@ -51,6 +51,10 @@ namespace DeadAcres.Items
         [Tooltip("Cuánto beneficia al jugador: decide con qué frecuencia lo trae la tienda.")]
         [SerializeField] private ItemRarity rarity = ItemRarity.Common;
 
+        [Header("Solo colocables")]
+        [Tooltip("Oro que cuesta cada reparación con cinta, además de la cinta.")]
+        [SerializeField, Min(0)] private int repairGoldCost;
+
         [Header("Solo comida")]
         [Tooltip("Vida que recupera el jugador al comerlo. 0 = no se come.")]
         [SerializeField, Min(0f)] private float healAmount;
@@ -79,6 +83,7 @@ namespace DeadAcres.Items
         public float RepairAmount => repairAmount;
         public float HealAmount => healAmount;
         public ItemRarity Rarity => rarity;
+        public int RepairGoldCost => repairGoldCost;
         public string Id => id;
         public string DisplayName => displayName;
         public Sprite Icon => icon;
@@ -117,6 +122,8 @@ namespace DeadAcres.Items
         internal void ConfigureRepair(float amount) => repairAmount = Mathf.Max(0f, amount);
 
         internal void ConfigureRarity(ItemRarity newRarity) => rarity = newRarity;
+
+        internal void ConfigureRepairCost(int gold) => repairGoldCost = Mathf.Max(0, gold);
 
         internal void ConfigureHeal(float amount) => healAmount = Mathf.Max(0f, amount);
 

@@ -63,6 +63,7 @@ namespace DeadAcres.UI
         private int lastClockStamp = -1;
         private float noticeTimeLeft;
         private PlacementLimiter limiter;
+        private PowerMap powerMap;
         private Wallet wallet;
 
         private void OnEnable()
@@ -84,6 +85,8 @@ namespace DeadAcres.UI
 
             limiter = world != null ? world.Limiter : null;
             if (limiter != null) limiter.CountChanged += OnPlacementCountChanged;
+            powerMap = world != null ? world.Power : null;
+            if (powerMap != null) powerMap.Changed += RefreshPlantsLabel;
 
             wallet = playerWallet != null ? playerWallet.Wallet : null;
             if (wallet != null) wallet.Changed += OnGoldChanged;
@@ -116,6 +119,8 @@ namespace DeadAcres.UI
 
             if (limiter != null) limiter.CountChanged -= OnPlacementCountChanged;
             limiter = null;
+            if (powerMap != null) powerMap.Changed -= RefreshPlantsLabel;
+            powerMap = null;
 
             if (wallet != null) wallet.Changed -= OnGoldChanged;
             wallet = null;
@@ -309,9 +314,13 @@ namespace DeadAcres.UI
                 return;
             }
 
+            string energy = powerMap != null && !float.IsInfinity(powerMap.TotalCapacity)
+                ? $"   Energía {powerMap.TotalUsed:0}/{powerMap.TotalCapacity:0}"
+                : string.Empty;
             SetText(plantsLabel,
                 $"Plantas {limiter.GetCount(PlaceableCategory.Plant)}/{limiter.GetLimit(PlaceableCategory.Plant)}" +
-                $"   Objetos {limiter.GetCount(PlaceableCategory.Object)}/{limiter.GetLimit(PlaceableCategory.Object)}");
+                $"   Objetos {limiter.GetCount(PlaceableCategory.Object)}/{limiter.GetLimit(PlaceableCategory.Object)}" +
+                energy);
         }
 
         private void ShowNotice(string message)
