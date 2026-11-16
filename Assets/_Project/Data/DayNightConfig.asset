@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DayNightConfig
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.DayNight.DayNightConfig
   dawnDuration: 15
-  firstDayDuration: 360
-  dayDuration: 240
+  firstDayDuration: 120
+  dayDuration: 120
   duskDuration: 30
   minNightDuration: 120
   maxNightDuration: 300
