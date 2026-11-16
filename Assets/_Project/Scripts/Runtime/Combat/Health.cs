@@ -113,6 +113,18 @@ namespace DeadAcres.Combat
             HealthChanged?.Invoke(currentHealth, maxHealth);
         }
 
+        /// <summary>
+        /// Modo de una vida: deja la vida máxima en este valor, llena y sin tope por golpe.
+        /// </summary>
+        public void OverrideMaxHealth(float newMax)
+        {
+            baseMaxHealth = Mathf.Max(1f, newMax);
+            maxHitFraction = 0f;
+            maxHealth = baseMaxHealth;
+            currentHealth = baseMaxHealth;
+            HealthChanged?.Invoke(currentHealth, maxHealth);
+        }
+
         internal void ConfigureHitCap(float fraction) => maxHitFraction = Mathf.Clamp01(fraction);
 
         internal void Configure(Faction newFaction, float newBaseMaxHealth, GameSession newSession)

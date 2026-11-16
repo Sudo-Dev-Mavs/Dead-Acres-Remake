@@ -25,6 +25,10 @@ namespace DeadAcres.Loot
 
         private readonly List<ItemStack> pending = new List<ItemStack>();
         private bool rolled;
+        private int weaponAllowance = 1;
+
+        /// <summary>Cuántas armas puede llegar a tener este contenedor (lo reparte LootDirector).</summary>
+        public void SetWeaponAllowance(int weapons) => weaponAllowance = Mathf.Max(0, weapons);
 
         public string Id => id;
 
@@ -47,7 +51,7 @@ namespace DeadAcres.Loot
             if (!rolled)
             {
                 rolled = true;
-                int gold = table.Roll(new System.Random(), pending);
+                int gold = table.Roll(new System.Random(), pending, weaponAllowance);
                 if (gold > 0 && player.TryGetComponent(out PlayerWallet wallet))
                 {
                     wallet.Wallet.Add(gold);

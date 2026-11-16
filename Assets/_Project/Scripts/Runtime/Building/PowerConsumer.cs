@@ -64,6 +64,8 @@ namespace DeadAcres.Building
             PoweredChanged?.Invoke(powered);
         }
 
+        internal void ConfigureWorld(FarmWorld farmWorld) => world = farmWorld;
+
         internal void ConfigureDemand(float newDemand) => demand = Mathf.Max(0f, newDemand);
     }
 }

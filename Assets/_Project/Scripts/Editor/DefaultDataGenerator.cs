@@ -97,7 +97,16 @@ namespace DeadAcres.EditorTools
             endless.Configure("Endless", plants: 500, objects: 500, nights: 0);
             EditorUtility.SetDirty(endless);
 
-            data.Modes = new List<GameModeRules> { campaign, endless };
+            // Una vida: como la campaña, pero el jugador y la caravana caen de un golpe y perder
+            // borra la partida guardada.
+            var oneLife = EditorPaths.LoadOrCreate<GameModeRules>($"{Root}/GameModes/GameMode_OneLife.asset");
+            oneLife.Configure("One Life", plants: 100, objects: 100, nights: 5);
+            oneLife.ConfigureOneLife(true);
+            EditorUtility.SetDirty(oneLife);
+            campaign.ConfigureOneLife(false);
+            endless.ConfigureOneLife(false);
+
+            data.Modes = new List<GameModeRules> { campaign, endless, oneLife };
 
             data.Session = EditorPaths.LoadOrCreate<GameSession>($"{Root}/GameSession.asset");
             data.Session.ConfigureDefaults(medium, campaign);

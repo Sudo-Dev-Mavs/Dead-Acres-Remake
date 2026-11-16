@@ -155,7 +155,11 @@ namespace DeadAcres.EditorTools
 
             // Guardado automático al amanecer y carga al elegir "Continuar" en el menú.
             systems.AddComponent<SaveGameController>().Configure(data.Session, cycle, data.PhaseChanged, data.Items,
-                data.Crops, world, farm, inventory, interactor.GetComponent<PlayerWallet>(), playerHealth, rvHealth);
+                data.Crops, world, farm, inventory, interactor.GetComponent<PlayerWallet>(), playerHealth, rvHealth,
+                match);
+
+            // Reparte el cupo de armas entre los autos: como mucho una en toda la partida.
+            systems.AddComponent<LootDirector>();
 
             new GameObject("PauseMenu").AddComponent<PauseMenuView>().Configure(playerInput, cycle, match);
 
@@ -180,16 +184,50 @@ namespace DeadAcres.EditorTools
                       "(se puede cambiar en Dead Acres > Play empieza en el menú principal).");
         }
 
-        /// <summary>El menú principal: una cámara, el EventSystem y el componente que monta la interfaz.</summary>
+        /// <summary>
+        /// El menú principal: detrás del panel se ve una partida de demostración (caravana,
+        /// muros, torretas, cultivos y zombis que llegan y caen) con la cámara dando vueltas.
+        /// </summary>
         private static void BuildMainMenuScene(DefaultDataGenerator.GeneratedData data)
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
+            // Luz de atardecer: se ve todo, pero ya con ambiente de noche cerca.
+            Light sun = CreateDirectionalLight("Sun", new Color(1f, 0.72f, 0.50f), 1f, LightShadows.Soft,
+                Quaternion.Euler(20f, -40f, 0f));
+            RenderSettings.sun = sun;
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.36f, 0.38f, 0.48f);
+
+            CreateGround(EditorPaths.LoadOrCreateMaterial("Greybox_Ground", new Color(0.33f, 0.55f, 0.27f)));
+            Material propMaterial = EditorPaths.LoadOrCreateMaterial("Greybox_Prop", new Color(0.62f, 0.62f, 0.66f));
+
+            var demo = new GameObject("Demo").transform;
+            GameObject rv = CreateBox("RV (placeholder)", demo, propMaterial, new Vector3(0f, 1.4f, 0f), RvSize);
+            var rvHealth = rv.AddComponent<Health>();
+            rvHealth.Configure(Faction.PlayerSide, 100000f, data.Session);
+
+            // Solo para dar energía a las torretas de la demostración: sobra capacidad.
+            var worldObject = new GameObject("FarmWorld");
+            worldObject.transform.position = new Vector3(-40f, 0f, -40f);
+            var world = worldObject.AddComponent<FarmWorld>();
+            world.Configure(data.Session, 80, 80, 1f);
+            rv.AddComponent<PowerSource>().Configure(world, 40f, default, 1000f);
+
+            var repaired = new List<Health>();
+            CreateDemoDefenses(data, demo, world, repaired);
+            CreateDemoFarm(demo);
+
+            var director = new GameObject("DemoDirector").AddComponent<MenuDemoDirector>();
+            director.Configure(new List<ZombieBrain> { data.ZombiePrefab, data.StrongZombiePrefab }, rvHealth, repaired, 30f);
+
             var cameraObject = new GameObject("Main Camera") { tag = "MainCamera" };
             var camera = cameraObject.AddComponent<Camera>();
             camera.clearFlags = CameraClearFlags.SolidColor;
-            camera.backgroundColor = new Color(0.06f, 0.09f, 0.07f);
+            camera.backgroundColor = new Color(0.20f, 0.16f, 0.22f);
+            camera.farClipPlane = 200f;
             cameraObject.AddComponent<AudioListener>();
+            cameraObject.AddComponent<MenuCameraOrbit>().Configure(new Vector3(0f, 1.5f, 0f), 19f, 8f);
 
             new GameObject("MainMenu").AddComponent<MainMenuView>().Configure(data.Session, data.Difficulties, data.Modes);
 
@@ -209,6 +247,99 @@ namespace DeadAcres.EditorTools
             EditorPaths.EnsureFolder(SceneFolder);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, MenuScenePath);
+        }
+
+        /// <summary>Torretas alrededor de la caravana, cuatro tramos de muro con huecos en las esquinas y luces.</summary>
+        private static void CreateDemoDefenses(DefaultDataGenerator.GeneratedData data, Transform parent, FarmWorld world,
+            List<Health> repaired)
+        {
+            PlaceDemoObject(data, "placeable_turret_auto", parent, new Vector3(6f, 0f, 6f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_turret", parent, new Vector3(-6f, 0f, 6f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_turret_electric", parent, new Vector3(6f, 0f, -6f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_turret_shotgun", parent, new Vector3(-6f, 0f, -6f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_turret_sniper", parent, new Vector3(0f, 0f, 8f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_turret_double", parent, new Vector3(0f, 0f, -8f), 0f, world, repaired);
+
+            const float ring = 11f;
+            for (int i = -5; i <= 5; i++)
+            {
+                PlaceDemoObject(data, "placeable_wood_wall", parent, new Vector3(i, 0f, ring), 0f, world, repaired);
+                PlaceDemoObject(data, "placeable_wood_wall", parent, new Vector3(i, 0f, -ring), 0f, world, repaired);
+                PlaceDemoObject(data, "placeable_wood_wall", parent, new Vector3(ring, 0f, i), 90f, world, repaired);
+                PlaceDemoObject(data, "placeable_wood_wall", parent, new Vector3(-ring, 0f, i), 90f, world, repaired);
+            }
+
+            PlaceDemoObject(data, "placeable_torch", parent, new Vector3(9f, 0f, 9f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_torch", parent, new Vector3(-9f, 0f, 9f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_torch", parent, new Vector3(9f, 0f, -9f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_torch", parent, new Vector3(-9f, 0f, -9f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_campfire", parent, new Vector3(-3.5f, 0f, 3f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_lamp", parent, new Vector3(3f, 0f, 4.5f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_well", parent, new Vector3(-4f, 0f, -4f), 0f, world, repaired);
+            PlaceDemoObject(data, "placeable_windmill", parent, new Vector3(-7.5f, 0f, 0f), 90f, world, repaired);
+        }
+
+        /// <summary>
+        /// Pone en la demostración el prefab de un ítem colocable, sin pasar por la rejilla: con
+        /// energía si la necesita, en silencio y apuntado para que se repare solo.
+        /// </summary>
+        private static void PlaceDemoObject(DefaultDataGenerator.GeneratedData data, string itemId, Transform parent,
+            Vector3 position, float yaw, FarmWorld world, List<Health> repaired)
+        {
+            if (!data.Items.TryGet(itemId, out ItemDefinition item) || item.PlacedPrefab == null)
+            {
+                Debug.LogWarning($"Dead Acres: la demostración del menú no encontró el ítem {itemId}.");
+                return;
+            }
+
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(item.PlacedPrefab, parent);
+            instance.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+
+            if (instance.TryGetComponent(out PowerConsumer consumer)) consumer.ConfigureWorld(world);
+            foreach (AudioSource source in instance.GetComponentsInChildren<AudioSource>())
+            {
+                // En el menú solo suena la música.
+                source.mute = true;
+            }
+
+            if (instance.TryGetComponent(out Health health)) repaired.Add(health);
+        }
+
+        /// <summary>Un huerto y un par de árboles, solo de adorno (cubos sin lógica de cultivo).</summary>
+        private static void CreateDemoFarm(Transform parent)
+        {
+            Material soil = EditorPaths.LoadOrCreateMaterial("Greybox_DemoSoil", new Color(0.36f, 0.25f, 0.16f));
+            Material red = EditorPaths.LoadOrCreateMaterial("Greybox_DemoCropRed", new Color(0.86f, 0.12f, 0.20f));
+            Material yellow = EditorPaths.LoadOrCreateMaterial("Greybox_DemoCropYellow", new Color(0.98f, 0.82f, 0.10f));
+            Material leaves = EditorPaths.LoadOrCreateMaterial("Greybox_DemoLeaves", new Color(0.20f, 0.50f, 0.22f));
+            Material trunk = EditorPaths.LoadOrCreateMaterial("Greybox_DemoTrunk", new Color(0.40f, 0.27f, 0.16f));
+
+            for (int x = 0; x < 4; x++)
+            {
+                for (int z = 0; z < 6; z++)
+                {
+                    var cell = new Vector3(3.5f + x, 0f, -3f + z);
+                    AddDemoBox("Soil", parent, soil, cell + Vector3.up * 0.03f, new Vector3(0.95f, 0.06f, 0.95f));
+
+                    // Alturas distintas: como si unas plantas fueran más adelantadas que otras.
+                    float height = 0.25f + 0.15f * ((x * 3 + z * 2) % 4);
+                    AddDemoBox("Crop", parent, (x + z) % 3 == 0 ? yellow : red, cell + Vector3.up * (0.06f + height * 0.5f),
+                        new Vector3(0.45f, height, 0.45f));
+                }
+            }
+
+            foreach (Vector3 spot in new[] { new Vector3(-4f, 0f, 7.5f), new Vector3(4.5f, 0f, -7.5f), new Vector3(-8.5f, 0f, -6f) })
+            {
+                AddDemoBox("Trunk", parent, trunk, spot + Vector3.up * 0.9f, new Vector3(0.35f, 1.8f, 0.35f));
+                AddDemoBox("Leaves", parent, leaves, spot + Vector3.up * 2.4f, new Vector3(1.6f, 1.4f, 1.6f));
+            }
+        }
+
+        private static void AddDemoBox(string name, Transform parent, Material material, Vector3 position, Vector3 scale)
+        {
+            GameObject box = CreateDecoration(name, scale, material);
+            box.transform.SetParent(parent, false);
+            box.transform.position = position;
         }
 
         private static PlayerInteractor CreatePlayer(DefaultDataGenerator.GeneratedData data, FarmWorld world,

@@ -14,6 +14,12 @@ namespace DeadAcres.Saving
 
         public int version = CurrentVersion;
 
+        /// <summary>Nombre que le puso el jugador a la partida.</summary>
+        public string name;
+
+        /// <summary>De esta semilla sale qué auto puede tener el arma.</summary>
+        public int lootSeed;
+
         /// <summary>Día que empieza al cargar (se guarda al amanecer).</summary>
         public int dayNumber = 1;
         public string difficulty;
