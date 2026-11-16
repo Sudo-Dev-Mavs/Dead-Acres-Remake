@@ -322,7 +322,7 @@ namespace DeadAcres.EditorTools
             return door;
         }
 
-        /// <summary>Autos abandonados repartidos por el mapa. El más lejano guarda el rifle.</summary>
+        /// <summary>Autos abandonados repartidos por el mapa. El botín de todos es al azar.</summary>
         private static void CreateCars(DefaultDataGenerator.GeneratedData data, FarmWorld world)
         {
             var parent = new GameObject("Cars").transform;
@@ -330,7 +330,7 @@ namespace DeadAcres.EditorTools
             CreateCar(parent, world, "car_2", new Vector3(-30f, 0f, -24f), 75f, data.CarLoot, new Color(0.20f, 0.35f, 0.55f));
             CreateCar(parent, world, "car_3", new Vector3(38f, 0f, 30f), -30f, data.CarLoot, new Color(0.60f, 0.58f, 0.50f));
             CreateCar(parent, world, "car_4", new Vector3(-20f, 0f, 48f), 10f, data.CarLoot, new Color(0.25f, 0.45f, 0.30f));
-            CreateCar(parent, world, "car_5", new Vector3(55f, 0f, -40f), 60f, data.SpecialCarLoot, new Color(0.15f, 0.15f, 0.17f));
+            CreateCar(parent, world, "car_5", new Vector3(55f, 0f, -40f), 60f, data.CarLoot, new Color(0.15f, 0.15f, 0.17f));
         }
 
         private static void CreateCar(Transform parent, FarmWorld world, string id, Vector3 position, float yaw,

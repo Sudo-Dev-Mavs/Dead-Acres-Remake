@@ -45,7 +45,6 @@ namespace DeadAcres.EditorTools
             public List<DifficultyProfile> Difficulties;
             public List<GameModeRules> Modes;
             public LootTable CarLoot;
-            public LootTable SpecialCarLoot;
             public ItemDefinition SheepItem;
             public ItemDefinition ChickenItem;
             public VoidEventChannel RvDestroyed;
@@ -264,17 +263,17 @@ namespace DeadAcres.EditorTools
             // aproximado sin contar recargas (la pistola inicial ronda 80).
             //
             // Pistolas y subfusiles: poco daño por bala, mucha cadencia, corto alcance.
-            CreateWeapon("weapon_auto_pistol", "Pistola automática", ItemRarity.Rare, 180,
+            ItemDefinition autoPistol = CreateWeapon("weapon_auto_pistol", "Pistola automática", ItemRarity.Rare, 180,
                 damage: 14f, range: 50f, interval: 0.11f, automatic: true, spread: 2.5f, magazine: 18, reload: 1.4f);          // ~127
             CreateWeapon("weapon_magnum", "Revólver Magnum .44", ItemRarity.UltraRare, 320,
                 damage: 75f, range: 70f, interval: 0.6f, magazine: 6, reload: 2.2f);                                           // ~125, un zombi normal por bala
-            CreateWeapon("weapon_uzi", "Uzi", ItemRarity.Rare, 260,
+            ItemDefinition uzi = CreateWeapon("weapon_uzi", "Uzi", ItemRarity.Rare, 260,
                 damage: 11f, range: 40f, interval: 0.07f, automatic: true, spread: 3.5f, magazine: 32, reload: 1.8f);          // ~157
 
             // Escopetas: varios perdigones por disparo; de cerca rinden mucho, de lejos casi nada.
-            CreateWeapon("weapon_shotgun_single", "Escopeta monotiro", ItemRarity.Common, 150,
+            ItemDefinition singleShotgun = CreateWeapon("weapon_shotgun_single", "Escopeta monotiro", ItemRarity.Common, 150,
                 damage: 14f, range: 22f, interval: 0.3f, pellets: 8, spread: 6f, magazine: 1, reload: 1.2f);                  // ~86
-            CreateWeapon("weapon_shotgun_pump", "Escopeta de corredera", ItemRarity.Rare, 280,
+            ItemDefinition pumpShotgun = CreateWeapon("weapon_shotgun_pump", "Escopeta de corredera", ItemRarity.Rare, 280,
                 damage: 14f, range: 24f, interval: 0.85f, pellets: 8, spread: 5.5f, magazine: 6, reload: 3.0f);               // ~132
             CreateWeapon("weapon_shotgun_double", "Escopeta de doble cañón", ItemRarity.UltraRare, 380,
                 damage: 13f, range: 20f, interval: 0.25f, pellets: 8, spread: 7f, magazine: 2, reload: 2.0f);                 // dos cartuchos seguidos y a recargar
@@ -370,14 +369,17 @@ namespace DeadAcres.EditorTools
                 new LootTable.Entry(wall, 3, 6, 2f),
                 new LootTable.Entry(lamp, 1, 1, 1f),
             };
-            data.CarLoot = EditorPaths.LoadOrCreate<LootTable>($"{Root}/Loot/Loot_Car.asset");
-            data.CarLoot.Configure(10, 30, 2, null, carEntries);
-            EditorUtility.SetDirty(data.CarLoot);
+            // Como mucho un arma por auto, y nunca por encima de rareza Raro: la más probable es
+            // la monotiro (común); las otras tres son raras.
+            carEntries.Add(new LootTable.Entry(singleShotgun, 1, 1, 1.2f));
+            carEntries.Add(new LootTable.Entry(autoPistol, 1, 1, 0.6f));
+            carEntries.Add(new LootTable.Entry(uzi, 1, 1, 0.5f));
+            carEntries.Add(new LootTable.Entry(pumpShotgun, 1, 1, 0.5f));
 
-            data.SpecialCarLoot = EditorPaths.LoadOrCreate<LootTable>($"{Root}/Loot/Loot_CarSpecial.asset");
-            data.SpecialCarLoot.Configure(30, 60, 2,
-                new List<LootTable.Entry> { new LootTable.Entry(rifle, 1, 1) }, new List<LootTable.Entry>(carEntries));
-            EditorUtility.SetDirty(data.SpecialCarLoot);
+            // Todos los autos tiran de la misma tabla: oro y tres cosas al azar.
+            data.CarLoot = EditorPaths.LoadOrCreate<LootTable>($"{Root}/Loot/Loot_Car.asset");
+            data.CarLoot.Configure(10, 40, 3, null, carEntries, weaponLimit: 1);
+            EditorUtility.SetDirty(data.CarLoot);
 
             // Rareza del resto: lo que no se nombra aquí es común (muro, valla, antorcha, cinta,
             // martillo, pozo y las herramientas iniciales).
@@ -685,6 +687,7 @@ namespace DeadAcres.EditorTools
 
             var consumer = root.AddComponent<PowerConsumer>();
             consumer.ConfigureDemand(powerDemand);
+            root.AddComponent<PlacedStatusLabel>();
             var turret = root.AddComponent<Turret>();
             turret.Configure(consumer, head.transform, beam.transform, status.GetComponent<Renderer>());
             configureStats(turret);

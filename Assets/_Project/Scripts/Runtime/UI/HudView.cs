@@ -376,7 +376,7 @@ namespace DeadAcres.UI
             switch (phase)
             {
                 case GamePhase.Dawn: return "Amanecer";
-                case GamePhase.Day: return "Día  ·  [R] Listo";
+                case GamePhase.Day: return "Día  ·  [Enter] Listo";
                 case GamePhase.Dusk: return "Atardecer";
                 default: return "Noche";
             }

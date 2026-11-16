@@ -4,6 +4,7 @@ using DeadAcres.Animals;
 using DeadAcres.Combat;
 using DeadAcres.Core.Session;
 using DeadAcres.DayNight;
+using DeadAcres.Defenses;
 using UnityEngine;
 
 namespace DeadAcres.Enemies
@@ -234,8 +235,8 @@ namespace DeadAcres.Enemies
             return nearbyTargets;
         }
 
-        // Los animales se compran, se recolocan y mueren: se buscan en la escena, como mucho una
-        // vez por frame aunque salgan varios zombis a la vez.
+        // Animales y torretas se compran, se recolocan y mueren: se buscan en la escena, como
+        // mucho una vez por frame aunque salgan varios zombis a la vez.
         private void RefreshAnimals()
         {
             if (animalsFrame == Time.frameCount)
@@ -251,6 +252,16 @@ namespace DeadAcres.Enemies
                 if (found[i].TryGetComponent(out Health animalHealth))
                 {
                     animals.Add(animalHealth);
+                }
+            }
+
+            // Las torretas también: un zombi que pase cerca de una se desvía a romperla.
+            Turret[] turrets = FindObjectsByType<Turret>(FindObjectsSortMode.None);
+            for (int i = 0; i < turrets.Length; i++)
+            {
+                if (turrets[i].TryGetComponent(out Health turretHealth))
+                {
+                    animals.Add(turretHealth);
                 }
             }
         }

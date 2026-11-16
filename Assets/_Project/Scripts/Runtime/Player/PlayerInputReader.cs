@@ -31,7 +31,6 @@ namespace DeadAcres.Player
         public event Action InteractPressed;
         public event Action ReadyPressed;
 
-        /// <summary>Recargar desde el mando. En teclado la R pasa por <see cref="ReadyPressed"/>.</summary>
         public event Action ReloadPressed;
         public event Action InventoryPressed;
 
@@ -81,9 +80,9 @@ namespace DeadAcres.Player
             primary = Button("Primary", () => PrimaryPressed?.Invoke(), "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
             Button("Secondary", () => SecondaryPressed?.Invoke(), "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
             Button("Interact", () => InteractPressed?.Invoke(), "<Keyboard>/f", "<Gamepad>/buttonWest");
-            Button("Ready", () => ReadyPressed?.Invoke(), "<Keyboard>/r", "<Gamepad>/start");
+            Button("Ready", () => ReadyPressed?.Invoke(), "<Keyboard>/enter", "<Gamepad>/start");
             Button("Inventory", () => InventoryPressed?.Invoke(), "<Keyboard>/tab", "<Gamepad>/select");
-            Button("Reload", () => ReloadPressed?.Invoke(), "<Gamepad>/buttonNorth", null);
+            Button("Reload", () => ReloadPressed?.Invoke(), "<Keyboard>/r", "<Gamepad>/buttonNorth");
             Button("RotateLeft", () => RotatePressed?.Invoke(-1), "<Keyboard>/q", "<Gamepad>/dpad/left");
             Button("RotateRight", () => RotatePressed?.Invoke(1), "<Keyboard>/e", "<Gamepad>/dpad/right");
             Button("HotbarNext", () => HotbarCycled?.Invoke(1), "<Gamepad>/rightShoulder", null);

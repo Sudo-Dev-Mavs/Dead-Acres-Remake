@@ -30,6 +30,7 @@ namespace DeadAcres.Player
 
         // Un cargador por tipo de arma: sigue como estaba aunque se guarde y se vuelva a sacar.
         private readonly Dictionary<ItemDefinition, WeaponClip> clips = new Dictionary<ItemDefinition, WeaponClip>();
+        private readonly RaycastHit[] rayHits = new RaycastHit[32];
         private WeaponClip activeClip;
         private float nextFireTime;
         private float impactHideTime;
@@ -156,7 +157,7 @@ namespace DeadAcres.Player
             for (int i = 0; i < weapon.Pellets; i++)
             {
                 var ray = new Ray(eye.position, GetShotDirection(weapon.SpreadDegrees));
-                if (!Physics.Raycast(ray, out RaycastHit hit, weapon.WeaponRange, hitMask, QueryTriggerInteraction.Ignore))
+                if (!TryRaycastIgnoringSelf(ray, weapon.WeaponRange, out RaycastHit hit))
                 {
                     continue;
                 }
@@ -192,6 +193,24 @@ namespace DeadAcres.Player
                 impactMarker.SetActive(true);
                 impactHideTime = Time.time + ImpactSeconds;
             }
+        }
+
+        // Lo más cercano que toca la bala, sin contar al propio jugador.
+        private bool TryRaycastIgnoringSelf(Ray ray, float range, out RaycastHit nearest)
+        {
+            nearest = default;
+            int count = Physics.RaycastNonAlloc(ray, rayHits, range, hitMask, QueryTriggerInteraction.Ignore);
+            float best = float.MaxValue;
+            for (int i = 0; i < count; i++)
+            {
+                if (rayHits[i].distance < best && !rayHits[i].collider.transform.IsChildOf(transform))
+                {
+                    best = rayHits[i].distance;
+                    nearest = rayHits[i];
+                }
+            }
+
+            return best < float.MaxValue;
         }
 
         // Dirección al azar dentro de un cono de esa apertura alrededor de la mira.
