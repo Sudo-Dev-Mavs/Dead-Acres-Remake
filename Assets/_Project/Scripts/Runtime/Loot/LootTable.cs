@@ -41,6 +41,9 @@ namespace DeadAcres.Loot
         [SerializeField, Min(0)] private int rolls = 2;
         [SerializeField] private List<Entry> random = new List<Entry>();
 
+        [Tooltip("Armas como mucho por tirada, contando las seguras.")]
+        [SerializeField, Min(0)] private int maxWeapons = 1;
+
         /// <summary>Tira el botín. Con la misma semilla sale siempre lo mismo.</summary>
         /// <returns>Oro encontrado.</returns>
         public int Roll(System.Random rng, List<ItemStack> results)
@@ -57,9 +60,23 @@ namespace DeadAcres.Loot
                 if (random[i].item != null && random[i].weight > 0f) pool.Add(random[i]);
             }
 
+            int weapons = 0;
+            for (int i = 0; i < results.Count; i++)
+            {
+                if (results[i].Item.Kind == ItemKind.Weapon) weapons++;
+            }
+
             for (int roll = 0; roll < rolls && pool.Count > 0; roll++)
             {
+                // Con el cupo de armas lleno, las que queden dejan de poder salir.
+                if (weapons >= maxWeapons)
+                {
+                    pool.RemoveAll(entry => entry.item.Kind == ItemKind.Weapon);
+                    if (pool.Count == 0) break;
+                }
+
                 int picked = PickWeighted(pool, rng);
+                if (pool[picked].item.Kind == ItemKind.Weapon) weapons++;
                 AddEntry(pool[picked], rng, results);
                 pool.RemoveAt(picked);
             }
@@ -94,8 +111,9 @@ namespace DeadAcres.Loot
         }
 
         internal void Configure(int minGold, int maxGold, int rollCount, List<Entry> guaranteedEntries,
-            List<Entry> randomEntries)
+            List<Entry> randomEntries, int weaponLimit = 1)
         {
+            maxWeapons = Mathf.Max(0, weaponLimit);
             goldMin = Mathf.Max(0, minGold);
             goldMax = Mathf.Max(goldMin, maxGold);
             rolls = Mathf.Max(0, rollCount);

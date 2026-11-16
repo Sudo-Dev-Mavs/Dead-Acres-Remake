@@ -81,14 +81,16 @@ namespace DeadAcres.Building
         private bool TryGetTarget(out RectInt rect)
         {
             rect = default;
+            // Sin rayos de física: el suelo es plano y así no estorban ni el propio jugador ni lo
+            // que se cruce por delante. Mirando lejos, el fantasma queda al borde del alcance.
             Ray ray = viewCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            if (!Physics.Raycast(ray, out RaycastHit hit, maxReach, groundMask, QueryTriggerInteraction.Ignore))
+            if (!GroundAim.TryGetPoint(ray, world.Grid.WorldOrigin.y, maxReach, out Vector3 point))
             {
                 return false;
             }
 
             Vector2Int size = PlacementGrid.RotateFootprint(ghostItem.Footprint, quarterTurns);
-            rect = PlacementGrid.RectAround(world.Grid.WorldToCell(hit.point), size);
+            rect = PlacementGrid.RectAround(world.Grid.WorldToCell(point), size);
             return world.Grid.IsInside(rect);
         }
 

@@ -1,4 +1,5 @@
 using System;
+using DeadAcres.Building;
 using DeadAcres.DayNight;
 using DeadAcres.Farming;
 using DeadAcres.Items;
@@ -31,6 +32,7 @@ namespace DeadAcres.Player
         [SerializeField] private LayerMask targetMask = Physics.DefaultRaycastLayers;
 
         private InteractionContext context;
+        private readonly RaycastHit[] rayHits = new RaycastHit[16];
         private bool cursorWasLocked;
         private Collider lastHitCollider;
         private IInteractable lastHitInteractable;
@@ -87,22 +89,32 @@ namespace DeadAcres.Player
 
         private InteractionContext BuildContext()
         {
-            if (eye == null
-                || !Physics.Raycast(new Ray(eye.position, eye.forward), out RaycastHit hit, reach, targetMask,
-                    QueryTriggerInteraction.Collide))
+            if (eye == null)
             {
                 return default;
             }
 
-            IInteractable interactable = GetInteractable(hit.collider);
-            if (interactable != null && interactable.CanInteract)
+            var ray = new Ray(eye.position, eye.forward);
+            Vector3 aimPoint;
+            if (TryRaycastIgnoringSelf(ray, out RaycastHit hit))
             {
-                return new InteractionContext(interactable);
+                IInteractable interactable = GetInteractable(hit.collider);
+                if (interactable != null && interactable.CanInteract)
+                {
+                    return new InteractionContext(interactable);
+                }
+
+                // Se empuja el punto un poco hacia dentro de lo que se golpeó: al apuntar al costado
+                // de una planta, la celda elegida es la de la planta y no la vecina.
+                aimPoint = hit.point - hit.normal * 0.02f;
+            }
+            else if (farm == null || !GroundAim.TryGetPoint(ray, farm.GroundHeight, reach, out aimPoint))
+            {
+                // Mirando más lejos que el alcance, la celda es la del borde del alcance.
+                return default;
             }
 
-            // Se empuja el punto un poco hacia dentro de lo que se golpeó: al apuntar al costado
-            // de una planta, la celda elegida es la de la planta y no la vecina.
-            if (farm == null || !farm.TryWorldToCell(hit.point - hit.normal * 0.02f, out Vector2Int cell))
+            if (farm == null || !farm.TryWorldToCell(aimPoint, out Vector2Int cell))
             {
                 return default;
             }
@@ -137,6 +149,25 @@ namespace DeadAcres.Player
             }
 
             return new InteractionContext(true, cell, primary, cropToPlant, hasPlot, plot.Stage, plot.Crop);
+        }
+
+        // Lo más cercano que toca el rayo sin contar los colliders del propio jugador: al moverse,
+        // el rayo puede salir desde fuera de su cápsula y chocar con ella.
+        private bool TryRaycastIgnoringSelf(Ray ray, out RaycastHit nearest)
+        {
+            nearest = default;
+            int count = Physics.RaycastNonAlloc(ray, rayHits, reach, targetMask, QueryTriggerInteraction.Collide);
+            float best = float.MaxValue;
+            for (int i = 0; i < count; i++)
+            {
+                if (rayHits[i].distance < best && !rayHits[i].collider.transform.IsChildOf(transform))
+                {
+                    best = rayHits[i].distance;
+                    nearest = rayHits[i];
+                }
+            }
+
+            return best < float.MaxValue;
         }
 
         // Solo se busca el componente cuando cambia el collider que se mira.
@@ -228,12 +259,6 @@ namespace DeadAcres.Player
 
         private void SkipDay()
         {
-            // La misma tecla recarga: si el arma en la mano necesita balas, eso va primero.
-            if (TryGetComponent(out PlayerWeapon weapon) && weapon.TryStartReload())
-            {
-                return;
-            }
-
             if (dayNight != null)
             {
                 dayNight.TrySkipDay();

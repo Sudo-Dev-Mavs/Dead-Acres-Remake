@@ -23,7 +23,7 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 | Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada), colocar, recoger (martillo), reparar (cinta) o comer | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
 | Hablar con Jack, recoger huevos y lana, abrir y cerrar puertas | F | X |
-| "Listo" (terminar el día) | R (si el arma en la mano no necesita recargar) | Start |
+| "Listo" (terminar el día) | Enter | Start |
 | Recargar | R | Y |
 | Inventario (mover entre hotbar y mochila) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
@@ -43,15 +43,15 @@ Se puede arar, plantar y colocar en todo el suelo, salvo en una franja de 3 bloq
 
 Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noche los cultivos crecen a una décima de la velocidad del día.
 
-De noche llegan zombis desde todas las direcciones. Van a por la caravana, persiguen al jugador si lo tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman.
+De noche llegan zombis desde todas las direcciones. Van a por la caravana, se desvían a por el jugador, los animales y las torretas si los tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman.
 
 El día dura 2 minutos. La noche dura como mucho 5: el reloj nunca se detiene a esperar a que mates al último. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad; si la despejas después, amanece en el acto. Los zombis que sigan vivos al amanecer empiezan a arder: se alejan de la granja y desaparecen al llegar al borde, salvo que te tengan cerca, en cuyo caso te atacan hasta que mueran ellos o tú. Con la partida terminada, Enter la reinicia.
 
 La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) suelta zombis fuertes desde la segunda noche: uno más cada noche. Aguantan cuatro veces más que uno normal, pegan más y son más lentos.
 
-Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y un par de cosas al azar (semillas, cinta, antorchas, muros, alguna luz). El más lejano guarda un rifle de caza; Jack también lo vende desde el cuarto día.
+Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y tres cosas al azar (semillas, cinta, antorchas, muros, alguna luz). Con suerte sale un arma, como mucho una por auto y nunca por encima de rareza Raro.
 
-Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando) cuando le faltan balas. El HUD muestra las balas junto al nombre del arma.
+Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando). El HUD muestra las balas junto al nombre del arma.
 
 Cada noche los zombis tienen un 20 % más de vida y pegan un 15 % más que la primera. Un solo golpe nunca quita más del 99 % de la vida máxima al jugador ni a la caravana.
 
@@ -59,7 +59,9 @@ Defensas: antorchas (luz sin energía), luces portátiles, torretas, espantapáj
 
 Energía: las luces portátiles y las torretas necesitan una fuente a su alcance (la caravana llega a 6 bloques; un generador, a 9; el generador pequeño, a 5) y a la que le quede capacidad: la caravana aguanta 10 de consumo, cada generador 20 y el pequeño 8. El HUD muestra "Energía usada/disponible"; si no alcanza, lo último que se colocó se queda sin energía (luz roja en la torreta).
 
-Torretas: normal (consume 2), doble cañón (4), escopeta (3, daña a todo lo que tenga delante), lanzallamas (4, muy corto alcance y daño continuo), francotiradora (3, largo alcance), automática (5, mucha cadencia) y eléctrica (6: el rayo salta hasta a 4 zombis más y pierde un 30 % de daño en cada salto). Repararlas con cinta cuesta además algo de oro, más cuanto mejor es la torreta. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
+Torretas: normal (consume 2), doble cañón (4), escopeta (3, daña a todo lo que tenga delante), lanzallamas (4, muy corto alcance y daño continuo), francotiradora (3, largo alcance), automática (5, mucha cadencia) y eléctrica (6: el rayo salta hasta a 4 zombis más y pierde un 30 % de daño en cada salto). Repararlas con cinta cuesta además algo de oro, más cuanto mejor es la torreta. Al acercarte a una torreta aparece un cartel con su vida, su consumo y si tiene energía.
+
+Al arar, plantar o colocar, el objetivo es el punto del suelo que miras; si miras más lejos de lo que alcanzas (6 m), queda en el borde del alcance en esa dirección. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
 

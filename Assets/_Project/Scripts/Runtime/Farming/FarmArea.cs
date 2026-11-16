@@ -40,6 +40,9 @@ namespace DeadAcres.Farming
         public CropCatalog Catalog => catalog;
         public float CellSize => world.Grid.CellSize;
 
+        /// <summary>Altura (Y) del suelo de la granja.</summary>
+        public float GroundHeight => world.Grid.WorldOrigin.y;
+
         private void Update()
         {
             DayNightClock clock = dayNight != null ? dayNight.Clock : null;
