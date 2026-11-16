@@ -9,6 +9,9 @@ namespace DeadAcres.Building
         [SerializeField] private FarmWorld world;
         [SerializeField, Min(0.5f)] private float radius = 9f;
 
+        [Tooltip("Mitad del tamaño de la fuente en X y Z: el radio se cuenta desde ese borde. Cero: desde el centro.")]
+        [SerializeField] private Vector2 halfExtents;
+
         private int sourceId;
 
         public float Radius => radius;
@@ -27,7 +30,7 @@ namespace DeadAcres.Building
                 return;
             }
 
-            sourceId = world.Power.Add(transform.position, radius);
+            sourceId = world.Power.Add(transform.position, radius, halfExtents);
         }
 
         private void OnDestroy()
@@ -38,10 +41,11 @@ namespace DeadAcres.Building
             }
         }
 
-        internal void Configure(FarmWorld farmWorld, float newRadius)
+        internal void Configure(FarmWorld farmWorld, float newRadius, Vector2 newHalfExtents = default)
         {
             world = farmWorld;
             radius = Mathf.Max(0.5f, newRadius);
+            halfExtents = newHalfExtents;
         }
     }
 }

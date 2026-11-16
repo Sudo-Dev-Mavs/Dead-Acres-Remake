@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DeadAcres.Building
 {
     /// <summary>
-    /// Rejilla de bloques de la zona jugable (64×64 en el slice). Solo guarda ocupación:
+    /// Rejilla de bloques de la zona jugable (todo el suelo en el greybox). Solo guarda ocupación:
     /// qué celdas están libres y qué objeto ocupa cada una. No sabe nada de GameObjects.
     /// </summary>
     public sealed class PlacementGrid
@@ -95,6 +95,39 @@ namespace DeadAcres.Building
             Fill(rect, id);
             footprints.Add(id, rect);
             return id;
+        }
+
+        /// <summary>
+        /// Celdas que toca la caja del mundo [min, max] (solo cuentan X y Z), con un margen de
+        /// celdas alrededor. No se recorta a la rejilla.
+        /// </summary>
+        public RectInt CellsCovering(Vector3 worldMin, Vector3 worldMax, int marginCells = 0)
+        {
+            // Un borde que cae justo en la línea entre dos celdas no cuenta como tocar la siguiente.
+            const float epsilon = 0.0001f;
+            Vector2Int min = WorldToCell(worldMin);
+            Vector2Int max = WorldToCell(new Vector3(worldMax.x - epsilon, worldMax.y, worldMax.z - epsilon));
+            max = Vector2Int.Max(min, max);
+            marginCells = Mathf.Max(0, marginCells);
+
+            return new RectInt(min.x - marginCells, min.y - marginCells,
+                max.x - min.x + 1 + 2 * marginCells, max.y - min.y + 1 + 2 * marginCells);
+        }
+
+        /// <summary>
+        /// Bloquea un rectángulo (zona donde no se construye). Lo que sobresalga de la rejilla
+        /// se ignora.
+        /// </summary>
+        /// <returns>Id para liberarlo, o <see cref="NoOccupant"/> si no queda nada dentro o ya hay algo.</returns>
+        public int Reserve(RectInt rect)
+        {
+            int xMin = Mathf.Max(rect.xMin, 0);
+            int zMin = Mathf.Max(rect.yMin, 0);
+            int xMax = Mathf.Min(rect.xMax, Width);
+            int zMax = Mathf.Min(rect.yMax, Depth);
+            if (xMax <= xMin || zMax <= zMin) return NoOccupant;
+
+            return Occupy(new RectInt(xMin, zMin, xMax - xMin, zMax - zMin));
         }
 
         public bool Release(int occupantId)
