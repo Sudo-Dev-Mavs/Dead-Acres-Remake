@@ -147,7 +147,7 @@ namespace DeadAcres.UI
 
             ClearRows(buyList);
             itemBuffer.Clear();
-            shopkeeper.Catalog.GetAvailable(day, itemBuffer);
+            itemBuffer.AddRange(shopkeeper.GetStock(day));
             buyPage = ListPaging.WrapPage(buyPage, itemBuffer.Count, RowsPerPage);
             for (int i = buyPage * RowsPerPage, row = 0; i < itemBuffer.Count && row < RowsPerPage; i++, row++)
             {
@@ -201,7 +201,11 @@ namespace DeadAcres.UI
 
         private void AddBuyRow(int index, ItemDefinition item, int day)
         {
-            RectTransform row = CreateRow(buyList, index, item, item.DisplayName, $"{item.BuyPrice} oro");
+            // Segunda línea, pequeña y con su color: la rareza.
+            string rarityColor = ColorUtility.ToHtmlStringRGB(ItemRarityInfo.GetColor(item.Rarity));
+            string title = $"<size=17>{item.DisplayName}</size>\n" +
+                           $"<size=12><color=#{rarityColor}>{ItemRarityInfo.GetName(item.Rarity)}</color></size>";
+            RectTransform row = CreateRow(buyList, index, item, title, $"{item.BuyPrice} oro");
 
             Button buy = UiFactory.CreateButton("Buy", row, font, "Comprar");
             UiFactory.Place(buy.GetComponent<RectTransform>(), UiFactory.MiddleRight, UiFactory.MiddleRight,

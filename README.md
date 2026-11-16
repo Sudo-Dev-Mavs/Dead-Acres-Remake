@@ -60,7 +60,7 @@ Animales: empiezas con una oveja y dos gallinas, cada una por su lado a unos 25-
 
 Más colocables: valla (baja: frena a los zombis y se dispara por encima), puerta (F la abre y la cierra), fogata (luz sin energía, más que la antorcha), pozo y molino (decoración; el molino ocupa 2×2).
 
-Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y vende semillas y muros; su catálogo crece cada día (si no cabe en pantalla, el botón "Más" pasa de página). Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
+Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y cada día trae 12 objetos distintos elegidos al azar (siempre al menos dos tipos de semillas). Cada objeto tiene una rareza —Común, Raro, Ultrararo, Épico o Legendario— según cuánto ayuda: cuanto más raro, menos veces aparece, aunque los raros se dejan ver más según pasan los días. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
 
 ## Estructura
 
@@ -73,7 +73,7 @@ Assets/_Project/
     Difficulty       DifficultyProfile (Easy/Medium/Hard/Hell)
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
-    Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila), ItemCatalog (búsqueda por Id)
+    Items            ItemDefinition, ItemRarity, ItemStack, Inventory (puro: hotbar 9 + mochila), ItemCatalog (búsqueda por Id)
     Audio            AudioLibrary (clips por función), GameAudio (escucha eventos), VolumeSetting, VolumeSteps (puro)
     Saving           SaveData (datos planos), SaveMapper (puro), SaveFile (JSON en disco), SaveGameController
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
@@ -82,7 +82,7 @@ Assets/_Project/
     Loot             LootTable (tirada con semilla), LootContainer (autos abandonados)
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
-    Economy          Wallet + ShopCommands (puros), ShopCatalog, Shopkeeper (Jack)
+    Economy          Wallet + ShopCommands + ShopStock (puros), ShopCatalog, Shopkeeper (Jack)
     Enemies          WaveRunner + WaveMath (puros), WaveConfig, WaveDirector, ZombieBrain
     Match            MatchState (puro) + MatchDirector: victoria y derrota
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
