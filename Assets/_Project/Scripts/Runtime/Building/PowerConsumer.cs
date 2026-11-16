@@ -12,7 +12,13 @@ namespace DeadAcres.Building
         [Tooltip("Vacío en objetos colocados: se toma del PlacedObject.")]
         [SerializeField] private FarmWorld world;
 
+        [Tooltip("Cuánta energía gasta. Si a ninguna fuente cercana le queda tanta, no funciona.")]
+        [SerializeField, Min(0f)] private float demand = 1f;
+
         private PowerMap map;
+        private int consumerId;
+
+        public float Demand => demand;
 
         /// <summary>Empieza en false; pasa a true (con evento) si hay una fuente en rango.</summary>
         public bool IsPowered { get; private set; }
@@ -33,6 +39,7 @@ namespace DeadAcres.Building
             }
 
             map.Changed += Refresh;
+            consumerId = map.AddConsumer(transform.position, demand);
             Refresh();
         }
 
@@ -41,12 +48,13 @@ namespace DeadAcres.Building
             if (map != null)
             {
                 map.Changed -= Refresh;
+                map.RemoveConsumer(consumerId);
             }
         }
 
         private void Refresh()
         {
-            bool powered = map.IsPowered(transform.position);
+            bool powered = map.IsConsumerPowered(consumerId);
             if (powered == IsPowered)
             {
                 return;
@@ -55,5 +63,7 @@ namespace DeadAcres.Building
             IsPowered = powered;
             PoweredChanged?.Invoke(powered);
         }
+
+        internal void ConfigureDemand(float newDemand) => demand = Mathf.Max(0f, newDemand);
     }
 }

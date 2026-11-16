@@ -52,7 +52,11 @@ Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez
 
 Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita.
 
-Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan a 6 bloques o menos de la caravana, o cerca de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
+Defensas: antorchas (luz sin energía), luces portátiles, torretas, espantapájaros con TNT (explota al acercarse un zombi) y muros.
+
+Energía: las luces portátiles y las torretas necesitan una fuente a su alcance (la caravana llega a 6 bloques; un generador, a 9) y a la que le quede capacidad: la caravana aguanta 10 de consumo y cada generador 20. El HUD muestra "Energía usada/disponible"; si no alcanza, lo último que se colocó se queda sin energía (luz roja en la torreta).
+
+Torretas: normal (consume 2), doble cañón (4), escopeta (3, daña a todo lo que tenga delante), lanzallamas (4, muy corto alcance y daño continuo), francotiradora (3, largo alcance), automática (5, mucha cadencia) y eléctrica (6: el rayo salta hasta a 4 zombis más y pierde un 30 % de daño en cada salto). Repararlas con cinta cuesta además algo de oro, más cuanto mejor es la torreta. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
 

@@ -131,9 +131,23 @@ namespace DeadAcres.Player
                 return;
             }
 
+            // Las defensas caras cuestan oro además de la cinta.
+            int cost = target.TryGetComponent(out PlacedObject placed) && placed.Item != null
+                ? placed.Item.RepairGoldCost
+                : 0;
+            if (cost > 0)
+            {
+                if (!TryGetComponent(out PlayerWallet wallet) || !wallet.Wallet.TrySpend(cost))
+                {
+                    Message?.Invoke($"Repararlo cuesta {cost} de oro");
+                    return;
+                }
+            }
+
             target.Heal(tape.RepairAmount);
             Inventory.RemoveAt(Inventory.SelectedIndex, 1);
-            Message?.Invoke($"Reparado: {Mathf.CeilToInt(target.Current)}/{Mathf.CeilToInt(target.Max)}");
+            string paid = cost > 0 ? $"  (-{cost} de oro)" : string.Empty;
+            Message?.Invoke($"Reparado: {Mathf.CeilToInt(target.Current)}/{Mathf.CeilToInt(target.Max)}{paid}");
         }
 
         internal void Configure(PlayerInputReader inputReader, PlayerInventory inventory, Transform eyeTransform)

@@ -51,6 +51,9 @@ namespace DeadAcres.EditorTools
         /// <summary>Alcance de la energía de la caravana, en metros desde su borde.</summary>
         private const float RvPowerRange = 6f;
 
+        /// <summary>Consumo que aguanta la caravana: unas pocas torretas sencillas. Para más, generadores.</summary>
+        private const float RvPowerCapacity = 10f;
+
         [MenuItem("Dead Acres/Crear escena greybox")]
         public static void Build()
         {
@@ -110,7 +113,7 @@ namespace DeadAcres.EditorTools
             world.Configure(data.Session, GridSize, GridSize, GridCellSize);
 
             rvHealth.gameObject.AddComponent<PowerSource>()
-                .Configure(world, RvPowerRange, new Vector2(RvSize.x * 0.5f, RvSize.z * 0.5f));
+                .Configure(world, RvPowerRange, new Vector2(RvSize.x * 0.5f, RvSize.z * 0.5f), RvPowerCapacity);
             rvHealth.gameObject.AddComponent<NoBuildZone>().Configure(world, RvNoBuildMargin);
             CreateNoBuildMarker();
             var farm = worldObject.AddComponent<FarmArea>();
