@@ -24,7 +24,7 @@ namespace DeadAcres.Economy
         /// <summary>(tendero, jugador que quiere comerciar).</summary>
         public event Action<Shopkeeper, GameObject> ShopRequested;
 
-        [Tooltip("Cuántos objetos distintos trae cada día.")]
+        [Tooltip("Cuántos objetos distintos trae como mucho. Los primeros días trae menos (ver ShopStock.GetSize).")]
         [SerializeField, Min(1)] private int stockSize = ShopStock.DefaultSize;
 
         [Tooltip("Semillas que nunca faltan en el surtido del día.")]
@@ -49,7 +49,8 @@ namespace DeadAcres.Economy
                 stockDay = dayNumber;
                 pool.Clear();
                 catalog.GetAvailable(dayNumber, pool);
-                ShopStock.Pick(pool, dayNumber, stockSeed, stockSize, guaranteedSeeds, stock);
+                int size = ShopStock.GetSize(dayNumber, stockSeed, stockSize);
+                ShopStock.Pick(pool, dayNumber, stockSeed, size, guaranteedSeeds, stock);
             }
 
             return stock;

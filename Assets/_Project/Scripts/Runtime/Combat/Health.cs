@@ -22,6 +22,9 @@ namespace DeadAcres.Combat
         [SerializeField, Min(1f)] private float baseMaxHealth = 100f;
         [SerializeField] private GameSession session;
 
+        [Tooltip("Fracción de la vida máxima que puede quitar un solo golpe. 0 = sin tope.")]
+        [SerializeField, Range(0f, 1f)] private float maxHitFraction;
+
         private float maxHealth;
         private float currentHealth;
 
@@ -67,6 +70,12 @@ namespace DeadAcres.Combat
                 damage = session.Difficulty.ScaleDamageTaken(rawDamage);
             }
 
+            // Tope por golpe (jugador y caravana): nada los tumba de un solo golpe estando enteros.
+            if (maxHitFraction > 0f)
+            {
+                damage = Mathf.Min(damage, maxHealth * maxHitFraction);
+            }
+
             damage = Mathf.Min(damage, currentHealth);
             currentHealth -= damage;
             HealthChanged?.Invoke(currentHealth, maxHealth);
@@ -103,6 +112,8 @@ namespace DeadAcres.Combat
             currentHealth = Mathf.Clamp(current, 1f, maxHealth);
             HealthChanged?.Invoke(currentHealth, maxHealth);
         }
+
+        internal void ConfigureHitCap(float fraction) => maxHitFraction = Mathf.Clamp01(fraction);
 
         internal void Configure(Faction newFaction, float newBaseMaxHealth, GameSession newSession)
         {

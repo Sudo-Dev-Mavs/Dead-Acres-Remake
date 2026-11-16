@@ -228,6 +228,12 @@ namespace DeadAcres.Player
 
         private void SkipDay()
         {
+            // La misma tecla recarga: si el arma en la mano necesita balas, eso va primero.
+            if (TryGetComponent(out PlayerWeapon weapon) && weapon.TryStartReload())
+            {
+                return;
+            }
+
             if (dayNight != null)
             {
                 dayNight.TrySkipDay();

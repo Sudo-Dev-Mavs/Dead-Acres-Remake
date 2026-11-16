@@ -17,6 +17,33 @@ namespace DeadAcres.Economy
         private static readonly float[] BaseWeight = { 100f, 55f, 28f, 12f, 4f };
         private static readonly float[] GrowthPerDay = { 0f, 0.15f, 0.30f, 0.50f, 0.80f };
 
+        /// <summary>Lo mínimo que trae la tienda un día en el que ya podría traerlo todo.</summary>
+        public const int MinLateSize = 6;
+
+        /// <summary>
+        /// Cuántos objetos trae ese día: 4 el primero, 6 el segundo, 9 el tercero. Desde el cuarto,
+        /// casi siempre el máximo, pero hay días flojos en los que trae entre 6 y uno menos.
+        /// </summary>
+        public static int GetSize(int dayNumber, int seed, int maxSize = DefaultSize)
+        {
+            int size;
+            if (dayNumber <= 1) size = 4;
+            else if (dayNumber == 2) size = 6;
+            else if (dayNumber == 3) size = 9;
+            else
+            {
+                var rng = new Random(unchecked(seed * 92821 + dayNumber * 31337 + 17));
+                size = rng.NextDouble() < FullStockChance || maxSize <= MinLateSize
+                    ? maxSize
+                    : rng.Next(MinLateSize, maxSize);
+            }
+
+            return Math.Max(1, Math.Min(size, maxSize));
+        }
+
+        /// <summary>Probabilidad, desde el cuarto día, de que el surtido venga completo.</summary>
+        public const double FullStockChance = 0.6;
+
         public static float GetWeight(ItemRarity rarity, int dayNumber)
         {
             int index = Math.Min(Math.Max((int)rarity, 0), BaseWeight.Length - 1);

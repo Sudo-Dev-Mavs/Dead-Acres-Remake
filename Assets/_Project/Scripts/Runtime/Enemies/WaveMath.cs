@@ -66,6 +66,15 @@ namespace DeadAcres.Enemies
             return (spawnIndex + 1) * strongCount / totalCount > spawnIndex * strongCount / totalCount;
         }
 
+        /// <summary>
+        /// Crecimiento lineal por noche: 1 la primera, 1 + <paramref name="perNight"/> la segunda...
+        /// Vale para la vida y para el daño de los zombis, en cualquier modo.
+        /// </summary>
+        public static float GetNightGrowth(float perNight, int nightNumber)
+        {
+            return 1f + Mathf.Max(0f, perNight) * (Mathf.Max(1, nightNumber) - 1);
+        }
+
         /// <summary>Multiplicador de vida extra por noche. Solo Endless; en Campaña siempre 1.</summary>
         public static float GetHealthMultiplier(GameModeRules rules, int nightNumber)
         {

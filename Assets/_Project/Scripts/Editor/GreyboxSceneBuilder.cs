@@ -131,6 +131,11 @@ namespace DeadAcres.EditorTools
             Shopkeeper jack = CreateShopkeeper(data);
 
             var playerHealth = interactor.GetComponent<Health>();
+
+            // Por mucho que crezca el daño de los zombis, un solo golpe nunca quita más del 99 %
+            // de la vida máxima del jugador ni de la caravana.
+            playerHealth.ConfigureHitCap(0.99f);
+            rvHealth.ConfigureHitCap(0.99f);
             var playerInput = interactor.GetComponent<PlayerInputReader>();
 
             // Los zombis aparecen en un círculo alrededor de la caravana y van a por ella.

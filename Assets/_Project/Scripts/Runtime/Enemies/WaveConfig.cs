@@ -50,6 +50,15 @@ namespace DeadAcres.Enemies
 
         [SerializeField, Min(0)] private int strongMaxCount = 8;
 
+        [Header("Crecimiento por noche (todos los modos)")]
+        [Tooltip("Vida extra de los zombis por cada noche que pasa (0,2 = +20 % de la base por noche).")]
+        [SerializeField, Min(0f)] private float healthGrowthPerNight = 0.2f;
+
+        [Tooltip("Daño extra de los zombis por cada noche que pasa.")]
+        [SerializeField, Min(0f)] private float damageGrowthPerNight = 0.15f;
+
+        public float HealthGrowthPerNight => healthGrowthPerNight;
+        public float DamageGrowthPerNight => damageGrowthPerNight;
         public int StrongFromNight => strongFromNight;
         public int StrongPerNight => strongPerNight;
         public int StrongMaxCount => strongMaxCount;
@@ -71,6 +80,12 @@ namespace DeadAcres.Enemies
             extraPerNight = Mathf.Max(0, perNight);
             initialDelay = Mathf.Max(0f, delay);
             spawnWindow = Mathf.Max(1f, window);
+        }
+
+        internal void ConfigureGrowth(float healthPerNight, float damagePerNight)
+        {
+            healthGrowthPerNight = Mathf.Max(0f, healthPerNight);
+            damageGrowthPerNight = Mathf.Max(0f, damagePerNight);
         }
 
         internal void ConfigureStrong(int fromNight, int perNight, int maxCount)

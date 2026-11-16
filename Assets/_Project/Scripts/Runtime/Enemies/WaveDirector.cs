@@ -51,6 +51,7 @@ namespace DeadAcres.Enemies
         private readonly List<Health> animals = new List<Health>(16);
         private int animalsFrame = -1;
         private float healthMultiplier = 1f;
+        private float damageMultiplier = 1f;
         private int waveCount;
         private bool spawningReinforcements;
         private int strongCount;
@@ -129,7 +130,10 @@ namespace DeadAcres.Enemies
             }
 
             var rules = session != null ? session.Mode : null;
-            healthMultiplier = WaveMath.GetHealthMultiplier(rules, change.DayNumber);
+            // Cada noche aguantan y pegan más; en Endless, además, la vida crece de forma compuesta.
+            healthMultiplier = WaveMath.GetHealthMultiplier(rules, change.DayNumber)
+                               * WaveMath.GetNightGrowth(config.HealthGrowthPerNight, change.DayNumber);
+            damageMultiplier = WaveMath.GetNightGrowth(config.DamageGrowthPerNight, change.DayNumber);
             waveCount = WaveMath.GetEnemyCount(config, rules, change.DayNumber);
             strongCount = strongZombiePrefab != null && crypt != null
                 ? WaveMath.GetStrongCount(config, change.DayNumber)
@@ -212,6 +216,7 @@ namespace DeadAcres.Enemies
         private void Register(ZombieBrain zombie)
         {
             zombie.Initialize(primaryTarget, GetNearbyTargets());
+            zombie.SetDamageMultiplier(damageMultiplier);
 
             var health = zombie.GetComponent<Health>();
             health.ResetHealth(healthMultiplier);

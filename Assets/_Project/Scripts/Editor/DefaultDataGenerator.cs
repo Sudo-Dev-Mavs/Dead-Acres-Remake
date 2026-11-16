@@ -122,6 +122,10 @@ namespace DeadAcres.EditorTools
 
             // La cripta suelta zombis fuertes desde la segunda noche: uno más cada noche, hasta 8.
             data.Waves.ConfigureStrong(fromNight: 2, perNight: 1, maxCount: 8);
+
+            // Cada noche los zombis tienen un 20 % más de vida y pegan un 15 % más que la primera
+            // (noche 5: 108 de vida y 12,8 de daño el normal; 432 y 32 el fuerte).
+            data.Waves.ConfigureGrowth(healthPerNight: 0.2f, damagePerNight: 0.15f);
             EditorUtility.SetDirty(data.Waves);
 
             // Zombi normal: 60 de vida, tres tiros de pistola. El fuerte aguanta cuatro veces más,
@@ -173,14 +177,20 @@ namespace DeadAcres.EditorTools
             ItemDefinition tape = CreateItem("consumable_duct_tape", "Cinta americana", ItemKind.Consumable, 20,
                 new Color(0.70f, 0.70f, 0.72f));
             tape.ConfigureRepair(60f);
-            tape.ConfigurePrices(buy: 15, sell: 0);
+            tape.ConfigurePrices(buy: 25, sell: 0);
 
             ItemDefinition torch = CreatePlaceableItem("placeable_torch", "Antorcha", new Color(1f, 0.55f, 0.15f),
                 CreateTorchPrefab(data.Session), buy: 10, sell: 4);
             ItemDefinition lamp = CreatePlaceableItem("placeable_lamp", "Luz portátil", new Color(0.95f, 0.95f, 0.80f),
                 CreateLampPrefab(data.Session), buy: 40, sell: 15);
+            // Generador: 9 m de alcance y 20 de capacidad. El pequeño: 5 m y 8, más barato y más común.
             ItemDefinition generator = CreatePlaceableItem("placeable_generator", "Generador", new Color(0.80f, 0.65f, 0.15f),
-                CreateGeneratorPrefab(data.Session), buy: 150, sell: 60);
+                CreateGeneratorPrefab(data.Session, "Generator", 200f, 9f, 20f, 0.9f, new Color(0.80f, 0.65f, 0.15f)),
+                buy: 150, sell: 60);
+            ItemDefinition smallGenerator = CreatePlaceableItem("placeable_generator_small", "Generador pequeño",
+                new Color(0.70f, 0.60f, 0.30f),
+                CreateGeneratorPrefab(data.Session, "GeneratorSmall", 120f, 5f, 8f, 0.6f, new Color(0.70f, 0.60f, 0.30f)),
+                buy: 70, sell: 28);
             ItemDefinition tnt = CreatePlaceableItem("placeable_tnt_scarecrow", "Espantapájaros TNT", new Color(0.85f, 0.15f, 0.15f),
                 CreateTntScarecrowPrefab(data.Session), buy: 60, sell: 20);
 
@@ -242,46 +252,48 @@ namespace DeadAcres.EditorTools
             ItemDefinition pistol = CreateItem("weapon_pistol", "Pistola", ItemKind.Weapon, 1,
                 new Color(0.25f, 0.25f, 0.28f));
             pistol.ConfigureWeapon(damage: 20f, range: 60f, interval: 0.25f);
+            pistol.ConfigureMagazine(12, 1.2f);
 
             // El arma mejor: aparece en el auto más lejano y, con suerte, en la tienda.
             ItemDefinition rifle = CreateWeapon("weapon_rifle", "Rifle de caza", ItemRarity.UltraRare, 300,
-                damage: 60f, range: 90f, interval: 0.7f);
+                damage: 60f, range: 90f, interval: 0.7f, magazine: 5, reload: 2.5f);
 
-            // Resto del arsenal. Todas con munición infinita por ahora: lo que las distingue es
-            // daño por bala, cadencia, alcance y precisión. Entre paréntesis, daño por segundo
-            // aproximado disparando sin parar (la pistola inicial ronda 80).
+            // Resto del arsenal. La munición total es infinita, pero cada arma tiene su cargador y
+            // su tiempo de recarga. Los precios que se escriben aquí son la base: CreateWeapon les
+            // aplica el recargo de armas. El comentario de cada línea es el daño por segundo
+            // aproximado sin contar recargas (la pistola inicial ronda 80).
             //
             // Pistolas y subfusiles: poco daño por bala, mucha cadencia, corto alcance.
             CreateWeapon("weapon_auto_pistol", "Pistola automática", ItemRarity.Rare, 180,
-                damage: 14f, range: 50f, interval: 0.11f, automatic: true, spread: 2.5f);          // ~127
+                damage: 14f, range: 50f, interval: 0.11f, automatic: true, spread: 2.5f, magazine: 18, reload: 1.4f);          // ~127
             CreateWeapon("weapon_magnum", "Revólver Magnum .44", ItemRarity.UltraRare, 320,
-                damage: 75f, range: 70f, interval: 0.6f);                                           // ~125, un zombi normal por bala
+                damage: 75f, range: 70f, interval: 0.6f, magazine: 6, reload: 2.2f);                                           // ~125, un zombi normal por bala
             CreateWeapon("weapon_uzi", "Uzi", ItemRarity.Rare, 260,
-                damage: 11f, range: 40f, interval: 0.07f, automatic: true, spread: 3.5f);          // ~157
+                damage: 11f, range: 40f, interval: 0.07f, automatic: true, spread: 3.5f, magazine: 32, reload: 1.8f);          // ~157
 
             // Escopetas: varios perdigones por disparo; de cerca rinden mucho, de lejos casi nada.
             CreateWeapon("weapon_shotgun_single", "Escopeta monotiro", ItemRarity.Common, 150,
-                damage: 14f, range: 22f, interval: 1.3f, pellets: 8, spread: 6f);                  // ~86
+                damage: 14f, range: 22f, interval: 0.3f, pellets: 8, spread: 6f, magazine: 1, reload: 1.2f);                  // ~86
             CreateWeapon("weapon_shotgun_pump", "Escopeta de corredera", ItemRarity.Rare, 280,
-                damage: 14f, range: 24f, interval: 0.85f, pellets: 8, spread: 5.5f);               // ~132
+                damage: 14f, range: 24f, interval: 0.85f, pellets: 8, spread: 5.5f, magazine: 6, reload: 3.0f);               // ~132
             CreateWeapon("weapon_shotgun_double", "Escopeta de doble cañón", ItemRarity.UltraRare, 380,
-                damage: 13f, range: 20f, interval: 1.5f, pellets: 16, spread: 8f);                 // ~139, 208 de golpe
+                damage: 13f, range: 20f, interval: 0.25f, pellets: 8, spread: 7f, magazine: 2, reload: 2.0f);                 // dos cartuchos seguidos y a recargar
             CreateWeapon("weapon_shotgun_semi", "Escopeta semiautomática", ItemRarity.Epic, 520,
-                damage: 13f, range: 24f, interval: 0.45f, pellets: 8, spread: 5.5f);               // ~231
+                damage: 13f, range: 24f, interval: 0.45f, pellets: 8, spread: 5.5f, magazine: 8, reload: 3.2f);               // ~231
             CreateWeapon("weapon_shotgun_auto", "Escopeta automática", ItemRarity.Legendary, 800,
-                damage: 12f, range: 22f, interval: 0.28f, automatic: true, pellets: 7, spread: 6f); // ~300
+                damage: 12f, range: 22f, interval: 0.28f, automatic: true, pellets: 7, spread: 6f, magazine: 12, reload: 3.5f); // ~300
 
             // Rifles de asalto: automáticos, precisos y de largo alcance.
             CreateWeapon("weapon_ak47", "AK-47", ItemRarity.Epic, 650,
-                damage: 28f, range: 70f, interval: 0.11f, automatic: true, spread: 2f);            // ~255
+                damage: 28f, range: 70f, interval: 0.11f, automatic: true, spread: 2f, magazine: 30, reload: 2.4f);            // ~255
             CreateWeapon("weapon_m4", "M4", ItemRarity.Epic, 680,
-                damage: 24f, range: 75f, interval: 0.085f, automatic: true, spread: 1.2f);         // ~282
+                damage: 24f, range: 75f, interval: 0.085f, automatic: true, spread: 1.2f, magazine: 30, reload: 2.2f);         // ~282
             CreateWeapon("weapon_xm7", "SIG XM7", ItemRarity.Legendary, 950,
-                damage: 38f, range: 85f, interval: 0.1f, automatic: true, spread: 1f);             // ~380
+                damage: 38f, range: 85f, interval: 0.1f, automatic: true, spread: 1f, magazine: 20, reload: 2.6f);             // ~380
 
             // Francotirador pesado: tumba a un zombi fuerte (240) de un tiro, pero dispara despacio.
             CreateWeapon("weapon_heavy_sniper", "Francotirador pesado", ItemRarity.Legendary, 900,
-                damage: 260f, range: 150f, interval: 1.6f);                                         // ~162
+                damage: 260f, range: 150f, interval: 1.6f, magazine: 5, reload: 3.5f);                                         // ~162
 
             // id, nombre, color maduro, s. hasta 1.ª cosecha, s. de rebrote, rendimiento mín-máx, altura,
             // precio de la semilla, precio de venta del fruto.
@@ -369,7 +381,7 @@ namespace DeadAcres.EditorTools
 
             // Rareza del resto: lo que no se nombra aquí es común (muro, valla, antorcha, cinta,
             // martillo, pozo y las herramientas iniciales).
-            SetRarity(ItemRarity.Rare, gate, campfire, lamp, windmill, chicken, egg);
+            SetRarity(ItemRarity.Rare, gate, campfire, lamp, windmill, chicken, egg, smallGenerator);
             SetRarity(ItemRarity.UltraRare, tnt, sheep, wool);
             SetRarity(ItemRarity.Epic, generator);
 
@@ -415,12 +427,23 @@ namespace DeadAcres.EditorTools
             return clip;
         }
 
+        /// <summary>Recargo sobre el precio base de armas y torretas (1,5 = un 50 % más caras).</summary>
+        private const float CombatPriceFactor = 1.5f;
+
+        /// <summary>Precio con el recargo, redondeado a múltiplos de 5.</summary>
+        private static int WithCombatMarkup(int basePrice)
+        {
+            return Mathf.RoundToInt(basePrice * CombatPriceFactor / 5f) * 5;
+        }
+
         private static ItemDefinition CreateWeapon(string id, string name, ItemRarity rarity, int price, float damage,
-            float range, float interval, bool automatic = false, int pellets = 1, float spread = 0f)
+            float range, float interval, bool automatic = false, int pellets = 1, float spread = 0f, int magazine = 0,
+            float reload = 0f)
         {
             ItemDefinition weapon = CreateItem(id, name, ItemKind.Weapon, 1, new Color(0.25f, 0.25f, 0.28f));
             weapon.ConfigureWeapon(damage, range, interval, automatic, pellets, spread);
-            weapon.ConfigurePrices(buy: price, sell: 0);
+            weapon.ConfigureMagazine(magazine, reload);
+            weapon.ConfigurePrices(buy: WithCombatMarkup(price), sell: 0);
             weapon.ConfigureRarity(rarity);
             return weapon;
         }
@@ -447,6 +470,7 @@ namespace DeadAcres.EditorTools
             // tiene que volver a su valor por defecto.
             item.ConfigureRarity(ItemRarity.Common);
             item.ConfigureRepairCost(0);
+            item.ConfigureMagazine(0, 0f);
             EditorUtility.SetDirty(item);
             createdItems.Add(item);
             return item;
@@ -631,11 +655,12 @@ namespace DeadAcres.EditorTools
         }
 
         /// <summary>Generador: fuente de energía que se puede colocar lejos de la caravana.</summary>
-        private static GameObject CreateGeneratorPrefab(GameSession session)
+        private static GameObject CreateGeneratorPrefab(GameSession session, string prefabName, float maxHealth,
+            float radius, float capacity, float size, Color color)
         {
-            GameObject root = NewPlaceable("Generator", 200f, session);
-            AddBox(root, "Body", new Vector3(0f, 0.45f, 0f), new Vector3(0.9f, 0.9f, 0.9f), "Generator", new Color(0.80f, 0.65f, 0.15f));
-            root.AddComponent<PowerSource>().Configure(null, 9f);
+            GameObject root = NewPlaceable(prefabName, maxHealth, session);
+            AddBox(root, "Body", new Vector3(0f, size * 0.5f, 0f), new Vector3(size, size, size), prefabName, color);
+            root.AddComponent<PowerSource>().Configure(null, radius, default, capacity);
             return SavePlaceable(root);
         }
 
@@ -674,7 +699,8 @@ namespace DeadAcres.EditorTools
             GameObject prefab = CreateTurretPrefab(session, prefabName, maxHealth, powerDemand, headColor, beamColor,
                 barrelLength, barrelWidth, configureStats);
 
-            ItemDefinition item = CreatePlaceableItem(id, name, headColor, prefab, buy: price, sell: price * 2 / 5);
+            int finalPrice = WithCombatMarkup(price);
+            ItemDefinition item = CreatePlaceableItem(id, name, headColor, prefab, buy: finalPrice, sell: finalPrice * 2 / 5);
             item.ConfigureRarity(rarity);
             item.ConfigureRepairCost(repairCost);
             return item;

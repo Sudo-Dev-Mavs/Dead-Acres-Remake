@@ -48,6 +48,12 @@ namespace DeadAcres.Items
         [Tooltip("Apertura del cono de dispersión, en grados desde el centro.")]
         [SerializeField, Min(0f)] private float spreadDegrees;
 
+        [Tooltip("Disparos por cargador. 0 = sin cargador. La munición total es infinita.")]
+        [SerializeField, Min(0)] private int magazineSize;
+
+        [Tooltip("Segundos que tarda en recargar.")]
+        [SerializeField, Min(0f)] private float reloadSeconds;
+
         [Tooltip("Cuánto beneficia al jugador: decide con qué frecuencia lo trae la tienda.")]
         [SerializeField] private ItemRarity rarity = ItemRarity.Common;
 
@@ -79,6 +85,8 @@ namespace DeadAcres.Items
         public bool IsAutomatic => automatic;
         public int Pellets => pellets;
         public float SpreadDegrees => spreadDegrees;
+        public int MagazineSize => magazineSize;
+        public float ReloadSeconds => reloadSeconds;
 
         public float RepairAmount => repairAmount;
         public float HealAmount => healAmount;
@@ -117,6 +125,12 @@ namespace DeadAcres.Items
             automatic = isAutomatic;
             pellets = Mathf.Max(1, pelletCount);
             spreadDegrees = Mathf.Max(0f, spread);
+        }
+
+        internal void ConfigureMagazine(int size, float seconds)
+        {
+            magazineSize = Mathf.Max(0, size);
+            reloadSeconds = Mathf.Max(0f, seconds);
         }
 
         internal void ConfigureRepair(float amount) => repairAmount = Mathf.Max(0f, amount);
