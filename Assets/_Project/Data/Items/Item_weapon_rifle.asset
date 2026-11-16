@@ -15,7 +15,7 @@ MonoBehaviour:
   id: weapon_rifle
   displayName: Rifle de caza
   icon: {fileID: 0}
-  tint: {r: 0.4, g: 0.28, b: 0.18, a: 1}
+  tint: {r: 0.25, g: 0.25, b: 0.28, a: 1}
   kind: 1
   maxStack: 1
   tool: 0
@@ -24,6 +24,9 @@ MonoBehaviour:
   weaponDamage: 60
   weaponRange: 90
   fireInterval: 0.7
+  automatic: 0
+  pellets: 1
+  spreadDegrees: 0
   rarity: 2
   healAmount: 0
   repairAmount: 0

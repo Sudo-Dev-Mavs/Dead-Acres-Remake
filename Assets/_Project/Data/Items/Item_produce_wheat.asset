@@ -24,6 +24,9 @@ MonoBehaviour:
   weaponDamage: 20
   weaponRange: 60
   fireInterval: 0.25
+  automatic: 0
+  pellets: 1
+  spreadDegrees: 0
   rarity: 0
   healAmount: 2
   repairAmount: 0
