@@ -6,7 +6,8 @@ namespace DeadAcres.Building
 {
     /// <summary>
     /// Fuentes de energía de la partida (caravana, generadores) en C# puro. Un aparato tiene
-    /// energía si está dentro del radio de alguna fuente, medido en horizontal.
+    /// energía si está dentro del radio de alguna fuente, medido en horizontal. Si la fuente
+    /// tiene tamaño (la caravana), el radio se cuenta desde su borde y no desde su centro.
     /// </summary>
     public sealed class PowerMap
     {
@@ -15,6 +16,7 @@ namespace DeadAcres.Building
             public int Id;
             public Vector3 Position;
             public float Radius;
+            public Vector2 HalfExtents;
         }
 
         private readonly List<Source> sources = new List<Source>(8);
@@ -25,11 +27,18 @@ namespace DeadAcres.Building
 
         public int SourceCount => sources.Count;
 
+        /// <param name="halfExtents">Mitad del tamaño de la fuente en X y Z. Cero: un punto.</param>
         /// <returns>Id para quitar la fuente después.</returns>
-        public int Add(Vector3 position, float radius)
+        public int Add(Vector3 position, float radius, Vector2 halfExtents = default)
         {
             int id = nextId++;
-            sources.Add(new Source { Id = id, Position = position, Radius = Mathf.Max(0f, radius) });
+            sources.Add(new Source
+            {
+                Id = id,
+                Position = position,
+                Radius = Mathf.Max(0f, radius),
+                HalfExtents = new Vector2(Mathf.Max(0f, halfExtents.x), Mathf.Max(0f, halfExtents.y)),
+            });
             Changed?.Invoke();
             return id;
         }
@@ -53,8 +62,9 @@ namespace DeadAcres.Building
         {
             for (int i = 0; i < sources.Count; i++)
             {
-                float dx = point.x - sources[i].Position.x;
-                float dz = point.z - sources[i].Position.z;
+                // Distancia al rectángulo de la fuente: dentro de él vale 0.
+                float dx = Mathf.Max(0f, Mathf.Abs(point.x - sources[i].Position.x) - sources[i].HalfExtents.x);
+                float dz = Mathf.Max(0f, Mathf.Abs(point.z - sources[i].Position.z) - sources[i].HalfExtents.y);
                 if (dx * dx + dz * dz <= sources[i].Radius * sources[i].Radius)
                 {
                     return true;

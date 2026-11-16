@@ -31,9 +31,20 @@ namespace DeadAcres.EditorTools
         private const string ScenePath = SceneFolder + "/Greybox.unity";
 
         // FarmWorld marca la esquina (0,0) de la rejilla: 32×32 celdas de 1 m delante del jugador.
-        private static readonly Vector3 GridOrigin = new Vector3(-16f, 0f, 4f);
-        private const int GridSize = 32;
+        // La rejilla cubre todo el suelo (300×300 m): se puede arar y colocar en cualquier parte,
+        // salvo alrededor de la caravana.
+        private const int GridSize = 300;
         private const float GridCellSize = 1f;
+        private static readonly Vector3 GridOrigin = new Vector3(-GridSize * 0.5f, 0f, -GridSize * 0.5f);
+
+        private static readonly Vector3 RvCenter = new Vector3(-7f, 1.4f, -2f);
+        private static readonly Vector3 RvSize = new Vector3(2.6f, 2.8f, 7f);
+
+        /// <summary>Celdas alrededor de la caravana en las que no se puede poner nada.</summary>
+        private const int RvNoBuildMargin = 3;
+
+        /// <summary>Alcance de la energía de la caravana, en metros desde su borde.</summary>
+        private const float RvPowerRange = 6f;
 
         [MenuItem("Dead Acres/Crear escena greybox")]
         public static void Build()
@@ -90,8 +101,10 @@ namespace DeadAcres.EditorTools
             var world = worldObject.AddComponent<FarmWorld>();
             world.Configure(data.Session, GridSize, GridSize, GridCellSize);
 
-            // La caravana da energía a 14 m: alcanza la esquina de la rejilla más cercana.
-            rvHealth.gameObject.AddComponent<PowerSource>().Configure(world, 14f);
+            rvHealth.gameObject.AddComponent<PowerSource>()
+                .Configure(world, RvPowerRange, new Vector2(RvSize.x * 0.5f, RvSize.z * 0.5f));
+            rvHealth.gameObject.AddComponent<NoBuildZone>().Configure(world, RvNoBuildMargin);
+            CreateNoBuildMarker();
             var farm = worldObject.AddComponent<FarmArea>();
             farm.Configure(world, data.Crops, cycle);
 
@@ -190,15 +203,15 @@ namespace DeadAcres.EditorTools
         }
 
         /// <summary>
-        /// Animales de regalo: una oveja y dos gallinas dentro de la rejilla, cerca de donde
-        /// empieza el jugador, para que se les pueda hacer un corral. El resto se compra.
+        /// Animales de regalo: una oveja y dos gallinas a unos 25 m de la caravana. Se les puede
+        /// hacer un corral ahí o traerlos con el martillo. El resto se compra.
         /// </summary>
         private static void CreateAnimals(DefaultDataGenerator.GeneratedData data)
         {
             var parent = new GameObject("Animals").transform;
-            SpawnAnimal(data.SheepItem, parent, new Vector3(7.5f, 0f, 8.5f));
-            SpawnAnimal(data.ChickenItem, parent, new Vector3(5.5f, 0f, 7.5f));
-            SpawnAnimal(data.ChickenItem, parent, new Vector3(9.5f, 0f, 7.5f));
+            SpawnAnimal(data.SheepItem, parent, new Vector3(11.5f, 0f, 16.5f));
+            SpawnAnimal(data.ChickenItem, parent, new Vector3(9.5f, 0f, 14.5f));
+            SpawnAnimal(data.ChickenItem, parent, new Vector3(13.5f, 0f, 14.5f));
         }
 
         private static void SpawnAnimal(ItemDefinition item, Transform parent, Vector3 position)
@@ -256,24 +269,26 @@ namespace DeadAcres.EditorTools
             var props = new GameObject("Props").transform;
 
             // La caravana: lo que se defiende de noche. Si llega a cero, se pierde.
-            GameObject rv = CreateBox("RV (placeholder)", props, material, new Vector3(-7f, 1.4f, -2f),
-                new Vector3(2.6f, 2.8f, 7f));
+            GameObject rv = CreateBox("RV (placeholder)", props, material, RvCenter, RvSize);
             var rvHealth = rv.AddComponent<Health>();
             rvHealth.Configure(Faction.PlayerSide, 600f, data.Session);
 
-            // Postes en las esquinas de la zona cultivable, como referencia visual.
-            float side = GridSize * GridCellSize;
-            for (int x = 0; x <= 1; x++)
-            {
-                for (int z = 0; z <= 1; z++)
-                {
-                    // Justo por fuera de la rejilla, para no tapar ninguna celda.
-                    var offset = new Vector3(x == 0 ? -0.25f : side + 0.25f, 0.7f, z == 0 ? -0.25f : side + 0.25f);
-                    CreateBox("Grid corner post", props, material, GridOrigin + offset, new Vector3(0.3f, 1.4f, 0.3f));
-                }
-            }
-
             return rvHealth;
+        }
+
+        /// <summary>
+        /// Losa a ras de suelo que marca dónde no se puede construir: las mismas celdas que
+        /// reserva <see cref="NoBuildZone"/> en la caravana.
+        /// </summary>
+        private static void CreateNoBuildMarker()
+        {
+            var grid = new PlacementGrid(GridSize, GridSize, GridOrigin, GridCellSize);
+            RectInt cells = grid.CellsCovering(RvCenter - RvSize * 0.5f, RvCenter + RvSize * 0.5f, RvNoBuildMargin);
+
+            Material material = EditorPaths.LoadOrCreateMaterial("Greybox_NoBuild", new Color(0.42f, 0.38f, 0.30f));
+            GameObject marker = CreateDecoration("No-build zone",
+                new Vector3(cells.width * GridCellSize, 0.04f, cells.height * GridCellSize), material);
+            marker.transform.position = grid.RectCenterToWorld(cells) + Vector3.up * 0.02f;
         }
 
         /// <summary>Caja visual sin collider (no bloquea disparos ni el rayo de interacción).</summary>

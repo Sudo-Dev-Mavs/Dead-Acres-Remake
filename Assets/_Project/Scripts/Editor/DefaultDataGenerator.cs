@@ -115,6 +115,7 @@ namespace DeadAcres.EditorTools
 
             ItemDefinition hammer = CreateItem("tool_hammer", "Martillo", ItemKind.Tool, 1,
                 new Color(0.55f, 0.45f, 0.40f), ToolKind.Hammer);
+            hammer.ConfigurePrices(buy: 15, sell: 0);
 
             // 60 de vida por uso: un muro (150) se repara entero con tres.
             ItemDefinition tape = CreateItem("consumable_duct_tape", "Cinta americana", ItemKind.Consumable, 20,
@@ -213,6 +214,7 @@ namespace DeadAcres.EditorTools
             {
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 1),
+                new KeyValuePair<ItemDefinition, int>(hammer, 1),
                 new KeyValuePair<ItemDefinition, int>(wall, 1),
                 new KeyValuePair<ItemDefinition, int>(fence, 1),
                 new KeyValuePair<ItemDefinition, int>(gate, 1),
@@ -246,18 +248,9 @@ namespace DeadAcres.EditorTools
                 new KeyValuePair<ItemDefinition, int>(pistol, 1),
                 new KeyValuePair<ItemDefinition, int>(hoe, 1),
                 new KeyValuePair<ItemDefinition, int>(sickle, 1),
-                new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 8),
-                new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 4),
-                new KeyValuePair<ItemDefinition, int>(wall, 12),
-                new KeyValuePair<ItemDefinition, int>(hammer, 1),
-                new KeyValuePair<ItemDefinition, int>(tape, 3),
-                new KeyValuePair<ItemDefinition, int>(torch, 4),
 
-                // Lo que sigue cae en la mochila (Tab). Está para poder probar las defensas sin
-                // tener que ahorrar primero; quitarlo cuando la economía esté afinada.
-                new KeyValuePair<ItemDefinition, int>(turret, 1),
-                new KeyValuePair<ItemDefinition, int>(lamp, 1),
-                new KeyValuePair<ItemDefinition, int>(tnt, 1),
+                // Solo las semillas más baratas: todo lo demás se compra a Jack.
+                new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 8),
             };
         }
 

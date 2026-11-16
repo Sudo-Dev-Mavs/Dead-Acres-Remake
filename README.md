@@ -29,17 +29,19 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
 
+Se puede arar, plantar y colocar en todo el suelo, salvo en una franja de 3 bloques alrededor de la caravana (la losa marrón). Empiezas solo con la pistola, la azada, la hoz dentada y unas semillas de fresa: el martillo, los muros y todo lo demás se compra a Jack.
+
 Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noche los cultivos crecen a una décima de la velocidad del día.
 
 De noche llegan zombis desde todas las direcciones. Van a por la caravana, persiguen al jugador si lo tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman.
 
 La noche dura entre 2 y 5 minutos. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad. Con la partida terminada, Enter la reinicia.
 
-Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan cerca de la caravana o de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado y la cinta americana lo repara.
+Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan a 6 bloques o menos de la caravana, o cerca de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
 
-Animales: empiezas con una oveja y dos gallinas dentro de la zona cultivable; Jack vende más. Cuando tienen producto listo les aparece un cubo amarillo encima: F para recoger el huevo o la lana. Son colocables: el martillo los recoge para moverlos. Pasean cerca de donde se colocan sin atravesar vallas ni muros, y de noche los zombis los atacan si pasan cerca, así que conviene hacerles un corral.
+Animales: empiezas con una oveja y dos gallinas a unos 25 m de la caravana; Jack vende más. Cuando tienen producto listo les aparece un cubo amarillo encima: F para recoger el huevo o la lana. Son colocables: el martillo los recoge para moverlos. Pasean cerca de donde se colocan sin atravesar vallas ni muros, y de noche los zombis los atacan si pasan cerca, así que conviene hacerles un corral.
 
 Árboles frutales (manzano, naranjo, limonero): se plantan como cualquier semilla, tardan más y dan más fruta.
 
@@ -60,7 +62,7 @@ Assets/_Project/
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
     Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
-                     PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, Gate, Spinner
+                     PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
     Animals          ProductionTimer (puro) + Animal
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
