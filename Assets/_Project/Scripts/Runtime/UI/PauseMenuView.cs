@@ -1,3 +1,4 @@
+using DeadAcres.Audio;
 using DeadAcres.DayNight;
 using DeadAcres.Match;
 using DeadAcres.Player;
@@ -21,6 +22,7 @@ namespace DeadAcres.UI
 
         private GameObject panel;
         private Text message;
+        private Button volumeButton;
         private bool inputWasEnabled;
 
         public bool IsOpen { get; private set; }
@@ -92,6 +94,8 @@ namespace DeadAcres.UI
             UiModal.Exit(playerInput, dayNight);
         }
 
+        private void CycleVolume() => MenuUi.SetLabel(volumeButton, VolumeSteps.Format(VolumeSetting.Cycle()));
+
         private void GoToMenu()
         {
             if (!Application.CanStreamedLevelBeLoaded(menuSceneName))
@@ -129,7 +133,7 @@ namespace DeadAcres.UI
             panel = dim.gameObject;
 
             Image window = UiFactory.CreateImage("Window", dim.transform, new Color(0.12f, 0.13f, 0.15f, 0.97f), true);
-            UiFactory.Place(window.rectTransform, UiFactory.Center, UiFactory.Center, Vector2.zero, new Vector2(620f, 460f));
+            UiFactory.Place(window.rectTransform, UiFactory.Center, UiFactory.Center, Vector2.zero, new Vector2(620f, 530f));
 
             Text title = UiFactory.CreateText("Title", window.transform, font, 40, TextAnchor.MiddleCenter, false);
             title.text = "Pausa";
@@ -142,8 +146,10 @@ namespace DeadAcres.UI
 
             const float top = -160f;
             MenuUi.AddButton(window.transform, font, "Continuar  [Esc]", 0, top).onClick.AddListener(Close);
-            MenuUi.AddButton(window.transform, font, "Menú principal", 1, top).onClick.AddListener(GoToMenu);
-            MenuUi.AddButton(window.transform, font, "Salir del juego", 2, top).onClick.AddListener(Quit);
+            volumeButton = MenuUi.AddButton(window.transform, font, VolumeSteps.Format(VolumeSetting.Current), 1, top);
+            volumeButton.onClick.AddListener(CycleVolume);
+            MenuUi.AddButton(window.transform, font, "Menú principal", 2, top).onClick.AddListener(GoToMenu);
+            MenuUi.AddButton(window.transform, font, "Salir del juego", 3, top).onClick.AddListener(Quit);
 
             message = UiFactory.CreateText("Message", window.transform, font, 18, TextAnchor.MiddleCenter, false);
             message.color = new Color(1f, 0.6f, 0.45f);

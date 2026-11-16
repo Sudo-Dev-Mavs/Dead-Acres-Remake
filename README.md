@@ -36,6 +36,8 @@ Guardado: la partida se guarda sola cada amanecer a partir del segundo día (dí
 
 Pausa (Esc o P): detiene el juego entero y permite volver al menú principal.
 
+Sonido: efectos y dos bucles de música (día y noche) provisionales, sintetizados con `Tools/generate_placeholder_audio.py`. Para cambiar uno, sustituye su `.wav` en `Assets/_Project/Audio/` conservando el nombre. El botón de volumen está en el menú principal y en el de pausa.
+
 Se puede arar, plantar y colocar en todo el suelo, salvo en una franja de 3 bloques alrededor de la caravana (la losa marrón). Empiezas solo con la pistola, la azada, la hoz dentada y unas semillas de fresa: el martillo, los muros y todo lo demás se compra a Jack.
 
 Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noche los cultivos crecen a una décima de la velocidad del día.
@@ -72,6 +74,7 @@ Assets/_Project/
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
     Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila), ItemCatalog (búsqueda por Id)
+    Audio            AudioLibrary (clips por función), GameAudio (escucha eventos), VolumeSetting, VolumeSteps (puro)
     Saving           SaveData (datos planos), SaveMapper (puro), SaveFile (JSON en disco), SaveGameController
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
@@ -88,6 +91,7 @@ Assets/_Project/
                      MainMenuView, PauseMenuView, MenuUi
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
+  Audio/             .wav provisionales
   Data/, Scenes/, Art/, Prefabs/   generados desde el menú Dead Acres
 Assets/Settings/     assets de URP de la plantilla oficial
 ```

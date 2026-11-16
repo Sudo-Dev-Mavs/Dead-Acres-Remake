@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using DeadAcres.Combat;
 using DeadAcres.Animals;
+using DeadAcres.Audio;
 using DeadAcres.Building;
 using DeadAcres.Core.Events;
 using DeadAcres.Core.Session;
@@ -40,6 +41,7 @@ namespace DeadAcres.EditorTools
             public ZombieBrain ZombiePrefab;
             public ZombieBrain StrongZombiePrefab;
             public ItemCatalog Items;
+            public AudioLibrary Audio;
             public List<DifficultyProfile> Difficulties;
             public List<GameModeRules> Modes;
             public LootTable CarLoot;
@@ -129,6 +131,12 @@ namespace DeadAcres.EditorTools
                 new Color(0.45f, 0.25f, 0.50f), speed: 1.6f, damage: 20f, attackInterval: 1.2f);
 
             GenerateItemsAndCrops(data);
+
+            // Sonido provisional: los .wav de Assets/_Project/Audio (sintetizados con
+            // Tools/generate_placeholder_audio.py). Para cambiar uno, se sustituye el archivo.
+            data.Audio = EditorPaths.LoadOrCreate<AudioLibrary>($"{Root}/AudioLibrary.asset");
+            data.Audio.Configure(LoadClip);
+            EditorUtility.SetDirty(data.Audio);
 
             // Todos los ítems, para encontrarlos por Id al cargar una partida.
             data.Items = EditorPaths.LoadOrCreate<ItemCatalog>($"{Root}/ItemCatalog.asset");
@@ -327,6 +335,18 @@ namespace DeadAcres.EditorTools
             crop.Configure(id, name, seed, produce, growSeconds, regrowSeconds, yieldMin, yieldMax, color, height);
             EditorUtility.SetDirty(crop);
             return crop;
+        }
+
+        private static AudioClip LoadClip(string fileName)
+        {
+            string path = $"Assets/_Project/Audio/{fileName}.wav";
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
+            if (clip == null)
+            {
+                Debug.LogWarning($"Dead Acres: falta el sonido {path}; esa parte quedará en silencio.");
+            }
+
+            return clip;
         }
 
         private static readonly List<ItemDefinition> createdItems = new List<ItemDefinition>();

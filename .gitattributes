@@ -10,3 +10,7 @@
 *.wav filter=lfs diff=lfs merge=lfs -text
 *.ogg filter=lfs diff=lfs merge=lfs -text
 *.mp3 filter=lfs diff=lfs merge=lfs -text
+
+# Audio provisional sintetizado (1,4 MB en total): va en el repo normal, sin LFS, para que
+# funcione sin tener git-lfs instalado. El audio definitivo sí debería ir por LFS, en otra carpeta.
+Assets/_Project/Audio/*.wav -filter -diff -merge -text
