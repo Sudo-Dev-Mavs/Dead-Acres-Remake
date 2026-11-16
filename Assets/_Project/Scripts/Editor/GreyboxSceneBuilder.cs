@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using DeadAcres.Audio;
 using DeadAcres.Building;
 using DeadAcres.Combat;
 using DeadAcres.DayNight;
@@ -150,6 +151,11 @@ namespace DeadAcres.EditorTools
 
             new GameObject("PauseMenu").AddComponent<PauseMenuView>().Configure(playerInput, cycle, match);
 
+            new GameObject("Audio").AddComponent<GameAudio>().Configure(data.Audio, data.PhaseChanged,
+                interactor.GetComponent<PlayerWeapon>(), interactor, inventory,
+                interactor.GetComponent<PlayerBuildTools>(), interactor.GetComponent<PlayerWallet>(), playerHealth,
+                rvHealth, waves, world);
+
             // La tienda tiene botones: hace falta un EventSystem con el módulo del Input System.
             var eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<EventSystem>();
@@ -177,6 +183,15 @@ namespace DeadAcres.EditorTools
             cameraObject.AddComponent<AudioListener>();
 
             new GameObject("MainMenu").AddComponent<MainMenuView>().Configure(data.Session, data.Difficulties, data.Modes);
+
+            if (data.Audio != null && data.Audio.MusicDay != null)
+            {
+                var music = new GameObject("Music").AddComponent<AudioSource>();
+                music.clip = data.Audio.MusicDay;
+                music.loop = true;
+                music.playOnAwake = true;
+                music.volume = 0.35f;
+            }
 
             var eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<EventSystem>();

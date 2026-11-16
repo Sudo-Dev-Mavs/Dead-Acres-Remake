@@ -31,6 +31,9 @@ namespace DeadAcres.Player
         private float impactHideTime;
 
         private Inventory Inventory => playerInventory.Inventory;
+        /// <summary>Se disparó. True si la bala dio a un enemigo.</summary>
+        public event System.Action<bool> Fired;
+
 
         private void OnEnable()
         {
@@ -71,14 +74,18 @@ namespace DeadAcres.Player
             var ray = new Ray(eye.position, eye.forward);
             if (!Physics.Raycast(ray, out RaycastHit hit, weapon.WeaponRange, hitMask, QueryTriggerInteraction.Ignore))
             {
+                Fired?.Invoke(false);
                 return;
             }
 
             var target = hit.collider.GetComponentInParent<Health>();
-            if (target != null && target.Faction == Faction.Enemy)
+            bool hitEnemy = target != null && target.Faction == Faction.Enemy;
+            if (hitEnemy)
             {
                 target.ApplyDamage(weapon.WeaponDamage);
             }
+
+            Fired?.Invoke(hitEnemy);
 
             if (impactMarker != null)
             {

@@ -31,6 +31,9 @@ namespace DeadAcres.Building
             Power = new PowerMap();
         }
 
+        /// <summary>Se colocó un objeto en la rejilla.</summary>
+        public event System.Action<GameObject> Placed;
+
         /// <summary>
         /// Coloca un objeto en la rejilla: respeta el límite del modo y la ocupación. Lo usan el
         /// jugador al construir y la carga de partida.
@@ -62,6 +65,7 @@ namespace DeadAcres.Building
             }
 
             marker.Bind(this, occupantId, item.PlaceableCategory, item);
+            Placed?.Invoke(placed);
             return placed;
         }
 

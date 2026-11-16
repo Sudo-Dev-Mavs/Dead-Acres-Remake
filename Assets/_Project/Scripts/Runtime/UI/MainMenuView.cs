@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DeadAcres.Audio;
 using DeadAcres.Core.Session;
 using DeadAcres.Difficulty;
 using DeadAcres.GameMode;
@@ -29,6 +30,7 @@ namespace DeadAcres.UI
         private Button newGameButton;
         private Button difficultyButton;
         private Button modeButton;
+        private Button volumeButton;
         private Text summary;
         private Text message;
 
@@ -38,6 +40,7 @@ namespace DeadAcres.UI
             Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+            VolumeSetting.Apply();
 
             difficultyIndex = Mathf.Max(0, session != null ? difficulties.IndexOf(session.Difficulty) : 0);
             modeIndex = Mathf.Max(0, session != null ? modes.IndexOf(session.Mode) : 0);
@@ -118,6 +121,8 @@ namespace DeadAcres.UI
             Refresh();
         }
 
+        private void CycleVolume() => MenuUi.SetLabel(volumeButton, VolumeSteps.Format(VolumeSetting.Cycle()));
+
         private void NextMode()
         {
             if (modes.Count > 0) modeIndex = (modeIndex + 1) % modes.Count;
@@ -192,7 +197,9 @@ namespace DeadAcres.UI
             difficultyButton.onClick.AddListener(NextDifficulty);
             modeButton = MenuUi.AddButton(root, font, "Modo", 3, top);
             modeButton.onClick.AddListener(NextMode);
-            MenuUi.AddButton(root, font, "Salir", 4, top).onClick.AddListener(Quit);
+            volumeButton = MenuUi.AddButton(root, font, VolumeSteps.Format(VolumeSetting.Current), 4, top);
+            volumeButton.onClick.AddListener(CycleVolume);
+            MenuUi.AddButton(root, font, "Salir", 5, top).onClick.AddListener(Quit);
 
             // Las etiquetas largas (continuar, confirmar) necesitan más ancho que el resto.
             foreach (Button wide in new[] { continueButton, newGameButton })
@@ -204,7 +211,7 @@ namespace DeadAcres.UI
             summary = UiFactory.CreateText("Summary", root, font, 22, TextAnchor.UpperCenter);
             summary.color = new Color(0.85f, 0.85f, 0.80f);
             UiFactory.Place(summary.rectTransform, UiFactory.TopCenter, UiFactory.TopCenter,
-                new Vector2(0f, top - 5 * (MenuUi.ButtonHeight + MenuUi.ButtonSpacing) - 10f), new Vector2(1200f, 70f));
+                new Vector2(0f, top - 6 * (MenuUi.ButtonHeight + MenuUi.ButtonSpacing) - 10f), new Vector2(1200f, 70f));
 
             message = UiFactory.CreateText("Message", root, font, 20, TextAnchor.MiddleCenter);
             message.color = new Color(1f, 0.6f, 0.45f);

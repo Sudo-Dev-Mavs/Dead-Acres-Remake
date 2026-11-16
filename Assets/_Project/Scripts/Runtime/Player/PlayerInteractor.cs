@@ -43,6 +43,9 @@ namespace DeadAcres.Player
 
         public event Action<ItemDefinition, int> Harvested;
 
+        /// <summary>Se aró, se plantó o se cosechó con éxito.</summary>
+        public event Action<PrimaryActionKind> ActionPerformed;
+
         public InteractionContext Context => context;
         public FarmArea Farm => farm;
 
@@ -236,6 +239,11 @@ namespace DeadAcres.Player
             if (result != FarmActionResult.Ok)
             {
                 ActionRejected?.Invoke(result);
+            }
+            else
+            {
+                // context sigue siendo el de antes de la acción: dice qué se acaba de hacer.
+                ActionPerformed?.Invoke(context.Primary);
             }
 
             // La acción puede haber cambiado la parcela o la ranura: se recalcula ya.
