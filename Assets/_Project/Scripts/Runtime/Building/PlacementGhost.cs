@@ -25,11 +25,14 @@ namespace DeadAcres.Building
             root.gameObject.SetActive(false);
         }
 
-        public bool IsVisible => root.gameObject.activeSelf;
+        // Al salir de Play o recargar la escena, Unity puede destruir la raíz del fantasma antes
+        // de que el PlacementController se desactive: todo acceso comprueba que siga viva.
+        public bool IsVisible => root != null && root.gameObject.activeSelf;
 
         /// <summary>Reconstruye el fantasma. Solo al cambiar de ítem, nunca por frame.</summary>
         public void Build(GameObject prefab)
         {
+            if (root == null) return;
             Clear();
             if (prefab == null) return;
 
@@ -63,6 +66,7 @@ namespace DeadAcres.Building
 
         public void Show(Vector3 position, Quaternion rotation, bool valid)
         {
+            if (root == null) return;
             root.SetPositionAndRotation(position, rotation);
             if (!root.gameObject.activeSelf) root.gameObject.SetActive(true);
 
@@ -78,7 +82,7 @@ namespace DeadAcres.Building
 
         public void Hide()
         {
-            if (root.gameObject.activeSelf) root.gameObject.SetActive(false);
+            if (root != null && root.gameObject.activeSelf) root.gameObject.SetActive(false);
         }
 
         public void Dispose()
