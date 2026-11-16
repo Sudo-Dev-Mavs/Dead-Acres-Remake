@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DeadAcres.Combat;
 using DeadAcres.Items;
 using UnityEngine;
@@ -27,6 +28,9 @@ namespace DeadAcres.Player
 
         [SerializeField] private LayerMask hitMask = Physics.DefaultRaycastLayers;
 
+        // Un cargador por tipo de arma: sigue como estaba aunque se guarde y se vuelva a sacar.
+        private readonly Dictionary<ItemDefinition, WeaponClip> clips = new Dictionary<ItemDefinition, WeaponClip>();
+        private WeaponClip activeClip;
         private float nextFireTime;
         private float impactHideTime;
 
@@ -34,19 +38,66 @@ namespace DeadAcres.Player
         /// <summary>Se disparó. True si la bala dio a un enemigo.</summary>
         public event System.Action<bool> Fired;
 
+        /// <summary>Cambió lo que hay que enseñar del cargador (balas, recarga, arma en la mano).</summary>
+        public event System.Action AmmoChanged;
+
+        /// <summary>Empezó una recarga (para el sonido).</summary>
+        public event System.Action ReloadStarted;
+
+        /// <summary>Texto del cargador del arma en la mano: "7/12", "recargando…" o vacío.</summary>
+        public string AmmoText
+        {
+            get
+            {
+                if (activeClip == null || !activeClip.HasMagazine) return string.Empty;
+                return activeClip.IsReloading ? "recargando…" : $"{activeClip.Rounds}/{activeClip.Size}";
+            }
+        }
+
+        /// <summary>
+        /// Recarga el arma en la mano si le faltan balas.
+        /// </summary>
+        /// <returns>True si empezó a recargar o ya estaba recargando (la tecla queda "usada").</returns>
+        public bool TryStartReload()
+        {
+            if (activeClip == null)
+            {
+                return false;
+            }
+
+            if (activeClip.IsReloading)
+            {
+                return true;
+            }
+
+            if (!activeClip.StartReload())
+            {
+                return false;
+            }
+
+            ReloadStarted?.Invoke();
+            AmmoChanged?.Invoke();
+            return true;
+        }
+
+        private void OnReloadPressed() => TryStartReload();
+
 
         private void OnEnable()
         {
             input.PrimaryPressed += Fire;
+            input.ReloadPressed += OnReloadPressed;
             Inventory.SelectionChanged += OnSelectionChanged;
             Inventory.SlotChanged += OnSlotChanged;
             RefreshViewModel();
+            RefreshActiveClip();
             if (impactMarker != null) impactMarker.SetActive(false);
         }
 
         private void OnDisable()
         {
             input.PrimaryPressed -= Fire;
+            input.ReloadPressed -= OnReloadPressed;
             Inventory.SelectionChanged -= OnSelectionChanged;
             Inventory.SlotChanged -= OnSlotChanged;
         }
@@ -56,6 +107,11 @@ namespace DeadAcres.Player
             if (impactMarker != null && impactMarker.activeSelf && Time.time >= impactHideTime)
             {
                 impactMarker.SetActive(false);
+            }
+
+            if (activeClip != null && activeClip.Tick(Time.deltaTime))
+            {
+                AmmoChanged?.Invoke();
             }
 
             // Armas automáticas: mientras se mantenga pulsado, Fire respeta la cadencia.
@@ -76,6 +132,21 @@ namespace DeadAcres.Player
             }
 
             ItemDefinition weapon = selected.Item;
+            if (activeClip != null)
+            {
+                if (activeClip.IsReloading)
+                {
+                    return;
+                }
+
+                // Cargador vacío: el clic recarga en vez de disparar.
+                if (!activeClip.TryFire())
+                {
+                    TryStartReload();
+                    return;
+                }
+            }
+
             nextFireTime = Time.time + weapon.FireInterval;
 
             // Un rayo por proyectil: las escopetas reparten varios dentro de su cono.
@@ -102,6 +173,19 @@ namespace DeadAcres.Player
 
             Fired?.Invoke(hitEnemy);
 
+            // Con la última bala empieza a recargar sola.
+            if (activeClip != null && activeClip.HasMagazine)
+            {
+                if (activeClip.Rounds == 0)
+                {
+                    TryStartReload();
+                }
+                else
+                {
+                    AmmoChanged?.Invoke();
+                }
+            }
+
             if (hitAnything && impactMarker != null)
             {
                 impactMarker.transform.position = lastPoint;
@@ -122,14 +206,50 @@ namespace DeadAcres.Player
             return eye.rotation * (Quaternion.Euler(offset.y, offset.x, 0f) * Vector3.forward);
         }
 
-        private void OnSelectionChanged(int _) => RefreshViewModel();
+        private void OnSelectionChanged(int _)
+        {
+            RefreshViewModel();
+            RefreshActiveClip();
+        }
 
         private void OnSlotChanged(int index)
         {
             if (index == Inventory.SelectedIndex)
             {
                 RefreshViewModel();
+                RefreshActiveClip();
             }
+        }
+
+        // El cargador del arma que hay ahora en la mano. Cambiar de arma a media recarga la cancela.
+        private void RefreshActiveClip()
+        {
+            ItemStack selected = Inventory.Selected;
+            WeaponClip clip = null;
+            if (!selected.IsEmpty && selected.Item.Kind == ItemKind.Weapon)
+            {
+                if (!clips.TryGetValue(selected.Item, out clip))
+                {
+                    clip = new WeaponClip(selected.Item.MagazineSize, selected.Item.ReloadSeconds);
+                    clips.Add(selected.Item, clip);
+                }
+            }
+
+            if (clip == activeClip)
+            {
+                return;
+            }
+
+            if (activeClip != null) activeClip.CancelReload();
+            activeClip = clip;
+
+            // Si se guardó vacía, empieza a recargar al sacarla.
+            if (activeClip != null && activeClip.HasMagazine && activeClip.Rounds == 0)
+            {
+                activeClip.StartReload();
+            }
+
+            AmmoChanged?.Invoke();
         }
 
         private void RefreshViewModel()

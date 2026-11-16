@@ -30,6 +30,7 @@ namespace DeadAcres.Enemies
         private Health health;
         private float nextAttackTime;
         private float sidestepSign;
+        private float damageMultiplier = 1f;
 
         // Amaneció con el zombi vivo: arde, huye de la granja y solo ataca a un jugador cercano.
         private bool burning;
@@ -130,6 +131,9 @@ namespace DeadAcres.Enemies
             Face(direction);
             controller.SimpleMove(direction * (speed * 1.6f));
         }
+
+        /// <summary>Cuánto más pega esta noche respecto a su daño base.</summary>
+        public void SetDamageMultiplier(float multiplier) => damageMultiplier = Mathf.Max(0f, multiplier);
 
         internal void Configure(float newSpeed, float newDamage, float newAttackInterval)
         {
@@ -284,7 +288,7 @@ namespace DeadAcres.Enemies
             }
 
             nextAttackTime = Time.time + attackInterval;
-            target.ApplyDamage(attackDamage);
+            target.ApplyDamage(attackDamage * damageMultiplier);
         }
 
         private void Face(Vector3 direction)

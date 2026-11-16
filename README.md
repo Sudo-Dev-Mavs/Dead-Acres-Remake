@@ -23,7 +23,8 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 | Usar lo que llevas: disparar, arar (azada), plantar (semillas), cosechar (hoz dentada), colocar, recoger (martillo), reparar (cinta) o comer | Clic izq. | RT |
 | Rotar al colocar | Q / E | cruceta izq./der. |
 | Hablar con Jack, recoger huevos y lana, abrir y cerrar puertas | F | X |
-| "Listo" (terminar el día) | R | Start |
+| "Listo" (terminar el día) | R (si el arma en la mano no necesita recargar) | Start |
+| Recargar | R | Y |
 | Inventario (mover entre hotbar y mochila) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
 | Pausa | Esc o P | — |
@@ -50,11 +51,13 @@ La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) sue
 
 Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y un par de cosas al azar (semillas, cinta, antorchas, muros, alguna luz). El más lejano guarda un rifle de caza; Jack también lo vende desde el cuarto día.
 
-Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita.
+Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando) cuando le faltan balas. El HUD muestra las balas junto al nombre del arma.
+
+Cada noche los zombis tienen un 20 % más de vida y pegan un 15 % más que la primera. Un solo golpe nunca quita más del 99 % de la vida máxima al jugador ni a la caravana.
 
 Defensas: antorchas (luz sin energía), luces portátiles, torretas, espantapájaros con TNT (explota al acercarse un zombi) y muros.
 
-Energía: las luces portátiles y las torretas necesitan una fuente a su alcance (la caravana llega a 6 bloques; un generador, a 9) y a la que le quede capacidad: la caravana aguanta 10 de consumo y cada generador 20. El HUD muestra "Energía usada/disponible"; si no alcanza, lo último que se colocó se queda sin energía (luz roja en la torreta).
+Energía: las luces portátiles y las torretas necesitan una fuente a su alcance (la caravana llega a 6 bloques; un generador, a 9; el generador pequeño, a 5) y a la que le quede capacidad: la caravana aguanta 10 de consumo, cada generador 20 y el pequeño 8. El HUD muestra "Energía usada/disponible"; si no alcanza, lo último que se colocó se queda sin energía (luz roja en la torreta).
 
 Torretas: normal (consume 2), doble cañón (4), escopeta (3, daña a todo lo que tenga delante), lanzallamas (4, muy corto alcance y daño continuo), francotiradora (3, largo alcance), automática (5, mucha cadencia) y eléctrica (6: el rayo salta hasta a 4 zombis más y pierde un 30 % de daño en cada salto). Repararlas con cinta cuesta además algo de oro, más cuanto mejor es la torreta. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
 
@@ -66,7 +69,7 @@ Animales: empiezas con una oveja y dos gallinas, cada una por su lado a unos 25-
 
 Más colocables: valla (baja: frena a los zombis y se dispara por encima), puerta (F la abre y la cierra), fogata (luz sin energía, más que la antorcha), pozo y molino (decoración; el molino ocupa 2×2).
 
-Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y cada día trae 12 objetos distintos elegidos al azar (siempre al menos dos tipos de semillas). Cada objeto tiene una rareza —Común, Raro, Ultrararo, Épico o Legendario— según cuánto ayuda: cuanto más raro, menos veces aparece, aunque los raros se dejan ver más según pasan los días. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
+Jack está junto a la caravana de día y se va por la noche. Compra la cosecha y cada día trae objetos distintos elegidos al azar (siempre al menos dos tipos de semillas): 4 el primer día, 6 el segundo, 9 el tercero y, desde el cuarto, normalmente 12, aunque hay días flojos con entre 6 y 11. Cada objeto tiene una rareza —Común, Raro, Ultrararo, Épico o Legendario— según cuánto ayuda: cuanto más raro, menos veces aparece, aunque los raros se dejan ver más según pasan los días. Con la tienda abierta el reloj se detiene (Esc o F para cerrar).
 
 ## Estructura
 

@@ -30,6 +30,9 @@ namespace DeadAcres.Player
         public event Action SecondaryPressed;
         public event Action InteractPressed;
         public event Action ReadyPressed;
+
+        /// <summary>Recargar desde el mando. En teclado la R pasa por <see cref="ReadyPressed"/>.</summary>
+        public event Action ReloadPressed;
         public event Action InventoryPressed;
 
         /// <summary>-1 = Q (antihorario), +1 = E (horario).</summary>
@@ -80,6 +83,7 @@ namespace DeadAcres.Player
             Button("Interact", () => InteractPressed?.Invoke(), "<Keyboard>/f", "<Gamepad>/buttonWest");
             Button("Ready", () => ReadyPressed?.Invoke(), "<Keyboard>/r", "<Gamepad>/start");
             Button("Inventory", () => InventoryPressed?.Invoke(), "<Keyboard>/tab", "<Gamepad>/select");
+            Button("Reload", () => ReloadPressed?.Invoke(), "<Gamepad>/buttonNorth", null);
             Button("RotateLeft", () => RotatePressed?.Invoke(-1), "<Keyboard>/q", "<Gamepad>/dpad/left");
             Button("RotateRight", () => RotatePressed?.Invoke(1), "<Keyboard>/e", "<Gamepad>/dpad/right");
             Button("HotbarNext", () => HotbarCycled?.Invoke(1), "<Gamepad>/rightShoulder", null);

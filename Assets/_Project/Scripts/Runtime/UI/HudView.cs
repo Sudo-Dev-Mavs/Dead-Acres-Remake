@@ -64,6 +64,7 @@ namespace DeadAcres.UI
         private float noticeTimeLeft;
         private PlacementLimiter limiter;
         private PowerMap powerMap;
+        private PlayerWeapon weapon;
         private Wallet wallet;
 
         private void OnEnable()
@@ -85,6 +86,8 @@ namespace DeadAcres.UI
 
             limiter = world != null ? world.Limiter : null;
             if (limiter != null) limiter.CountChanged += OnPlacementCountChanged;
+            weapon = interactor != null ? interactor.GetComponent<PlayerWeapon>() : null;
+            if (weapon != null) weapon.AmmoChanged += RefreshSelectedLabel;
             powerMap = world != null ? world.Power : null;
             if (powerMap != null) powerMap.Changed += RefreshPlantsLabel;
 
@@ -119,6 +122,8 @@ namespace DeadAcres.UI
 
             if (limiter != null) limiter.CountChanged -= OnPlacementCountChanged;
             limiter = null;
+            if (weapon != null) weapon.AmmoChanged -= RefreshSelectedLabel;
+            weapon = null;
             if (powerMap != null) powerMap.Changed -= RefreshPlantsLabel;
             powerMap = null;
 
@@ -303,7 +308,9 @@ namespace DeadAcres.UI
         private void RefreshSelectedLabel()
         {
             ItemStack stack = playerInventory.Inventory.Selected;
-            SetText(selectedItemLabel, stack.IsEmpty ? string.Empty : stack.Item.DisplayName);
+            string ammo = weapon != null ? weapon.AmmoText : string.Empty;
+            string label = stack.IsEmpty ? string.Empty : stack.Item.DisplayName;
+            SetText(selectedItemLabel, string.IsNullOrEmpty(ammo) || stack.IsEmpty ? label : $"{label}   {ammo}");
         }
 
         private void RefreshPlantsLabel()
