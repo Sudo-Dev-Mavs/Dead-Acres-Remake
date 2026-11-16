@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ab902f2fd761d99c856058b3637bba2, type: 3}
+  m_Name: Crop_lemon
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Farming.CropDefinition
+  id: lemon
+  displayName: "Lim\xF3n"
+  seedItem: {fileID: 11400000, guid: 5fcab330a4766f261a9b293da9a95498, type: 2}
+  produceItem: {fileID: 11400000, guid: 8ec3b27e0c4561d4fad84a5e10b7afc4, type: 2}
+  growSeconds: 160
+  regrowSeconds: 80
+  yieldMin: 3
+  yieldMax: 5
+  ripeColor: {r: 0.95, g: 0.9, b: 0.25, a: 1}
+  ripeHeight: 2

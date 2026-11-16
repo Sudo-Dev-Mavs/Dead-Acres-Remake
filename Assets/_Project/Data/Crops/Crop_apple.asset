@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ab902f2fd761d99c856058b3637bba2, type: 3}
+  m_Name: Crop_apple
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Farming.CropDefinition
+  id: apple
+  displayName: Manzana
+  seedItem: {fileID: 11400000, guid: b2fda836d93db45c5b9d21ac31c58312, type: 2}
+  produceItem: {fileID: 11400000, guid: 240f23a2e3c5ac4d59908e008466410f, type: 2}
+  growSeconds: 180
+  regrowSeconds: 90
+  yieldMin: 3
+  yieldMax: 5
+  ripeColor: {r: 0.8, g: 0.15, b: 0.15, a: 1}
+  ripeHeight: 2.2

@@ -19,6 +19,10 @@ MonoBehaviour:
     availableFromDay: 1
   - item: {fileID: 11400000, guid: 9ee81ad03b2b8dad485e89b6aa0f639d, type: 2}
     availableFromDay: 1
+  - item: {fileID: 11400000, guid: 85779a53c4a1e92b993ddc0c7abc935d, type: 2}
+    availableFromDay: 1
+  - item: {fileID: 11400000, guid: 77eb55c60a54a66aebf0a788456cdde3, type: 2}
+    availableFromDay: 1
   - item: {fileID: 11400000, guid: 97615b4dd87b49608b33d8265cb02324, type: 2}
     availableFromDay: 1
   - item: {fileID: 11400000, guid: 8381d649e558175c5b6a8e677b77e86b, type: 2}
@@ -29,11 +33,27 @@ MonoBehaviour:
     availableFromDay: 2
   - item: {fileID: 11400000, guid: b0acb00843f49a2eb920eb3e69615972, type: 2}
     availableFromDay: 2
+  - item: {fileID: 11400000, guid: b2fda836d93db45c5b9d21ac31c58312, type: 2}
+    availableFromDay: 2
+  - item: {fileID: 11400000, guid: a2a091e5e0407ca33b928a2c39ed21b5, type: 2}
+    availableFromDay: 2
+  - item: {fileID: 11400000, guid: db53631b47ed707ec8c9445e60100e0c, type: 2}
+    availableFromDay: 2
+  - item: {fileID: 11400000, guid: c72eb9590ae2bb68c8ffae114ffeaf37, type: 2}
+    availableFromDay: 2
   - item: {fileID: 11400000, guid: db643971fa7bd6c309fb2a619cd8effd, type: 2}
     availableFromDay: 2
   - item: {fileID: 11400000, guid: 6cc7850d9a35ded6cb5bc84f8fb0ba79, type: 2}
     availableFromDay: 2
   - item: {fileID: 11400000, guid: 2db01a4490abf14b687d8bd1f5ae26d8, type: 2}
+    availableFromDay: 3
+  - item: {fileID: 11400000, guid: b124e616b81c79fa6a33e8143b78ad35, type: 2}
+    availableFromDay: 3
+  - item: {fileID: 11400000, guid: 5fcab330a4766f261a9b293da9a95498, type: 2}
+    availableFromDay: 3
+  - item: {fileID: 11400000, guid: 9abd9b24091f58913b64fe3300931097, type: 2}
+    availableFromDay: 3
+  - item: {fileID: 11400000, guid: dbd925866e13db527ba7f6aa6f506e80, type: 2}
     availableFromDay: 3
   - item: {fileID: 11400000, guid: 6f6836bc88e4705d592cf5215cdaebca, type: 2}
     availableFromDay: 3
