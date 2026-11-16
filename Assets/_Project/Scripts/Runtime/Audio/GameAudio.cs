@@ -5,6 +5,7 @@ using DeadAcres.Economy;
 using DeadAcres.Enemies;
 using DeadAcres.Items;
 using DeadAcres.Player;
+using DeadAcres.Settings;
 using UnityEngine;
 
 namespace DeadAcres.Audio
@@ -37,24 +38,37 @@ namespace DeadAcres.Audio
         private AudioSource effects;
         private AudioSource musicDay;
         private AudioSource musicNight;
+        private readonly AudioSource[] worldSources = new AudioSource[8];
+        private int nextWorldSource;
         private Wallet wallet;
         private bool nightMusic;
+        private float dayFade = 1f;
         private float lastPlayerHealth;
         private float lastRvHealth;
         private float nextRvHitTime;
 
         private void Awake()
         {
-            VolumeSetting.Apply();
+            GameSettings.Apply();
             effects = CreateSource("Effects", null, false);
             musicDay = CreateSource("Music (day)", library != null ? library.MusicDay : null, true);
             musicNight = CreateSource("Music (night)", library != null ? library.MusicNight : null, true);
+            for (int i = 0; i < worldSources.Length; i++)
+            {
+                worldSources[i] = CreateSource($"World {i}", null, false);
+                WorldSound.Configure(worldSources[i]);
+            }
         }
 
         private void OnEnable()
         {
             if (phaseChanged != null) phaseChanged.Subscribe(OnPhaseChanged);
-            if (weapon != null) weapon.Fired += OnFired;
+            if (weapon != null)
+            {
+                weapon.Fired += OnFired;
+                weapon.ReloadStarted += OnReloadStarted;
+                if (weapon.TryGetComponent(out FirstPersonController walker)) walker.Stepped += OnStepped;
+            }
             if (interactor != null) interactor.ActionPerformed += OnFarmAction;
             if (playerInventory != null) playerInventory.Notice += OnNotice;
             if (buildTools != null) buildTools.Message += OnNotice;
@@ -82,7 +96,12 @@ namespace DeadAcres.Audio
         private void OnDisable()
         {
             if (phaseChanged != null) phaseChanged.Unsubscribe(OnPhaseChanged);
-            if (weapon != null) weapon.Fired -= OnFired;
+            if (weapon != null)
+            {
+                weapon.Fired -= OnFired;
+                weapon.ReloadStarted -= OnReloadStarted;
+                if (weapon.TryGetComponent(out FirstPersonController walker)) walker.Stepped -= OnStepped;
+            }
             if (interactor != null) interactor.ActionPerformed -= OnFarmAction;
             if (playerInventory != null) playerInventory.Notice -= OnNotice;
             if (buildTools != null) buildTools.Message -= OnNotice;
@@ -102,9 +121,11 @@ namespace DeadAcres.Audio
         // El fundido de la música es continuo; con tiempo real para que siga en pausa.
         private void Update()
         {
-            float step = musicVolume * Time.unscaledDeltaTime / musicFadeSeconds;
-            musicDay.volume = Mathf.MoveTowards(musicDay.volume, nightMusic ? 0f : musicVolume, step);
-            musicNight.volume = Mathf.MoveTowards(musicNight.volume, nightMusic ? musicVolume : 0f, step);
+            // El volumen de música de las opciones se nota al momento, no al final del fundido.
+            float target = musicVolume * GameSettings.MusicVolume;
+            dayFade = Mathf.MoveTowards(dayFade, nightMusic ? 0f : 1f, Time.unscaledDeltaTime / musicFadeSeconds);
+            musicDay.volume = target * dayFade;
+            musicNight.volume = target * (1f - dayFade);
         }
 
         private void OnPhaseChanged(PhaseChange change)
@@ -150,7 +171,11 @@ namespace DeadAcres.Audio
 
         private void OnNotice(string _) => Play(library != null ? library.Blip : null, 0.6f);
 
-        private void OnZombieKilled() => Play(library != null ? library.ZombieDeath : null, 0.8f);
+        private void OnZombieKilled(Vector3 position) => PlayAt(library != null ? library.ZombieDeath : null, position);
+
+        private void OnStepped() => Play(library != null ? library.Step : null, 0.35f);
+
+        private void OnReloadStarted() => Play(library != null ? library.Reload : null, 0.7f);
 
         private void OnStrongIncoming(int _) => Play(library != null ? library.Strong : null);
 
@@ -176,7 +201,7 @@ namespace DeadAcres.Audio
             if (current < lastRvHealth && !IsQuietStart && Time.time >= nextRvHitTime)
             {
                 nextRvHitTime = Time.time + 0.35f;
-                Play(library != null ? library.RvHit : null, 0.7f);
+                PlayAt(library != null ? library.RvHit : null, rvHealth.transform.position);
             }
 
             lastRvHealth = current;
@@ -184,7 +209,21 @@ namespace DeadAcres.Audio
 
         private void Play(AudioClip clip, float volumeScale = 1f)
         {
-            if (clip != null) effects.PlayOneShot(clip, effectsVolume * volumeScale);
+            if (clip != null) effects.PlayOneShot(clip, effectsVolume * GameSettings.EffectsVolume * volumeScale);
+        }
+
+        // Sonido con posición: se oye más flojo y hacia su lado cuanto más lejos esté.
+        private void PlayAt(AudioClip clip, Vector3 position, float volumeScale = 1f)
+        {
+            if (clip == null)
+            {
+                return;
+            }
+
+            AudioSource source = worldSources[nextWorldSource];
+            nextWorldSource = (nextWorldSource + 1) % worldSources.Length;
+            source.transform.position = position;
+            source.PlayOneShot(clip, effectsVolume * GameSettings.EffectsVolume * volumeScale);
         }
 
         private AudioSource CreateSource(string sourceName, AudioClip loopClip, bool isMusic)

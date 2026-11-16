@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DeadAcres.Audio;
 using DeadAcres.Building;
 using DeadAcres.Combat;
 using UnityEngine;
@@ -81,7 +82,12 @@ namespace DeadAcres.Defenses
         private float nextFireTime;
         private float beamHideTime;
 
-        /// <summary>La torreta disparó (para el sonido).</summary>
+        [Header("Sonido (opcional)")]
+        [SerializeField] private AudioSource audioSource;
+        [SerializeField] private AudioClip fireClip;
+        [SerializeField, Range(0f, 1f)] private float fireVolume = 0.6f;
+
+        /// <summary>La torreta disparó.</summary>
         public event System.Action Fired;
 
         private void OnEnable()
@@ -136,6 +142,7 @@ namespace DeadAcres.Defenses
             {
                 nextFireTime = Time.time + fireInterval;
                 Fire(origin, aimPoint, flat);
+                WorldSound.Play(audioSource, fireClip, fireVolume);
                 Fired?.Invoke();
             }
         }
@@ -292,6 +299,13 @@ namespace DeadAcres.Defenses
             block.SetColor(BaseColorId, color);
             block.SetColor(ColorId, color);
             statusLight.SetPropertyBlock(block);
+        }
+
+        internal void ConfigureSound(AudioSource source, AudioClip clip, float volume)
+        {
+            audioSource = source;
+            fireClip = clip;
+            fireVolume = Mathf.Clamp01(volume);
         }
 
         internal void ConfigureStats(TurretMode newMode, float newRange, float newDamage, float newInterval,
