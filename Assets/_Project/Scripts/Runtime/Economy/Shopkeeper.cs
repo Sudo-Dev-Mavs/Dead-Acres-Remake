@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using DeadAcres.DayNight;
+using DeadAcres.Items;
 using DeadAcres.Player;
 using UnityEngine;
 
@@ -22,7 +24,36 @@ namespace DeadAcres.Economy
         /// <summary>(tendero, jugador que quiere comerciar).</summary>
         public event Action<Shopkeeper, GameObject> ShopRequested;
 
+        [Tooltip("Cuántos objetos distintos trae cada día.")]
+        [SerializeField, Min(1)] private int stockSize = ShopStock.DefaultSize;
+
+        [Tooltip("Semillas que nunca faltan en el surtido del día.")]
+        [SerializeField, Min(0)] private int guaranteedSeeds = 2;
+
+        private readonly List<ItemDefinition> pool = new List<ItemDefinition>();
+        private readonly List<ItemDefinition> stock = new List<ItemDefinition>();
+        private int stockDay = -1;
+        private int stockSeed;
+
         public ShopCatalog Catalog => catalog;
+
+        private void Awake() => stockSeed = UnityEngine.Random.Range(1, int.MaxValue);
+
+        /// <summary>
+        /// Lo que Jack trae ese día: un surtido al azar del catálogo, el mismo durante todo el día.
+        /// </summary>
+        public IReadOnlyList<ItemDefinition> GetStock(int dayNumber)
+        {
+            if (dayNumber != stockDay && catalog != null)
+            {
+                stockDay = dayNumber;
+                pool.Clear();
+                catalog.GetAvailable(dayNumber, pool);
+                ShopStock.Pick(pool, dayNumber, stockSeed, stockSize, guaranteedSeeds, stock);
+            }
+
+            return stock;
+        }
         public bool IsPresent { get; private set; } = true;
 
         public string Prompt => $"Comerciar con {displayName}";

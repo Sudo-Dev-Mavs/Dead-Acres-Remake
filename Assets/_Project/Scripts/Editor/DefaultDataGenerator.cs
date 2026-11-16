@@ -139,6 +139,18 @@ namespace DeadAcres.EditorTools
             data.Audio.Configure(LoadClip);
             EditorUtility.SetDirty(data.Audio);
 
+            // La tienda puede traer cualquier cosa que tenga precio de compra; qué sale cada día
+            // lo decide el azar según la rareza (ShopStock).
+            var forSale = new List<KeyValuePair<ItemDefinition, int>>();
+            foreach (ItemDefinition item in createdItems)
+            {
+                if (item.BuyPrice > 0) forSale.Add(new KeyValuePair<ItemDefinition, int>(item, 1));
+            }
+
+            data.Shop = EditorPaths.LoadOrCreate<ShopCatalog>($"{Root}/Shop/ShopCatalog.asset");
+            data.Shop.Configure(forSale);
+            EditorUtility.SetDirty(data.Shop);
+
             // Todos los ítems, para encontrarlos por Id al cargar una partida.
             data.Items = EditorPaths.LoadOrCreate<ItemCatalog>($"{Root}/ItemCatalog.asset");
             data.Items.Configure(createdItems);
@@ -194,7 +206,7 @@ namespace DeadAcres.EditorTools
                 new Color(0.25f, 0.25f, 0.28f));
             pistol.ConfigureWeapon(damage: 20f, range: 60f, interval: 0.25f);
 
-            // El arma mejor: aparece en el auto más lejano y Jack la trae a partir del cuarto día.
+            // El arma mejor: aparece en el auto más lejano y, con suerte, en la tienda.
             ItemDefinition rifle = CreateItem("weapon_rifle", "Rifle de caza", ItemKind.Weapon, 1,
                 new Color(0.40f, 0.28f, 0.18f));
             rifle.ConfigureWeapon(damage: 60f, range: 90f, interval: 0.7f);
@@ -204,17 +216,20 @@ namespace DeadAcres.EditorTools
             // precio de la semilla, precio de venta del fruto.
             var crops = new List<CropDefinition>
             {
-                CreateCrop("strawberry", "Fresa", new Color(0.86f, 0.12f, 0.20f), 60f, 45f, 2, 3, 0.40f, 5, 3),
-                CreateCrop("potato", "Papa", new Color(0.76f, 0.62f, 0.38f), 120f, 90f, 2, 4, 0.35f, 8, 4),
-                CreateCrop("tomato", "Tomate", new Color(0.92f, 0.28f, 0.12f), 90f, 60f, 2, 3, 0.80f, 10, 5),
-                CreateCrop("wheat", "Trigo", new Color(0.90f, 0.76f, 0.30f), 75f, 60f, 1, 2, 0.90f, 6, 6),
-                CreateCrop("sunflower", "Girasol", new Color(0.98f, 0.82f, 0.10f), 100f, 80f, 1, 1, 1.40f, 12, 14),
+                CreateCrop("strawberry", "Fresa", new Color(0.86f, 0.12f, 0.20f), 60f, 45f, 2, 3, 0.40f, 5, 3, ItemRarity.Common),
+                CreateCrop("potato", "Papa", new Color(0.76f, 0.62f, 0.38f), 120f, 90f, 2, 4, 0.35f, 8, 4, ItemRarity.Common),
+                CreateCrop("tomato", "Tomate", new Color(0.92f, 0.28f, 0.12f), 90f, 60f, 2, 3, 0.80f, 10, 5, ItemRarity.Rare),
+                CreateCrop("wheat", "Trigo", new Color(0.90f, 0.76f, 0.30f), 75f, 60f, 1, 2, 0.90f, 6, 6, ItemRarity.Common),
+                CreateCrop("sunflower", "Girasol", new Color(0.98f, 0.82f, 0.10f), 100f, 80f, 1, 1, 1.40f, 12, 14, ItemRarity.Rare),
 
                 // Árboles frutales: tardan más, pero dan más fruta cada vez.
-                CreateCrop("apple", "Manzana", new Color(0.80f, 0.15f, 0.15f), 180f, 90f, 3, 5, 2.20f, 25, 6),
-                CreateCrop("orange", "Naranja", new Color(0.98f, 0.55f, 0.10f), 180f, 90f, 3, 5, 2.20f, 25, 6),
-                CreateCrop("lemon", "Limón", new Color(0.95f, 0.90f, 0.25f), 160f, 80f, 3, 5, 2.00f, 22, 5),
+                CreateCrop("apple", "Manzana", new Color(0.80f, 0.15f, 0.15f), 180f, 90f, 3, 5, 2.20f, 25, 6, ItemRarity.Epic),
+                CreateCrop("orange", "Naranja", new Color(0.98f, 0.55f, 0.10f), 180f, 90f, 3, 5, 2.20f, 25, 6, ItemRarity.Epic),
+                CreateCrop("lemon", "Limón", new Color(0.95f, 0.90f, 0.25f), 160f, 80f, 3, 5, 2.00f, 22, 5, ItemRarity.UltraRare),
             };
+
+            // Rareza según cuánto oro por minuto deja el cultivo: fresa, papa y trigo son comunes;
+            // tomate y girasol, raros; el limonero, ultrararo; manzano y naranjo, épicos.
 
             // Vida que recupera comer cada fruto (en el mismo orden que la lista de cultivos).
             float[] healByCrop = { 4f, 3f, 4f, 2f, 2f, 6f, 6f, 4f };
@@ -254,36 +269,6 @@ namespace DeadAcres.EditorTools
             ItemDefinition windmill = CreatePlaceableItem("placeable_windmill", "Molino", new Color(0.85f, 0.80f, 0.70f),
                 CreateWindmillPrefab(data.Session), buy: 80, sell: 30, footprint: new Vector2Int(2, 2));
 
-            // Qué trae Jack y desde qué día: su catálogo crece, como en el original.
-            data.Shop = EditorPaths.LoadOrCreate<ShopCatalog>($"{Root}/Shop/ShopCatalog.asset");
-            data.Shop.Configure(new List<KeyValuePair<ItemDefinition, int>>
-            {
-                new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 1),
-                new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 1),
-                new KeyValuePair<ItemDefinition, int>(hammer, 1),
-                new KeyValuePair<ItemDefinition, int>(wall, 1),
-                new KeyValuePair<ItemDefinition, int>(fence, 1),
-                new KeyValuePair<ItemDefinition, int>(gate, 1),
-                new KeyValuePair<ItemDefinition, int>(torch, 1),
-                new KeyValuePair<ItemDefinition, int>(tape, 1),
-                new KeyValuePair<ItemDefinition, int>(lamp, 1),
-                new KeyValuePair<ItemDefinition, int>(crops[2].SeedItem, 2),
-                new KeyValuePair<ItemDefinition, int>(crops[3].SeedItem, 2),
-                new KeyValuePair<ItemDefinition, int>(crops[5].SeedItem, 2),
-                new KeyValuePair<ItemDefinition, int>(chicken, 2),
-                new KeyValuePair<ItemDefinition, int>(campfire, 2),
-                new KeyValuePair<ItemDefinition, int>(well, 2),
-                new KeyValuePair<ItemDefinition, int>(tnt, 2),
-                new KeyValuePair<ItemDefinition, int>(turret, 2),
-                new KeyValuePair<ItemDefinition, int>(crops[4].SeedItem, 3),
-                new KeyValuePair<ItemDefinition, int>(crops[6].SeedItem, 3),
-                new KeyValuePair<ItemDefinition, int>(crops[7].SeedItem, 3),
-                new KeyValuePair<ItemDefinition, int>(sheep, 3),
-                new KeyValuePair<ItemDefinition, int>(windmill, 3),
-                new KeyValuePair<ItemDefinition, int>(generator, 3),
-                new KeyValuePair<ItemDefinition, int>(rifle, 4),
-            });
-            EditorUtility.SetDirty(data.Shop);
             data.StartingGold = 20;
 
             data.Crops = EditorPaths.LoadOrCreate<CropCatalog>($"{Root}/CropCatalog.asset");
@@ -311,6 +296,12 @@ namespace DeadAcres.EditorTools
                 new List<LootTable.Entry> { new LootTable.Entry(rifle, 1, 1) }, new List<LootTable.Entry>(carEntries));
             EditorUtility.SetDirty(data.SpecialCarLoot);
 
+            // Rareza del resto: lo que no se nombra aquí es común (muro, valla, antorcha, cinta,
+            // martillo, pozo y las herramientas iniciales).
+            SetRarity(ItemRarity.Rare, gate, campfire, lamp, windmill, chicken, egg);
+            SetRarity(ItemRarity.UltraRare, tnt, turret, sheep, wool, rifle);
+            SetRarity(ItemRarity.Epic, generator);
+
             data.StartingItems = new List<KeyValuePair<ItemDefinition, int>>
             {
                 new KeyValuePair<ItemDefinition, int>(pistol, 1),
@@ -323,12 +314,15 @@ namespace DeadAcres.EditorTools
         }
 
         private static CropDefinition CreateCrop(string id, string name, Color color, float growSeconds,
-            float regrowSeconds, int yieldMin, int yieldMax, float height, int seedPrice, int produceSellPrice)
+            float regrowSeconds, int yieldMin, int yieldMax, float height, int seedPrice, int produceSellPrice,
+            ItemRarity rarity)
         {
             Color seedColor = Color.Lerp(color, new Color(0.45f, 0.36f, 0.24f), 0.6f);
             ItemDefinition seed = CreateItem($"seed_{id}", $"Semillas de {name.ToLowerInvariant()}",
                 ItemKind.Seed, 99, seedColor);
             ItemDefinition produce = CreateItem($"produce_{id}", name, ItemKind.Produce, 99, color);
+            seed.ConfigureRarity(rarity);
+            produce.ConfigureRarity(rarity);
             seed.ConfigurePrices(buy: seedPrice, sell: 0);
             produce.ConfigurePrices(buy: 0, sell: produceSellPrice);
 
@@ -350,6 +344,15 @@ namespace DeadAcres.EditorTools
             return clip;
         }
 
+        private static void SetRarity(ItemRarity rarity, params ItemDefinition[] items)
+        {
+            foreach (ItemDefinition item in items)
+            {
+                item.ConfigureRarity(rarity);
+                EditorUtility.SetDirty(item);
+            }
+        }
+
         private static readonly List<ItemDefinition> createdItems = new List<ItemDefinition>();
 
         private static ItemDefinition CreateItem(string id, string name, ItemKind kind, int maxStack,
@@ -358,6 +361,10 @@ namespace DeadAcres.EditorTools
             var item = EditorPaths.LoadOrCreate<ItemDefinition>($"{Root}/Items/Item_{id}.asset");
             item.Configure(name, kind, maxStack, footprint);
             item.ConfigureExtras(id, color, tool, placedPrefab);
+
+            // Los assets se reutilizan entre generaciones: lo que no se vuelva a fijar más abajo
+            // tiene que volver a su valor por defecto.
+            item.ConfigureRarity(ItemRarity.Common);
             EditorUtility.SetDirty(item);
             createdItems.Add(item);
             return item;
