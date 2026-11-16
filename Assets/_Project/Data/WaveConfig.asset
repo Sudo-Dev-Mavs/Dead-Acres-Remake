@@ -23,3 +23,6 @@ MonoBehaviour:
   minNightRemaining: 15
   nightFastForward: 3
   reinforcementRadiusFactor: 0.6
+  strongFromNight: 2
+  strongPerNight: 1
+  strongMaxCount: 8

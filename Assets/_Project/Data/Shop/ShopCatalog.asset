@@ -59,3 +59,5 @@ MonoBehaviour:
     availableFromDay: 3
   - item: {fileID: 11400000, guid: 6f6836bc88e4705d592cf5215cdaebca, type: 2}
     availableFromDay: 3
+  - item: {fileID: 11400000, guid: 4cbd78c59a46f4e7b9f82b32374a62f8, type: 2}
+    availableFromDay: 4
