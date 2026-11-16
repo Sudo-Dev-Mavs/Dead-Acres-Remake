@@ -378,6 +378,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967291
   blastVisual: {fileID: 9038968235413424471}
+  explosionClip: {fileID: 8300000, guid: 65430d49d6ed8c466b062d6359cf2acc, type: 3}
 --- !u!1 &9038968235413424471
 GameObject:
   m_ObjectHideFlags: 0
