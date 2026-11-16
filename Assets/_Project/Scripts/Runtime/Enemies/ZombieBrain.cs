@@ -57,6 +57,13 @@ namespace DeadAcres.Enemies
             nextAttackTime = 0f;
         }
 
+        internal void Configure(float newSpeed, float newDamage, float newAttackInterval)
+        {
+            speed = Mathf.Max(0f, newSpeed);
+            attackDamage = Mathf.Max(0f, newDamage);
+            attackInterval = Mathf.Max(0.1f, newAttackInterval);
+        }
+
         private void AddTarget(Health target)
         {
             if (target == null)

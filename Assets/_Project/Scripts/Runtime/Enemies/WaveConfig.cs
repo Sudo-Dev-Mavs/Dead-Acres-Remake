@@ -41,6 +41,18 @@ namespace DeadAcres.Enemies
         [Tooltip("Los refuerzos aparecen más cerca: fracción del radio de aparición normal.")]
         [SerializeField, Range(0.2f, 1f)] private float reinforcementRadiusFactor = 0.6f;
 
+        [Header("Zombis fuertes (salen de la cripta)")]
+        [Tooltip("Primera noche en la que la cripta suelta zombis fuertes. 0 = nunca.")]
+        [SerializeField, Min(0)] private int strongFromNight = 2;
+
+        [Tooltip("Cuántos más cada noche a partir de esa.")]
+        [SerializeField, Min(0)] private int strongPerNight = 1;
+
+        [SerializeField, Min(0)] private int strongMaxCount = 8;
+
+        public int StrongFromNight => strongFromNight;
+        public int StrongPerNight => strongPerNight;
+        public int StrongMaxCount => strongMaxCount;
         public int FirstNightCount => firstNightCount;
         public float ReinforcementFraction => reinforcementFraction;
         public int ReinforcementMinCount => reinforcementMinCount;
@@ -59,6 +71,13 @@ namespace DeadAcres.Enemies
             extraPerNight = Mathf.Max(0, perNight);
             initialDelay = Mathf.Max(0f, delay);
             spawnWindow = Mathf.Max(1f, window);
+        }
+
+        internal void ConfigureStrong(int fromNight, int perNight, int maxCount)
+        {
+            strongFromNight = Mathf.Max(0, fromNight);
+            strongPerNight = Mathf.Max(0, perNight);
+            strongMaxCount = Mathf.Max(0, maxCount);
         }
 
         internal void ConfigureReinforcements(float fraction, int minCount, int maxGroups, float window,

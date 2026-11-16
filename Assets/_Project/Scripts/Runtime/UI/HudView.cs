@@ -93,6 +93,8 @@ namespace DeadAcres.UI
             if (match != null) match.Ended += OnMatchEnded;
             if (waves != null) waves.ReinforcementsIncoming += OnReinforcementsIncoming;
             if (buildTools != null) buildTools.Message += ShowNotice;
+            if (waves != null) waves.StrongIncoming += OnStrongIncoming;
+            if (playerInventory != null) playerInventory.Notice += ShowNotice;
         }
 
         private void OnDisable()
@@ -123,6 +125,8 @@ namespace DeadAcres.UI
             if (match != null) match.Ended -= OnMatchEnded;
             if (waves != null) waves.ReinforcementsIncoming -= OnReinforcementsIncoming;
             if (buildTools != null) buildTools.Message -= ShowNotice;
+            if (waves != null) waves.StrongIncoming -= OnStrongIncoming;
+            if (playerInventory != null) playerInventory.Notice -= ShowNotice;
         }
 
         private void Start()
@@ -186,6 +190,9 @@ namespace DeadAcres.UI
 
         private void OnRvHealthChanged(float current, float max) =>
             SetText(rvLabel, $"Caravana {Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}");
+
+        private void OnStrongIncoming(int count) =>
+            ShowNotice(count == 1 ? "La cripta se abre: sale un zombi fuerte" : $"La cripta se abre: salen {count} zombis fuertes");
 
         private void OnReinforcementsIncoming(int count) =>
             ShowNotice($"¡Llegan {count} más! La noche se acelera");

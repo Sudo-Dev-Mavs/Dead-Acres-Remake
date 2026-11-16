@@ -127,6 +127,7 @@ namespace DeadAcres.Animals
 
             timer.Collect();
             playerInventory.Inventory.Add(product, amount);
+            playerInventory.Notify($"+{amount} {product.DisplayName}");
             if (readyIndicator != null) readyIndicator.SetActive(false);
         }
 

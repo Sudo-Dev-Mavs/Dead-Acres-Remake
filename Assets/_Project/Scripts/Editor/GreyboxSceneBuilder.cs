@@ -7,6 +7,7 @@ using DeadAcres.Economy;
 using DeadAcres.Enemies;
 using DeadAcres.Farming;
 using DeadAcres.Items;
+using DeadAcres.Loot;
 using DeadAcres.Match;
 using DeadAcres.Player;
 using UnityEditor;
@@ -125,7 +126,9 @@ namespace DeadAcres.EditorTools
             // Los zombis aparecen en un círculo alrededor de la caravana y van a por ella.
             waves.Configure(data.Waves, data.Session, data.PhaseChanged, data.NightCompleted, data.ZombiePrefab,
                 rvHealth, new List<Health> { playerHealth }, rvHealth.transform, 45f, cycle);
+            waves.ConfigureCrypt(data.StrongZombiePrefab, CreateCrypt(world));
             CreateAnimals(data);
+            CreateCars(data, world);
 
             var match = systems.AddComponent<MatchDirector>();
             match.Configure(data.Session, cycle, data.NightCompleted, rvHealth, playerHealth, playerInput,
@@ -221,6 +224,94 @@ namespace DeadAcres.EditorTools
 
             // No ocupa celda, pero el martillo lo recoge como ítem para poder moverlo.
             animal.AddComponent<PlacedObject>().ConfigureItem(item);
+        }
+
+        /// <summary>
+        /// La cripta: a unos 50 m de la caravana, con la puerta mirando hacia ella. De noche salen
+        /// de ahí los zombis fuertes.
+        /// </summary>
+        /// <returns>La puerta: de dónde salen y hacia dónde miran.</returns>
+        private static Transform CreateCrypt(FarmWorld world)
+        {
+            var position = new Vector3(-45f, 0f, 35f);
+            var toRv = new Vector3(RvCenter.x - position.x, 0f, RvCenter.z - position.z);
+
+            var crypt = new GameObject("Crypt");
+            crypt.transform.SetPositionAndRotation(position, Quaternion.LookRotation(toRv));
+
+            Material stone = EditorPaths.LoadOrCreateMaterial("Greybox_Crypt", new Color(0.36f, 0.36f, 0.40f));
+            GameObject building = AddPart(crypt.transform, "Building", new Vector3(0f, 1.5f, 0f), new Vector3(5f, 3f, 6f),
+                stone, true);
+            AddPart(crypt.transform, "Roof", new Vector3(0f, 3.2f, 0f), new Vector3(5.6f, 0.4f, 6.6f), stone, false);
+            AddPart(crypt.transform, "Doorway", new Vector3(0f, 1.1f, 3.01f), new Vector3(1.6f, 2.2f, 0.05f),
+                EditorPaths.LoadOrCreateMaterial("Greybox_CryptDoor", new Color(0.05f, 0.03f, 0.08f)), false);
+
+            // Delante de la puerta no se construye: es por donde salen.
+            building.AddComponent<NoBuildZone>().Configure(world, 4);
+
+            var glow = new GameObject("Glow").AddComponent<Light>();
+            glow.transform.SetParent(crypt.transform, false);
+            glow.transform.localPosition = new Vector3(0f, 2.2f, 4f);
+            glow.type = LightType.Point;
+            glow.color = new Color(0.65f, 0.30f, 0.95f);
+            glow.range = 12f;
+            glow.intensity = 3f;
+
+            var door = new GameObject("Door").transform;
+            door.SetParent(crypt.transform, false);
+            door.localPosition = new Vector3(0f, 0f, 3f);
+            return door;
+        }
+
+        /// <summary>Autos abandonados repartidos por el mapa. El más lejano guarda el rifle.</summary>
+        private static void CreateCars(DefaultDataGenerator.GeneratedData data, FarmWorld world)
+        {
+            var parent = new GameObject("Cars").transform;
+            CreateCar(parent, world, "car_1", new Vector3(22f, 0f, -14f), 20f, data.CarLoot, new Color(0.55f, 0.20f, 0.18f));
+            CreateCar(parent, world, "car_2", new Vector3(-30f, 0f, -24f), 75f, data.CarLoot, new Color(0.20f, 0.35f, 0.55f));
+            CreateCar(parent, world, "car_3", new Vector3(38f, 0f, 30f), -30f, data.CarLoot, new Color(0.60f, 0.58f, 0.50f));
+            CreateCar(parent, world, "car_4", new Vector3(-20f, 0f, 48f), 10f, data.CarLoot, new Color(0.25f, 0.45f, 0.30f));
+            CreateCar(parent, world, "car_5", new Vector3(55f, 0f, -40f), 60f, data.SpecialCarLoot, new Color(0.15f, 0.15f, 0.17f));
+        }
+
+        private static void CreateCar(Transform parent, FarmWorld world, string id, Vector3 position, float yaw,
+            LootTable loot, Color color)
+        {
+            var car = new GameObject($"Car ({id})");
+            car.transform.SetParent(parent, false);
+            car.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+
+            // Un solo collider en la raíz: es lo que mira el rayo de interacción y lo que reserva celdas.
+            var body = car.AddComponent<BoxCollider>();
+            body.center = new Vector3(0f, 0.75f, 0f);
+            body.size = new Vector3(1.9f, 1.5f, 4.2f);
+
+            Material paint = EditorPaths.LoadOrCreateMaterial($"Greybox_Car_{id}", color);
+            Material dark = EditorPaths.LoadOrCreateMaterial("Greybox_CarDark", new Color(0.10f, 0.10f, 0.12f));
+            AddPart(car.transform, "Body", new Vector3(0f, 0.6f, 0f), new Vector3(1.9f, 0.8f, 4.2f), paint, false);
+            AddPart(car.transform, "Cabin", new Vector3(0f, 1.3f, -0.2f), new Vector3(1.7f, 0.6f, 2f), dark, false);
+            GameObject closed = AddPart(car.transform, "TrunkClosed", new Vector3(0f, 1.03f, -1.6f),
+                new Vector3(1.7f, 0.06f, 0.9f), paint, false);
+            GameObject open = AddPart(car.transform, "TrunkOpen", new Vector3(0f, 1.4f, -1.2f),
+                new Vector3(1.7f, 0.06f, 0.9f), paint, false);
+            open.transform.localRotation = Quaternion.Euler(-65f, 0f, 0f);
+
+            car.AddComponent<LootContainer>().Configure(id, "auto", loot, closed, open);
+            car.AddComponent<NoBuildZone>().Configure(world, 0);
+        }
+
+        /// <summary>Caja hija en coordenadas locales del padre (gira y se mueve con él).</summary>
+        private static GameObject AddPart(Transform parent, string name, Vector3 localPosition, Vector3 size,
+            Material material, bool withCollider)
+        {
+            GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            part.name = name;
+            if (!withCollider) Object.DestroyImmediate(part.GetComponent<Collider>());
+            part.transform.SetParent(parent, false);
+            part.transform.localPosition = localPosition;
+            part.transform.localScale = size;
+            part.GetComponent<Renderer>().sharedMaterial = material;
+            return part;
         }
 
         /// <summary>Jack provisional: una cápsula junto a la caravana. De noche se oculta.</summary>

@@ -39,6 +39,33 @@ namespace DeadAcres.Enemies
             return groupsSent < config.MaxReinforcementGroups && nightSecondsRemaining >= config.MinNightRemaining;
         }
 
+        /// <summary>Zombis fuertes que suelta la cripta esa noche, además de la oleada normal.</summary>
+        public static int GetStrongCount(WaveConfig config, int nightNumber)
+        {
+            if (config.StrongFromNight <= 0 || nightNumber < config.StrongFromNight)
+            {
+                return 0;
+            }
+
+            int count = (nightNumber - config.StrongFromNight + 1) * config.StrongPerNight;
+            return Mathf.Clamp(count, 0, config.StrongMaxCount);
+        }
+
+        /// <summary>
+        /// ¿La aparición número <paramref name="spawnIndex"/> (desde 0) de la noche es un zombi
+        /// fuerte? Los reparte de forma uniforme entre las <paramref name="totalCount"/> apariciones.
+        /// </summary>
+        public static bool IsStrongSpawn(int spawnIndex, int totalCount, int strongCount)
+        {
+            if (strongCount <= 0 || totalCount <= 0 || spawnIndex < 0 || spawnIndex >= totalCount)
+            {
+                return false;
+            }
+
+            strongCount = Mathf.Min(strongCount, totalCount);
+            return (spawnIndex + 1) * strongCount / totalCount > spawnIndex * strongCount / totalCount;
+        }
+
         /// <summary>Multiplicador de vida extra por noche. Solo Endless; en Campaña siempre 1.</summary>
         public static float GetHealthMultiplier(GameModeRules rules, int nightNumber)
         {

@@ -21,6 +21,13 @@ namespace DeadAcres.Enemies
         [SerializeField] private NightResultEventChannel nightCompleted;
         [SerializeField] private ZombieBrain zombiePrefab;
 
+        [Header("Cripta")]
+        [Tooltip("Opcional. El zombi fuerte.")]
+        [SerializeField] private ZombieBrain strongZombiePrefab;
+
+        [Tooltip("De dónde salen los zombis fuertes.")]
+        [SerializeField] private Transform crypt;
+
         [Tooltip("Para saber cuánta noche queda al decidir si se mandan refuerzos.")]
         [SerializeField] private DayNightCycle dayNight;
 
@@ -42,6 +49,11 @@ namespace DeadAcres.Enemies
         private float healthMultiplier = 1f;
         private int waveCount;
         private bool spawningReinforcements;
+        private int strongCount;
+        private int spawnedThisWave;
+
+        /// <summary>Empieza una noche en la que la cripta suelta este número de zombis fuertes.</summary>
+        public event Action<int> StrongIncoming;
 
         /// <summary>Llega un grupo de refuerzo de este tamaño y la noche se acelera.</summary>
         public event Action<int> ReinforcementsIncoming;
@@ -112,8 +124,16 @@ namespace DeadAcres.Enemies
             var rules = session != null ? session.Mode : null;
             healthMultiplier = WaveMath.GetHealthMultiplier(rules, change.DayNumber);
             waveCount = WaveMath.GetEnemyCount(config, rules, change.DayNumber);
+            strongCount = strongZombiePrefab != null && crypt != null
+                ? WaveMath.GetStrongCount(config, change.DayNumber)
+                : 0;
+            spawnedThisWave = 0;
             spawningReinforcements = false;
-            runner.Begin(waveCount, config.InitialDelay, config.SpawnWindow);
+
+            // Los fuertes van aparte de la oleada normal, pero también hay que matarlos para
+            // que la noche cuente como despejada.
+            runner.Begin(waveCount + strongCount, config.InitialDelay, config.SpawnWindow);
+            if (strongCount > 0) StrongIncoming?.Invoke(strongCount);
         }
 
         // Amanece: los que queden se queman, como dice la configuración del ciclo.
@@ -135,6 +155,17 @@ namespace DeadAcres.Enemies
 
         private void Spawn()
         {
+            // Los refuerzos son siempre zombis normales.
+            if (!spawningReinforcements)
+            {
+                int index = spawnedThisWave++;
+                if (WaveMath.IsStrongSpawn(index, waveCount + strongCount, strongCount))
+                {
+                    SpawnFromCrypt();
+                    return;
+                }
+            }
+
             Vector3 center = spawnCenter != null ? spawnCenter.position : transform.position;
             float radius = spawningReinforcements ? spawnRadius * config.ReinforcementRadiusFactor : spawnRadius;
             float angle = UnityEngine.Random.value * Mathf.PI * 2f;
@@ -142,7 +173,19 @@ namespace DeadAcres.Enemies
                 center.z + Mathf.Sin(angle) * radius);
             Quaternion facing = Quaternion.LookRotation(new Vector3(center.x - position.x, 0f, center.z - position.z));
 
-            ZombieBrain zombie = Instantiate(zombiePrefab, position, facing, transform);
+            Register(Instantiate(zombiePrefab, position, facing, transform));
+        }
+
+        private void SpawnFromCrypt()
+        {
+            // Un poco repartidos delante de la puerta para que no salgan uno encima de otro.
+            Vector2 offset = UnityEngine.Random.insideUnitCircle * 1.5f;
+            Vector3 position = crypt.position + crypt.forward * 2.5f + new Vector3(offset.x, 0.1f, offset.y);
+            Register(Instantiate(strongZombiePrefab, position, crypt.rotation, transform));
+        }
+
+        private void Register(ZombieBrain zombie)
+        {
             zombie.Initialize(primaryTarget, GetNearbyTargets());
 
             var health = zombie.GetComponent<Health>();
@@ -199,6 +242,12 @@ namespace DeadAcres.Enemies
             alive.Remove(zombie);
             runner.NotifyEnemyRemoved();
             Destroy(zombie.gameObject, 0.15f);
+        }
+
+        internal void ConfigureCrypt(ZombieBrain strongPrefab, Transform cryptDoor)
+        {
+            strongZombiePrefab = strongPrefab;
+            crypt = cryptDoor;
         }
 
         internal void Configure(WaveConfig waveConfig, GameSession gameSession, PhaseEventChannel phaseChannel,
