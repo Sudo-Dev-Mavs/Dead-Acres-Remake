@@ -41,6 +41,10 @@ namespace DeadAcres.Enemies
         [SerializeField] private Transform spawnCenter;
         [SerializeField, Min(5f)] private float spawnRadius = 45f;
 
+        [Header("Amanecer")]
+        [Tooltip("Segundos que tarda en morir quemado un zombi que sigue vivo al amanecer.")]
+        [SerializeField, Min(1f)] private float burnSeconds = 12f;
+
         private readonly WaveRunner runner = new WaveRunner();
         private readonly List<Health> alive = new List<Health>(64);
         private readonly List<Health> nearbyTargets = new List<Health>(16);
@@ -139,21 +143,39 @@ namespace DeadAcres.Enemies
             if (strongCount > 0) StrongIncoming?.Invoke(strongCount);
         }
 
-        // Amanece: los que queden se queman, como dice la configuración del ciclo.
+        // Amanece: los que queden empiezan a quemarse. Se van de la granja y desaparecen al
+        // llegar al borde, salvo que tengan a un jugador cerca: a ese lo atacan hasta el final.
         private void OnNightCompleted(NightResult _)
         {
+            Vector3 center = spawnCenter != null ? spawnCenter.position : transform.position;
             for (int i = alive.Count - 1; i >= 0; i--)
             {
                 Health zombie = alive[i];
-                if (zombie != null)
+                if (zombie == null)
                 {
-                    zombie.Died -= OnZombieDied;
+                    continue;
+                }
+
+                zombie.Died -= OnZombieDied;
+                if (zombie.TryGetComponent(out ZombieBrain brain))
+                {
+                    zombie.Died += OnBurningZombieDied;
+                    brain.StartBurning(players, center, spawnRadius + 5f, burnSeconds);
+                }
+                else
+                {
                     Destroy(zombie.gameObject);
                 }
             }
 
             alive.Clear();
             runner.Abort();
+        }
+
+        private void OnBurningZombieDied(Health zombie)
+        {
+            zombie.Died -= OnBurningZombieDied;
+            Destroy(zombie.gameObject, 0.15f);
         }
 
         private void Spawn()

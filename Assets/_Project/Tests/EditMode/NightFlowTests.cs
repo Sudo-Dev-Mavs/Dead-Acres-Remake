@@ -90,6 +90,21 @@ namespace DeadAcres.Tests
         }
 
         [Test]
+        public void ReinforcementSurvivor_DoesNotHoldTheNight_ItEndsOnItsOwn()
+        {
+            Advance(80f, killEverything: true);
+            Assert.IsTrue(runner.AddReinforcements(WaveMath.GetReinforcementCount(waves, 30), waves.ReinforcementWindow,
+                waves.NightFastForward));
+
+            // Nadie mata a los refuerzos: quedan 220 s de reloj, que al triple son ~73 s reales.
+            float real = Advance(200f, killEverything: false);
+
+            Assert.AreEqual(GamePhase.Dawn, clock.Phase, "La noche no espera a que caiga el último.");
+            Assert.IsTrue(real > 72f && real < 75f, $"El resto de la noche duró {real} s reales.");
+            Assert.IsTrue(runner.Alive > 0, "Amaneció con zombis vivos: son los que se queman.");
+        }
+
+        [Test]
         public void ZombiesNeverKilled_NightStopsAt300s()
         {
             float real = Advance(400f, killEverything: false);

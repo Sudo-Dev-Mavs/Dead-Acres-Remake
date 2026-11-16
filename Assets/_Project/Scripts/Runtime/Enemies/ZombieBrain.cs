@@ -31,6 +31,12 @@ namespace DeadAcres.Enemies
         private float nextAttackTime;
         private float sidestepSign;
 
+        // Amaneció con el zombi vivo: arde, huye de la granja y solo ataca a un jugador cercano.
+        private bool burning;
+        private Vector3 fleeFrom;
+        private float despawnDistance;
+        private float burnPerSecond;
+
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
@@ -55,6 +61,74 @@ namespace DeadAcres.Enemies
             // Cada zombi esquiva por un lado distinto para que no se apilen en fila.
             sidestepSign = Random.value < 0.5f ? -1f : 1f;
             nextAttackTime = 0f;
+        }
+
+        /// <summary>
+        /// Amanece: el zombi empieza a quemarse. Se aleja de <paramref name="fleeFromPoint"/> y
+        /// desaparece al llegar a <paramref name="despawnAtDistance"/>; si tiene un jugador cerca,
+        /// va a por él hasta que muera uno de los dos.
+        /// </summary>
+        public void StartBurning(IReadOnlyList<Health> players, Vector3 fleeFromPoint, float despawnAtDistance,
+            float secondsToDie)
+        {
+            burning = true;
+            fleeFrom = fleeFromPoint;
+            despawnDistance = despawnAtDistance;
+            burnPerSecond = health.Max / Mathf.Max(0.5f, secondsToDie);
+
+            // Deja en paz la caravana y los animales: el hueco 0 (la caravana) queda vacío.
+            targets.Clear();
+            targetColliders.Clear();
+            targets.Add(null);
+            targetColliders.Add(null);
+            if (players != null)
+            {
+                for (int i = 0; i < players.Count; i++)
+                {
+                    AddTarget(players[i]);
+                }
+            }
+
+            ShowFire();
+        }
+
+        private void ShowFire()
+        {
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", new Color(1f, 0.45f, 0.1f));
+            foreach (Renderer part in GetComponentsInChildren<Renderer>())
+            {
+                part.SetPropertyBlock(tint);
+            }
+
+            var glow = new GameObject("Fire").AddComponent<Light>();
+            glow.transform.SetParent(transform, false);
+            glow.transform.localPosition = Vector3.up * 1.2f;
+            glow.type = LightType.Point;
+            glow.color = new Color(1f, 0.55f, 0.15f);
+            glow.range = 5f;
+            glow.intensity = 3f;
+        }
+
+        // Huye en línea recta; lo que le estorbe lo rodea en vez de romperlo.
+        private void Flee()
+        {
+            Vector3 away = transform.position - fleeFrom;
+            away.y = 0f;
+            if (away.magnitude >= despawnDistance)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Vector3 direction = away.sqrMagnitude > 0.001f ? away.normalized : transform.forward;
+            if (TryFindObstacle(direction, out _))
+            {
+                direction = Quaternion.Euler(0f, 70f * sidestepSign, 0f) * direction;
+            }
+
+            Face(direction);
+            controller.SimpleMove(direction * (speed * 1.6f));
         }
 
         internal void Configure(float newSpeed, float newDamage, float newAttackInterval)
@@ -82,10 +156,27 @@ namespace DeadAcres.Enemies
                 return;
             }
 
+            if (burning)
+            {
+                health.ApplyDamage(burnPerSecond * Time.deltaTime);
+                if (health.IsDead)
+                {
+                    return;
+                }
+            }
+
             int targetIndex = ChooseTarget();
             if (targetIndex < 0)
             {
-                controller.SimpleMove(Vector3.zero);
+                if (burning)
+                {
+                    Flee();
+                }
+                else
+                {
+                    controller.SimpleMove(Vector3.zero);
+                }
+
                 return;
             }
 

@@ -142,7 +142,7 @@ namespace DeadAcres.Tests
         }
 
         [Test]
-        public void Night_FastForward_ShortensOnlyTheWaitUntilTheMinimum()
+        public void Night_FastForward_KeepsRunningWithEnemiesAlive_UntilTheMaximum()
         {
             AdvanceToNight(); // mínimo 30 s, máximo 50 s
             clock.Tick(6f);
@@ -151,16 +151,23 @@ namespace DeadAcres.Tests
             clock.Tick(4f); // cuenta como 12 s → 18 s de reloj
             Assert.AreEqual(18f, clock.PhaseElapsed, 0.0001f);
 
-            clock.Tick(10f); // serían 30 s más: se queda en el mínimo, no lo salta
-            Assert.AreEqual(30f, clock.PhaseElapsed, 0.0001f);
-            Assert.AreEqual(GamePhase.Night, clock.Phase, "Con enemigos vivos la noche no termina.");
+            clock.Tick(10f); // 30 s más → 48 s: pasa del mínimo sin frenarse
+            Assert.AreEqual(48f, clock.PhaseElapsed, 0.0001f);
+            Assert.AreEqual(GamePhase.Night, clock.Phase, "Todavía no llega al máximo.");
 
-            clock.Tick(5f); // pasado el mínimo vuelve a ir a velocidad normal
-            Assert.AreEqual(35f, clock.PhaseElapsed, 0.0001f);
-
-            wave.IsWaveCleared = true;
-            clock.Tick(0.1f);
+            // Queda un zombi vivo y nadie lo mata: el reloj sigue y amanece igual.
+            clock.Tick(1f);
             Assert.AreEqual(GamePhase.Dawn, clock.Phase);
+        }
+
+        [Test]
+        public void Night_ClockShowsTheWholeNight_NotJustTheMinimum()
+        {
+            AdvanceToNight();
+            Assert.AreEqual(50f, clock.PhaseDuration, 0.0001f);
+
+            clock.Tick(40f);
+            Assert.AreEqual(0.8f, clock.PhaseProgress, 0.0001f, "Pasado el mínimo el reloj sigue avanzando.");
         }
 
         [Test]

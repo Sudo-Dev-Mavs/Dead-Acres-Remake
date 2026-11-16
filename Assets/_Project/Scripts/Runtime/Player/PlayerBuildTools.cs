@@ -93,6 +93,13 @@ namespace DeadAcres.Player
                 return;
             }
 
+            // Recoger algo dañado y volver a colocarlo lo dejaría como nuevo gratis.
+            if (placed.TryGetComponent(out Health placedHealth) && placedHealth.Current < placedHealth.Max - 0.5f)
+            {
+                Message?.Invoke("Está dañado: repáralo con cinta antes de recogerlo");
+                return;
+            }
+
             ItemDefinition item = placed.Item;
             if (item != null)
             {
