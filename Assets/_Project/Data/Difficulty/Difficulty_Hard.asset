@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f60884dd9f0a1498822331a17e1734b, type: 3}
   m_Name: Difficulty_Hard
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Difficulty.DifficultyProfile
-  displayName: Hard
+  displayName: "Dif\xEDcil"
   flavorText: "Los zombis aguantan m\xE1s y pegan m\xE1s fuerte."
   enemyHealthMultiplier: 1.5
   damageTakenMultiplier: 1.2

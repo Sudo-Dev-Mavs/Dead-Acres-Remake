@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f60884dd9f0a1498822331a17e1734b, type: 3}
   m_Name: Difficulty_Medium
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Difficulty.DifficultyProfile
-  displayName: Medium
+  displayName: Media
   flavorText: La experiencia base.
   enemyHealthMultiplier: 1
   damageTakenMultiplier: 1
