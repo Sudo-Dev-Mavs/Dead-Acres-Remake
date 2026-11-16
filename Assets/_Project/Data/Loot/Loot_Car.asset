@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: Loot_Car
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Loot.LootTable
   goldMin: 10
-  goldMax: 30
+  goldMax: 40
   guaranteed: []
-  rolls: 2
+  rolls: 3
   random:
   - item: {fileID: 11400000, guid: 35f32c1601244cb039076a850990f52b, type: 2}
     min: 3
@@ -45,3 +45,20 @@ MonoBehaviour:
     min: 1
     max: 1
     weight: 1
+  - item: {fileID: 11400000, guid: 74999f2ff4881a397af072a00fb64c87, type: 2}
+    min: 1
+    max: 1
+    weight: 1.2
+  - item: {fileID: 11400000, guid: 65018e98300936183bdf23e1aabbbf49, type: 2}
+    min: 1
+    max: 1
+    weight: 0.6
+  - item: {fileID: 11400000, guid: ccd7961b5d0690e74b3c6556a9e73389, type: 2}
+    min: 1
+    max: 1
+    weight: 0.5
+  - item: {fileID: 11400000, guid: 893c6a56cf1afc54bb6dcc715b367372, type: 2}
+    min: 1
+    max: 1
+    weight: 0.5
+  maxWeapons: 1

@@ -337,6 +337,7 @@ GameObject:
   - component: {fileID: 8115390984544862168}
   - component: {fileID: 3730177065359153904}
   - component: {fileID: 2292392489422946319}
+  - component: {fileID: 1507330110747355537}
   - component: {fileID: 4648739603335375856}
   m_Layer: 0
   m_Name: TurretFlame
@@ -406,6 +407,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Building.PowerConsumer
   world: {fileID: 0}
   demand: 4
+--- !u!114 &1507330110747355537
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3398817963616752749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b223188989ab62476bd028d2bb255128, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Defenses.PlacedStatusLabel
+  height: 1.7
+  showDistance: 5
 --- !u!114 &4648739603335375856
 MonoBehaviour:
   m_ObjectHideFlags: 0

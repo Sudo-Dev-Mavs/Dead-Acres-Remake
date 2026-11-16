@@ -247,6 +247,7 @@ GameObject:
   - component: {fileID: 6671557205296447072}
   - component: {fileID: 8014403169281380323}
   - component: {fileID: 773717149310006252}
+  - component: {fileID: 928129733410238669}
   - component: {fileID: 5321354654985590290}
   m_Layer: 0
   m_Name: TurretAuto
@@ -316,6 +317,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Building.PowerConsumer
   world: {fileID: 0}
   demand: 5
+--- !u!114 &928129733410238669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4263995004964553390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b223188989ab62476bd028d2bb255128, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.Defenses.PlacedStatusLabel
+  height: 1.7
+  showDistance: 5
 --- !u!114 &5321354654985590290
 MonoBehaviour:
   m_ObjectHideFlags: 0
