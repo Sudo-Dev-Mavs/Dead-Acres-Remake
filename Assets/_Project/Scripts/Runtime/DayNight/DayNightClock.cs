@@ -91,21 +91,11 @@ namespace DeadAcres.DayNight
         /// mínima: a partir de ahí (enemigos aún vivos) el reloj vuelve a ir a velocidad normal,
         /// para que el tope máximo siga siendo tiempo real.
         /// </summary>
+        // De noche el tiempo corre a la velocidad que marque la oleada (más rápido cuando ya se
+        // despejó una vez). Nunca se detiene a esperar a que caiga el último zombi.
         private float GetStep(float deltaTime)
         {
-            if (Phase != GamePhase.Night)
-            {
-                return deltaTime;
-            }
-
-            float scale = waveStatus.NightTimeScale;
-            float untilMinimum = config.MinNightDuration - PhaseElapsed;
-            if (scale <= 1f || untilMinimum <= 0f)
-            {
-                return deltaTime;
-            }
-
-            return Math.Min(deltaTime * scale, Math.Max(deltaTime, untilMinimum));
+            return Phase == GamePhase.Night ? deltaTime * Math.Max(1f, waveStatus.NightTimeScale) : deltaTime;
         }
 
         private void TickNight()
@@ -144,7 +134,7 @@ namespace DeadAcres.DayNight
                 case GamePhase.Dawn: return config.DawnDuration;
                 case GamePhase.Day: return config.GetDayDuration(DayNumber);
                 case GamePhase.Dusk: return config.DuskDuration;
-                case GamePhase.Night: return config.MinNightDuration;
+                case GamePhase.Night: return config.MaxNightDuration;
                 default: return 0f;
             }
         }

@@ -75,7 +75,8 @@ namespace DeadAcres.EditorTools
             createdItems.Clear();
 
             data.DayNight = EditorPaths.LoadOrCreate<DayNightConfig>($"{Root}/DayNightConfig.asset");
-            data.DayNight.Configure(dawn: 15f, firstDay: 360f, day: 240f, dusk: 30f, minNight: 120f, maxNight: 300f);
+            // Día de 2 minutos: poco tiempo para cultivar, hay que elegir bien qué se hace.
+            data.DayNight.Configure(dawn: 15f, firstDay: 120f, day: 120f, dusk: 30f, minNight: 120f, maxNight: 300f);
             EditorUtility.SetDirty(data.DayNight);
 
             // El primer nombre es el del asset (no cambia); el segundo, el que ve el jugador y el

@@ -165,10 +165,11 @@ namespace DeadAcres.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
             SetBuildScenes(MenuScenePath, ScenePath);
+            PlayFromMainMenu.Apply();
             AssetDatabase.SaveAssets();
 
-            Debug.Log($"Dead Acres: escenas generadas en {SceneFolder}. Pulsa Play para probar la de juego; " +
-                      "para ver el menú, abre MainMenu.unity y pulsa Play ahí.");
+            Debug.Log($"Dead Acres: escenas generadas en {SceneFolder}. Play arranca en el menú principal " +
+                      "(se puede cambiar en Dead Acres > Play empieza en el menú principal).");
         }
 
         /// <summary>El menú principal: una cámara, el EventSystem y el componente que monta la interfaz.</summary>
@@ -256,15 +257,15 @@ namespace DeadAcres.EditorTools
         }
 
         /// <summary>
-        /// Animales de regalo: una oveja y dos gallinas a unos 25 m de la caravana. Se les puede
-        /// hacer un corral ahí o traerlos con el martillo. El resto se compra.
+        /// Animales de regalo: una oveja y dos gallinas, cada uno por su lado a unos 25-30 m de la
+        /// caravana. Se les puede hacer un corral ahí o traerlos con el martillo. El resto se compra.
         /// </summary>
         private static void CreateAnimals(DefaultDataGenerator.GeneratedData data)
         {
             var parent = new GameObject("Animals").transform;
-            SpawnAnimal(data.SheepItem, parent, new Vector3(11.5f, 0f, 16.5f));
-            SpawnAnimal(data.ChickenItem, parent, new Vector3(9.5f, 0f, 14.5f));
-            SpawnAnimal(data.ChickenItem, parent, new Vector3(13.5f, 0f, 14.5f));
+            SpawnAnimal(data.SheepItem, parent, new Vector3(12.5f, 0f, 18.5f));
+            SpawnAnimal(data.ChickenItem, parent, new Vector3(-26.5f, 0f, 12.5f));
+            SpawnAnimal(data.ChickenItem, parent, new Vector3(16.5f, 0f, -24.5f));
         }
 
         private static void SpawnAnimal(ItemDefinition item, Transform parent, Vector3 position)

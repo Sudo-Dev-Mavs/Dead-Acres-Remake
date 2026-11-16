@@ -10,7 +10,7 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 
 1. En Unity Hub: **Add → Add project from disk** y elige la carpeta del repo. Ábrelo con 6000.3.25f1. La primera apertura tarda: Unity genera `Library/` y los `.meta`.
 2. Menú **Dead Acres → Crear escena greybox**. Genera los datos en `Assets/_Project/Data/`, los materiales, los prefabs y dos escenas ya cableadas en `Assets/_Project/Scenes/`: `MainMenu.unity` y `Greybox.unity` (la de juego, que queda abierta).
-3. Pulsa **Play** para probar la partida directamente. Para pasar por el menú principal (y poder usar "Continuar"), abre `MainMenu.unity` y pulsa Play ahí.
+3. Pulsa **Play**: arranca siempre en el menú principal, esté abierta la escena que esté. Para probar una escena suelta, desmarca **Dead Acres → Play empieza en el menú principal**.
 4. **Window → General → Test Runner → EditMode → Run All**.
 5. Haz commit de lo que Unity haya generado, **incluidos todos los `.meta`**. Los GUID de los `.meta` son los que enlazan escenas y assets con los scripts: deben generarse en una sola máquina y subirse.
 
@@ -44,17 +44,17 @@ Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noc
 
 De noche llegan zombis desde todas las direcciones. Van a por la caravana, persiguen al jugador si lo tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman.
 
-La noche dura entre 2 y 5 minutos. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad. Con la partida terminada, Enter la reinicia.
+El día dura 2 minutos. La noche dura como mucho 5: el reloj nunca se detiene a esperar a que mates al último. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad; si la despejas después, amanece en el acto. Los zombis que sigan vivos al amanecer empiezan a arder: se alejan de la granja y desaparecen al llegar al borde, salvo que te tengan cerca, en cuyo caso te atacan hasta que mueran ellos o tú. Con la partida terminada, Enter la reinicia.
 
 La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) suelta zombis fuertes desde la segunda noche: uno más cada noche. Aguantan cuatro veces más que uno normal, pegan más y son más lentos.
 
 Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y un par de cosas al azar (semillas, cinta, antorchas, muros, alguna luz). El más lejano guarda un rifle de caza; Jack también lo vende desde el cuarto día.
 
-Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan a 6 bloques o menos de la caravana, o cerca de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado y la cinta americana lo repara.
+Defensas: antorchas (luz sin energía), luces portátiles y torretas (solo funcionan a 6 bloques o menos de la caravana, o cerca de un generador; la torreta lo indica con una luz verde o roja), espantapájaros con TNT (explota al acercarse un zombi) y muros. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
 
-Animales: empiezas con una oveja y dos gallinas a unos 25 m de la caravana; Jack vende más. Cuando tienen producto listo les aparece un cubo amarillo encima: F para recoger el huevo o la lana. Son colocables: el martillo los recoge para moverlos. Pasean cerca de donde se colocan sin atravesar vallas ni muros, y de noche los zombis los atacan si pasan cerca, así que conviene hacerles un corral.
+Animales: empiezas con una oveja y dos gallinas, cada una por su lado a unos 25-30 m de la caravana; Jack vende más. Cuando tienen producto listo les aparece un cubo amarillo encima: F para recoger el huevo o la lana. Son colocables: el martillo los recoge para moverlos. Pasean cerca de donde se colocan sin atravesar vallas ni muros, y de noche los zombis los atacan si pasan cerca, así que conviene hacerles un corral.
 
 Árboles frutales (manzano, naranjo, limonero): se plantan como cualquier semilla, tardan más y dan más fruta.
 
