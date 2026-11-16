@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using DeadAcres.Animals;
 using DeadAcres.Combat;
 using DeadAcres.Core.Session;
 using DeadAcres.DayNight;
@@ -35,6 +36,9 @@ namespace DeadAcres.Enemies
 
         private readonly WaveRunner runner = new WaveRunner();
         private readonly List<Health> alive = new List<Health>(64);
+        private readonly List<Health> nearbyTargets = new List<Health>(16);
+        private readonly List<Health> animals = new List<Health>(16);
+        private int animalsFrame = -1;
         private float healthMultiplier = 1f;
         private int waveCount;
         private bool spawningReinforcements;
@@ -139,12 +143,54 @@ namespace DeadAcres.Enemies
             Quaternion facing = Quaternion.LookRotation(new Vector3(center.x - position.x, 0f, center.z - position.z));
 
             ZombieBrain zombie = Instantiate(zombiePrefab, position, facing, transform);
-            zombie.Initialize(primaryTarget, players);
+            zombie.Initialize(primaryTarget, GetNearbyTargets());
 
             var health = zombie.GetComponent<Health>();
             health.ResetHealth(healthMultiplier);
             health.Died += OnZombieDied;
             alive.Add(health);
+        }
+
+        // Jugadores y animales que sigan vivos: a quién puede desviarse un zombi.
+        private List<Health> GetNearbyTargets()
+        {
+            RefreshAnimals();
+            nearbyTargets.Clear();
+            AddLiving(players);
+            AddLiving(animals);
+            return nearbyTargets;
+        }
+
+        // Los animales se compran, se recolocan y mueren: se buscan en la escena, como mucho una
+        // vez por frame aunque salgan varios zombis a la vez.
+        private void RefreshAnimals()
+        {
+            if (animalsFrame == Time.frameCount)
+            {
+                return;
+            }
+
+            animalsFrame = Time.frameCount;
+            animals.Clear();
+            Animal[] found = FindObjectsByType<Animal>(FindObjectsSortMode.None);
+            for (int i = 0; i < found.Length; i++)
+            {
+                if (found[i].TryGetComponent(out Health animalHealth))
+                {
+                    animals.Add(animalHealth);
+                }
+            }
+        }
+
+        private void AddLiving(List<Health> source)
+        {
+            for (int i = 0; i < source.Count; i++)
+            {
+                if (source[i] != null && !source[i].IsDead)
+                {
+                    nearbyTargets.Add(source[i]);
+                }
+            }
         }
 
         private void OnZombieDied(Health zombie)

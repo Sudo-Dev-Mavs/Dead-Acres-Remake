@@ -10,6 +10,9 @@ namespace DeadAcres.Building
     /// </summary>
     public sealed class PlacedObject : MonoBehaviour
     {
+        [Tooltip("Solo para objetos que ya vienen en la escena: el ítem que devuelve el martillo.")]
+        [SerializeField] private ItemDefinition item;
+
         private FarmWorld world;
         private int occupantId;
         private PlaceableCategory category;
@@ -19,18 +22,24 @@ namespace DeadAcres.Building
         public FarmWorld World => world;
 
         /// <summary>Ítem con el que se colocó (lo que devuelve el martillo). Puede ser null.</summary>
-        public ItemDefinition Item { get; private set; }
+        public ItemDefinition Item => item;
         public PlaceableCategory Category => category;
 
         public void Bind(FarmWorld farmWorld, int id, PlaceableCategory placeableCategory,
             ItemDefinition sourceItem = null)
         {
-            Item = sourceItem;
+            item = sourceItem;
             world = farmWorld;
             occupantId = id;
             category = placeableCategory;
             released = false;
         }
+
+        /// <summary>
+        /// Para objetos puestos en la escena sin pasar por la rejilla: no ocupan celda ni cuentan
+        /// para el límite, pero el martillo los recoge como el ítem indicado.
+        /// </summary>
+        internal void ConfigureItem(ItemDefinition sourceItem) => item = sourceItem;
 
         private void OnDestroy() => Release();
 

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DeadAcres.Combat;
+using DeadAcres.Animals;
 using DeadAcres.Building;
 using DeadAcres.Core.Events;
 using DeadAcres.Core.Session;
@@ -36,6 +37,8 @@ namespace DeadAcres.EditorTools
             public ShopCatalog Shop;
             public WaveConfig Waves;
             public ZombieBrain ZombiePrefab;
+            public ItemDefinition SheepItem;
+            public ItemDefinition ChickenItem;
             public VoidEventChannel RvDestroyed;
             public VoidEventChannel Victory;
             public int StartingGold;
@@ -159,7 +162,50 @@ namespace DeadAcres.EditorTools
                 CreateCrop("tomato", "Tomate", new Color(0.92f, 0.28f, 0.12f), 90f, 60f, 2, 3, 0.80f, 10, 5),
                 CreateCrop("wheat", "Trigo", new Color(0.90f, 0.76f, 0.30f), 75f, 60f, 1, 2, 0.90f, 6, 6),
                 CreateCrop("sunflower", "Girasol", new Color(0.98f, 0.82f, 0.10f), 100f, 80f, 1, 1, 1.40f, 12, 14),
+
+                // Árboles frutales: tardan más, pero dan más fruta cada vez.
+                CreateCrop("apple", "Manzana", new Color(0.80f, 0.15f, 0.15f), 180f, 90f, 3, 5, 2.20f, 25, 6),
+                CreateCrop("orange", "Naranja", new Color(0.98f, 0.55f, 0.10f), 180f, 90f, 3, 5, 2.20f, 25, 6),
+                CreateCrop("lemon", "Limón", new Color(0.95f, 0.90f, 0.25f), 160f, 80f, 3, 5, 2.00f, 22, 5),
             };
+
+            // Vida que recupera comer cada fruto (en el mismo orden que la lista de cultivos).
+            float[] healByCrop = { 4f, 3f, 4f, 2f, 2f, 6f, 6f, 4f };
+            for (int i = 0; i < crops.Count; i++)
+            {
+                crops[i].ProduceItem.ConfigureHeal(healByCrop[i]);
+            }
+
+            // Productos de los animales.
+            ItemDefinition egg = CreateItem("produce_egg", "Huevo", ItemKind.Produce, 20, new Color(0.96f, 0.93f, 0.85f));
+            egg.ConfigurePrices(buy: 0, sell: 10);
+            egg.ConfigureHeal(12f);
+            ItemDefinition wool = CreateItem("produce_wool", "Lana", ItemKind.Produce, 20, new Color(0.92f, 0.92f, 0.92f));
+            wool.ConfigurePrices(buy: 0, sell: 15);
+
+            // Los animales son colocables: se compran, se ponen en la granja y el martillo los recoge.
+            GameObject chickenPrefab = CreateAnimalPrefab("Chicken", "Gallina", "Recoger", egg, 120f, 20f,
+                new Vector3(0.3f, 0.3f, 0.4f), new Color(0.95f, 0.85f, 0.55f), data.Session);
+            GameObject sheepPrefab = CreateAnimalPrefab("Sheep", "Oveja", "Esquilar", wool, 180f, 50f,
+                new Vector3(0.6f, 0.5f, 0.9f), new Color(0.93f, 0.93f, 0.93f), data.Session);
+            ItemDefinition chicken = CreatePlaceableItem("placeable_chicken", "Gallina", new Color(0.95f, 0.85f, 0.55f),
+                chickenPrefab, buy: 50, sell: 20);
+            ItemDefinition sheep = CreatePlaceableItem("placeable_sheep", "Oveja", new Color(0.93f, 0.93f, 0.93f),
+                sheepPrefab, buy: 90, sell: 35);
+            data.ChickenItem = chicken;
+            data.SheepItem = sheep;
+
+            // Más colocables. Fogata a 100 de oro: uno de los pocos precios que se oyen en el original.
+            ItemDefinition fence = CreatePlaceableItem("placeable_fence", "Valla", new Color(0.62f, 0.45f, 0.28f),
+                CreateFencePrefab(data.Session), buy: 3, sell: 1);
+            ItemDefinition gate = CreatePlaceableItem("placeable_gate", "Puerta", new Color(0.50f, 0.34f, 0.20f),
+                CreateGatePrefab(data.Session), buy: 15, sell: 6);
+            ItemDefinition campfire = CreatePlaceableItem("placeable_campfire", "Fogata", new Color(1f, 0.45f, 0.10f),
+                CreateCampfirePrefab(data.Session), buy: 100, sell: 40);
+            ItemDefinition well = CreatePlaceableItem("placeable_well", "Pozo", new Color(0.55f, 0.57f, 0.60f),
+                CreateWellPrefab(data.Session), buy: 30, sell: 12);
+            ItemDefinition windmill = CreatePlaceableItem("placeable_windmill", "Molino", new Color(0.85f, 0.80f, 0.70f),
+                CreateWindmillPrefab(data.Session), buy: 80, sell: 30, footprint: new Vector2Int(2, 2));
 
             // Qué trae Jack y desde qué día: su catálogo crece, como en el original.
             data.Shop = EditorPaths.LoadOrCreate<ShopCatalog>($"{Root}/Shop/ShopCatalog.asset");
@@ -168,14 +214,24 @@ namespace DeadAcres.EditorTools
                 new KeyValuePair<ItemDefinition, int>(crops[0].SeedItem, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[1].SeedItem, 1),
                 new KeyValuePair<ItemDefinition, int>(wall, 1),
+                new KeyValuePair<ItemDefinition, int>(fence, 1),
+                new KeyValuePair<ItemDefinition, int>(gate, 1),
                 new KeyValuePair<ItemDefinition, int>(torch, 1),
                 new KeyValuePair<ItemDefinition, int>(tape, 1),
                 new KeyValuePair<ItemDefinition, int>(lamp, 1),
                 new KeyValuePair<ItemDefinition, int>(crops[2].SeedItem, 2),
                 new KeyValuePair<ItemDefinition, int>(crops[3].SeedItem, 2),
+                new KeyValuePair<ItemDefinition, int>(crops[5].SeedItem, 2),
+                new KeyValuePair<ItemDefinition, int>(chicken, 2),
+                new KeyValuePair<ItemDefinition, int>(campfire, 2),
+                new KeyValuePair<ItemDefinition, int>(well, 2),
                 new KeyValuePair<ItemDefinition, int>(tnt, 2),
                 new KeyValuePair<ItemDefinition, int>(turret, 2),
                 new KeyValuePair<ItemDefinition, int>(crops[4].SeedItem, 3),
+                new KeyValuePair<ItemDefinition, int>(crops[6].SeedItem, 3),
+                new KeyValuePair<ItemDefinition, int>(crops[7].SeedItem, 3),
+                new KeyValuePair<ItemDefinition, int>(sheep, 3),
+                new KeyValuePair<ItemDefinition, int>(windmill, 3),
                 new KeyValuePair<ItemDefinition, int>(generator, 3),
             });
             EditorUtility.SetDirty(data.Shop);
@@ -222,19 +278,19 @@ namespace DeadAcres.EditorTools
         }
 
         private static ItemDefinition CreateItem(string id, string name, ItemKind kind, int maxStack,
-            Color color, ToolKind tool = ToolKind.None, GameObject placedPrefab = null)
+            Color color, ToolKind tool = ToolKind.None, GameObject placedPrefab = null, Vector2Int footprint = default)
         {
             var item = EditorPaths.LoadOrCreate<ItemDefinition>($"{Root}/Items/Item_{id}.asset");
-            item.Configure(name, kind, maxStack);
+            item.Configure(name, kind, maxStack, footprint);
             item.ConfigureExtras(id, color, tool, placedPrefab);
             EditorUtility.SetDirty(item);
             return item;
         }
 
         private static ItemDefinition CreatePlaceableItem(string id, string name, Color color, GameObject prefab,
-            int buy, int sell)
+            int buy, int sell, Vector2Int footprint = default)
         {
-            ItemDefinition item = CreateItem(id, name, ItemKind.Placeable, 99, color, ToolKind.None, prefab);
+            ItemDefinition item = CreateItem(id, name, ItemKind.Placeable, 99, color, ToolKind.None, prefab, footprint);
             item.ConfigurePrices(buy, sell);
             return item;
         }
@@ -288,6 +344,100 @@ namespace DeadAcres.EditorTools
             const string folder = "Assets/_Project/Prefabs/Placeables";
             EditorPaths.EnsureFolder(folder);
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{root.name}.prefab");
+            Object.DestroyImmediate(root);
+            return prefab;
+        }
+
+        /// <summary>Valla: baja (1 m). Frena a los zombis y se puede disparar por encima.</summary>
+        private static GameObject CreateFencePrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Fence", 80f, session);
+            AddBox(root, "Box", new Vector3(0f, 0.5f, 0f), new Vector3(1f, 1f, 0.15f), "Wood", new Color(0.45f, 0.30f, 0.18f));
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Puerta: dos postes y una hoja que se abre y se cierra con F.</summary>
+        private static GameObject CreateGatePrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Gate", 150f, session);
+            // Los postes no llevan collider: abierta, el hueco es la celda entera.
+            AddBox(root, "PostLeft", new Vector3(-0.47f, 1f, 0f), new Vector3(0.06f, 2f, 0.2f), "Wood", new Color(0.45f, 0.30f, 0.18f), false);
+            AddBox(root, "PostRight", new Vector3(0.47f, 1f, 0f), new Vector3(0.06f, 2f, 0.2f), "Wood", new Color(0.45f, 0.30f, 0.18f), false);
+            GameObject door = AddBox(root, "Door", new Vector3(0f, 0.9f, 0f), new Vector3(0.9f, 1.8f, 0.12f), "WoodWall", new Color(0.55f, 0.38f, 0.22f));
+
+            // Umbral sólido a ras de suelo: con la puerta abierta sigue habiendo algo a lo que
+            // apuntar con el martillo o la cinta, y no estorba el paso.
+            AddBox(root, "Threshold", new Vector3(0f, 0.025f, 0f), new Vector3(1f, 0.05f, 0.2f), "Wood", new Color(0.45f, 0.30f, 0.18f));
+            root.AddComponent<Gate>().Configure(door.transform);
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Fogata: más luz que la antorcha, sin energía.</summary>
+        private static GameObject CreateCampfirePrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Campfire", 80f, session);
+            AddBox(root, "LogA", new Vector3(0f, 0.1f, 0f), new Vector3(0.9f, 0.2f, 0.2f), "Wood", new Color(0.45f, 0.30f, 0.18f));
+            AddBox(root, "LogB", new Vector3(0f, 0.1f, 0f), new Vector3(0.2f, 0.2f, 0.9f), "Wood", new Color(0.45f, 0.30f, 0.18f), false);
+            AddBox(root, "Flame", new Vector3(0f, 0.45f, 0f), new Vector3(0.35f, 0.5f, 0.35f), "Flame", new Color(1f, 0.55f, 0.15f), false);
+            AddPointLight(root, new Vector3(0f, 1f, 0f), new Color(1f, 0.6f, 0.25f), 14f, 3.2f);
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Pozo: decoración.</summary>
+        private static GameObject CreateWellPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Well", 100f, session);
+            AddBox(root, "Ring", new Vector3(0f, 0.35f, 0f), new Vector3(0.9f, 0.7f, 0.9f), "Stone", new Color(0.55f, 0.57f, 0.60f));
+            AddBox(root, "PostLeft", new Vector3(-0.4f, 1.1f, 0f), new Vector3(0.08f, 0.9f, 0.08f), "Wood", new Color(0.45f, 0.30f, 0.18f), false);
+            AddBox(root, "PostRight", new Vector3(0.4f, 1.1f, 0f), new Vector3(0.08f, 0.9f, 0.08f), "Wood", new Color(0.45f, 0.30f, 0.18f), false);
+            AddBox(root, "Roof", new Vector3(0f, 1.6f, 0f), new Vector3(1f, 0.12f, 0.6f), "WoodWall", new Color(0.55f, 0.38f, 0.22f), false);
+            return SavePlaceable(root);
+        }
+
+        /// <summary>Molino: decoración de 2×2 celdas con aspas que giran.</summary>
+        private static GameObject CreateWindmillPrefab(GameSession session)
+        {
+            GameObject root = NewPlaceable("Windmill", 200f, session);
+            AddBox(root, "Tower", new Vector3(0f, 2f, 0f), new Vector3(1.3f, 4f, 1.3f), "Windmill", new Color(0.85f, 0.80f, 0.70f));
+
+            var blades = new GameObject("Blades");
+            blades.transform.SetParent(root.transform, false);
+            blades.transform.localPosition = new Vector3(0f, 3.5f, 0.75f);
+            AddBox(blades, "BladeA", Vector3.zero, new Vector3(3.2f, 0.25f, 0.08f), "WoodWall", new Color(0.55f, 0.38f, 0.22f), false);
+            AddBox(blades, "BladeB", Vector3.zero, new Vector3(0.25f, 3.2f, 0.08f), "WoodWall", new Color(0.55f, 0.38f, 0.22f), false);
+            blades.AddComponent<Spinner>();
+            return SavePlaceable(root);
+        }
+
+        /// <summary>
+        /// Animal provisional: una caja con collider que pasea, con un cubo flotante que aparece
+        /// cuando tiene producto listo.
+        /// </summary>
+        private static GameObject CreateAnimalPrefab(string prefabName, string displayName, string verb,
+            ItemDefinition product, float secondsPerProduct, float maxHealth, Vector3 bodySize, Color color,
+            GameSession session)
+        {
+            const string folder = "Assets/_Project/Prefabs/Animals";
+            EditorPaths.EnsureFolder(folder);
+
+            var root = new GameObject(prefabName);
+            float bodyY = bodySize.y * 0.5f + 0.15f;
+            AddBox(root, "Body", new Vector3(0f, bodyY, 0f), bodySize, prefabName, color);
+            AddBox(root, "Head", new Vector3(0f, bodyY + bodySize.y * 0.45f, bodySize.z * 0.5f),
+                bodySize * 0.5f, prefabName, color, false);
+            GameObject indicator = AddBox(root, "ReadyIndicator", new Vector3(0f, bodyY + bodySize.y + 0.35f, 0f),
+                new Vector3(0.18f, 0.18f, 0.18f), "ProductReady", new Color(1f, 0.85f, 0.2f), false);
+
+            // Se mueve por transform: con Rigidbody cinemático el collider se desplaza bien.
+            var body = root.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.useGravity = false;
+
+            root.AddComponent<Health>().Configure(Faction.PlayerSide, maxHealth, session);
+            root.AddComponent<DestroyOnDeath>();
+            root.AddComponent<Animal>().Configure(displayName, verb, product, 1, secondsPerProduct, indicator);
+
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{prefabName}.prefab");
             Object.DestroyImmediate(root);
             return prefab;
         }

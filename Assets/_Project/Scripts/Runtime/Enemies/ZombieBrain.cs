@@ -5,8 +5,8 @@ using UnityEngine;
 namespace DeadAcres.Enemies
 {
     /// <summary>
-    /// Zombi provisional. Va en línea recta hacia la caravana, o hacia un jugador si lo tiene
-    /// cerca, y golpea lo que sea del bando del jugador y le corte el paso (muros incluidos).
+    /// Zombi provisional. Va en línea recta hacia la caravana, o hacia un jugador o un animal si
+    /// lo tiene cerca, y golpea lo que sea del bando del jugador y le corte el paso (muros incluidos).
     /// No usa NavMesh todavía: no rodea obstáculos largos, los rompe.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
@@ -38,7 +38,7 @@ namespace DeadAcres.Enemies
         }
 
         /// <param name="primaryTarget">La caravana.</param>
-        /// <param name="players">Jugadores a los que puede perseguir.</param>
+        /// <param name="players">Jugadores y animales a los que puede desviarse.</param>
         public void Initialize(Health primaryTarget, IReadOnlyList<Health> players)
         {
             targets.Clear();
@@ -119,7 +119,7 @@ namespace DeadAcres.Enemies
             int best = -1;
             float bestSqr = aggroRadius * aggroRadius;
 
-            // El índice 0 es la caravana; a partir del 1, jugadores.
+            // El índice 0 es la caravana; a partir del 1, jugadores y animales.
             for (int i = 1; i < targets.Count; i++)
             {
                 if (targets[i] == null || targets[i].IsDead)
