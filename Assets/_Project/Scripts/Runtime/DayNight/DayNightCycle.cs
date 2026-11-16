@@ -41,7 +41,12 @@ namespace DeadAcres.DayNight
             clock.NightCompleted += OnNightCompleted;
         }
 
-        private void Start() => clock.Begin();
+        private int startDay = 1;
+
+        /// <summary>Al cargar una partida: el día en el que arranca el reloj. Llamar antes de Start.</summary>
+        public void SetStartDay(int day) => startDay = Mathf.Max(1, day);
+
+        private void Start() => clock.Begin(startDay);
 
         private void OnDestroy()
         {

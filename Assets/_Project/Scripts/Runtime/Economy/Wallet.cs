@@ -28,6 +28,19 @@ namespace DeadAcres.Economy
             Changed?.Invoke(Gold);
         }
 
+        /// <summary>Al cargar una partida: deja el oro exactamente en esta cantidad.</summary>
+        public void Restore(int gold)
+        {
+            gold = Math.Max(0, gold);
+            if (gold == Gold)
+            {
+                return;
+            }
+
+            Gold = gold;
+            Changed?.Invoke(Gold);
+        }
+
         /// <summary>Gasta todo o nada.</summary>
         public bool TrySpend(int amount)
         {

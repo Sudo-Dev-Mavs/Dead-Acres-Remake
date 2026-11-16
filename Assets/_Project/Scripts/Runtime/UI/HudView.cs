@@ -205,14 +205,14 @@ namespace DeadAcres.UI
 
             if (state.Outcome == MatchOutcome.Victory)
             {
-                SetText(bannerLabel, $"¡VICTORIA!\nSobreviviste {state.NightsSurvived} noches\n\n[Enter] Jugar de nuevo");
+                SetText(bannerLabel, $"¡VICTORIA!\nSobreviviste {state.NightsSurvived} noches\n\n[Enter] Jugar de nuevo   [Esc] Menú");
                 return;
             }
 
             string reason = state.DefeatReason == DefeatReason.RvDestroyed
                 ? "La caravana fue destruida"
                 : "No sobreviviste a la noche";
-            SetText(bannerLabel, $"DERROTA\n{reason}\nNoches superadas: {state.NightsSurvived}\n\n[Enter] Reintentar");
+            SetText(bannerLabel, $"DERROTA\n{reason}\nNoches superadas: {state.NightsSurvived}\n\n[Enter] Reintentar desde cero   [Esc] Menú");
         }
 
         private void OnGoldChanged(int gold) => SetText(goldLabel, wallet != null ? $"Oro {gold}" : string.Empty);

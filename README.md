@@ -9,8 +9,8 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 ## Puesta en marcha
 
 1. En Unity Hub: **Add → Add project from disk** y elige la carpeta del repo. Ábrelo con 6000.3.25f1. La primera apertura tarda: Unity genera `Library/` y los `.meta`.
-2. Menú **Dead Acres → Crear escena greybox**. Genera los datos en `Assets/_Project/Data/`, los materiales, un prefab de muro y `Assets/_Project/Scenes/Greybox.unity`, ya cableada.
-3. Pulsa **Play**.
+2. Menú **Dead Acres → Crear escena greybox**. Genera los datos en `Assets/_Project/Data/`, los materiales, los prefabs y dos escenas ya cableadas en `Assets/_Project/Scenes/`: `MainMenu.unity` y `Greybox.unity` (la de juego, que queda abierta).
+3. Pulsa **Play** para probar la partida directamente. Para pasar por el menú principal (y poder usar "Continuar"), abre `MainMenu.unity` y pulsa Play ahí.
 4. **Window → General → Test Runner → EditMode → Run All**.
 5. Haz commit de lo que Unity haya generado, **incluidos todos los `.meta`**. Los GUID de los `.meta` son los que enlazan escenas y assets con los scripts: deben generarse en una sola máquina y subirse.
 
@@ -26,8 +26,15 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 | "Listo" (terminar el día) | R | Start |
 | Inventario (mover entre hotbar y mochila) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
+| Pausa | Esc o P | — |
 
 En el editor, Esc suelta el cursor y un clic en la vista Game lo recupera.
+
+Menú principal: continuar la partida guardada o empezar una nueva eligiendo dificultad (Fácil, Media, Difícil, Infierno) y modo (Campaña o Endless). Empezar una nueva borra la guardada.
+
+Guardado: la partida se guarda sola cada amanecer a partir del segundo día (día, oro, inventario, parcelas y cultivos, todo lo colocado, animales, vida, autos ya registrados). "Continuar" retoma desde ese amanecer; lo hecho después se pierde. El archivo es `savegame.json` en `Application.persistentDataPath`. No se guardan el estado de las puertas ni el producto a medias de los animales.
+
+Pausa (Esc o P): detiene el juego entero y permite volver al menú principal.
 
 Se puede arar, plantar y colocar en todo el suelo, salvo en una franja de 3 bloques alrededor de la caravana (la losa marrón). Empiezas solo con la pistola, la azada, la hoz dentada y unas semillas de fresa: el martillo, los muros y todo lo demás se compra a Jack.
 
@@ -64,7 +71,8 @@ Assets/_Project/
     Difficulty       DifficultyProfile (Easy/Medium/Hard/Hell)
     GameMode         GameModeRules (límites, noches) + PlacementLimiter
     Combat           Health (con multiplicadores de dificultad), DestroyOnDeath
-    Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila)
+    Items            ItemDefinition, ItemStack, Inventory (puro: hotbar 9 + mochila), ItemCatalog (búsqueda por Id)
+    Saving           SaveData (datos planos), SaveMapper (puro), SaveFile (JSON en disco), SaveGameController
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
     Animals          ProductionTimer (puro) + Animal
@@ -76,7 +84,8 @@ Assets/_Project/
     Match            MatchState (puro) + MatchDirector: victoria y derrota
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
                      PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo, cinta y comer)
-    UI               HudView, ShopView, InventoryView, UiModal, UiFactory, ListPaging (puro)
+    UI               HudView, ShopView, InventoryView, UiModal, UiFactory, ListPaging (puro),
+                     MainMenuView, PauseMenuView, MenuUi
   Scripts/Editor/    generador de datos, generador de escena greybox y de HUD
   Tests/EditMode/    tests NUnit de la lógica pura
   Data/, Scenes/, Art/, Prefabs/   generados desde el menú Dead Acres

@@ -99,26 +99,10 @@ namespace DeadAcres.Building
                 return;
             }
 
-            ItemDefinition item = ghostItem;
-            if (!world.Limiter.TryRegister(item.PlaceableCategory))
+            if (world.TryPlace(ghostItem, targetRect, CurrentRotation) == null)
             {
                 return;
             }
-
-            int occupantId = world.Grid.Occupy(targetRect);
-            if (occupantId == PlacementGrid.NoOccupant)
-            {
-                world.Limiter.Unregister(item.PlaceableCategory);
-                return;
-            }
-
-            GameObject placed = Instantiate(item.PlacedPrefab, world.Grid.RectCenterToWorld(targetRect), CurrentRotation);
-            if (!placed.TryGetComponent(out PlacedObject marker))
-            {
-                marker = placed.AddComponent<PlacedObject>();
-            }
-
-            marker.Bind(world, occupantId, item.PlaceableCategory, item);
 
             // Quitar del inventario al final: puede vaciar la ranura y disparar RefreshGhostItem.
             Inventory.RemoveAt(Inventory.SelectedIndex, 1);

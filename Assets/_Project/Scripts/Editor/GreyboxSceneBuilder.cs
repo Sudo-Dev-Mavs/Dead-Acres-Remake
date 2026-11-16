@@ -10,6 +10,8 @@ using DeadAcres.Items;
 using DeadAcres.Loot;
 using DeadAcres.Match;
 using DeadAcres.Player;
+using DeadAcres.Saving;
+using DeadAcres.UI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -30,6 +32,7 @@ namespace DeadAcres.EditorTools
     {
         private const string SceneFolder = "Assets/_Project/Scenes";
         private const string ScenePath = SceneFolder + "/Greybox.unity";
+        private const string MenuScenePath = SceneFolder + "/MainMenu.unity";
 
         // FarmWorld marca la esquina (0,0) de la rejilla: 32×32 celdas de 1 m delante del jugador.
         // La rejilla cubre todo el suelo (300×300 m): se puede arar y colocar en cualquier parte,
@@ -75,6 +78,9 @@ namespace DeadAcres.EditorTools
             Material tintMaterial = EditorPaths.LoadOrCreateMaterial("Greybox_Tint", Color.white);
             Material ghostValid = EditorPaths.LoadOrCreateGhostMaterial("Ghost_Valid", new Color(0.2f, 0.9f, 0.3f, 0.45f));
             Material ghostInvalid = EditorPaths.LoadOrCreateGhostMaterial("Ghost_Invalid", new Color(0.95f, 0.2f, 0.2f, 0.45f));
+
+            // Primero el menú: así la escena que queda abierta al terminar es la de juego.
+            BuildMainMenuScene(data);
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -138,6 +144,12 @@ namespace DeadAcres.EditorTools
                 interactor.GetComponent<PlayerWallet>(), jack, playerInput, playerHealth, rvHealth, match, waves,
                 interactor.GetComponent<PlayerBuildTools>());
 
+            // Guardado automático al amanecer y carga al elegir "Continuar" en el menú.
+            systems.AddComponent<SaveGameController>().Configure(data.Session, cycle, data.PhaseChanged, data.Items,
+                data.Crops, world, farm, inventory, interactor.GetComponent<PlayerWallet>(), playerHealth, rvHealth);
+
+            new GameObject("PauseMenu").AddComponent<PauseMenuView>().Configure(playerInput, cycle, match);
+
             // La tienda tiene botones: hace falta un EventSystem con el módulo del Input System.
             var eventSystem = new GameObject("EventSystem");
             eventSystem.AddComponent<EventSystem>();
@@ -146,10 +158,33 @@ namespace DeadAcres.EditorTools
             EditorPaths.EnsureFolder(SceneFolder);
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
-            AddToBuildSettings(ScenePath);
+            SetBuildScenes(MenuScenePath, ScenePath);
             AssetDatabase.SaveAssets();
 
-            Debug.Log($"Dead Acres: escena generada en {ScenePath}. Pulsa Play para probarla.");
+            Debug.Log($"Dead Acres: escenas generadas en {SceneFolder}. Pulsa Play para probar la de juego; " +
+                      "para ver el menú, abre MainMenu.unity y pulsa Play ahí.");
+        }
+
+        /// <summary>El menú principal: una cámara, el EventSystem y el componente que monta la interfaz.</summary>
+        private static void BuildMainMenuScene(DefaultDataGenerator.GeneratedData data)
+        {
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            var cameraObject = new GameObject("Main Camera") { tag = "MainCamera" };
+            var camera = cameraObject.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.SolidColor;
+            camera.backgroundColor = new Color(0.06f, 0.09f, 0.07f);
+            cameraObject.AddComponent<AudioListener>();
+
+            new GameObject("MainMenu").AddComponent<MainMenuView>().Configure(data.Session, data.Difficulties, data.Modes);
+
+            var eventSystem = new GameObject("EventSystem");
+            eventSystem.AddComponent<EventSystem>();
+            eventSystem.AddComponent<InputSystemUIInputModule>().AssignDefaultActions();
+
+            EditorPaths.EnsureFolder(SceneFolder);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene, MenuScenePath);
         }
 
         private static PlayerInteractor CreatePlayer(DefaultDataGenerator.GeneratedData data, FarmWorld world,
@@ -406,18 +441,26 @@ namespace DeadAcres.EditorTools
             return box;
         }
 
-        private static void AddToBuildSettings(string scenePath)
+        /// <summary>
+        /// Deja estas escenas al principio de Build Settings, en este orden (la primera es la que
+        /// arranca el juego compilado). Las demás que hubiera se conservan detrás.
+        /// </summary>
+        private static void SetBuildScenes(params string[] orderedPaths)
         {
-            var scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
-            for (int i = 0; i < scenes.Count; i++)
+            var scenes = new List<EditorBuildSettingsScene>();
+            foreach (string path in orderedPaths)
             {
-                if (scenes[i].path == scenePath)
+                scenes.Add(new EditorBuildSettingsScene(path, true));
+            }
+
+            foreach (EditorBuildSettingsScene existing in EditorBuildSettings.scenes)
+            {
+                if (System.Array.IndexOf(orderedPaths, existing.path) < 0)
                 {
-                    return;
+                    scenes.Add(existing);
                 }
             }
 
-            scenes.Add(new EditorBuildSettingsScene(scenePath, true));
             EditorBuildSettings.scenes = scenes.ToArray();
         }
     }

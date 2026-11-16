@@ -31,6 +31,25 @@ namespace DeadAcres.Farming
             return false;
         }
 
+        /// <summary>Por el Id estable del cultivo: es lo que se guarda en la partida.</summary>
+        public bool TryGetById(string id, out CropDefinition crop)
+        {
+            if (!string.IsNullOrEmpty(id))
+            {
+                for (int i = 0; i < crops.Count; i++)
+                {
+                    if (crops[i] != null && crops[i].Id == id)
+                    {
+                        crop = crops[i];
+                        return true;
+                    }
+                }
+            }
+
+            crop = null;
+            return false;
+        }
+
         internal void Configure(IEnumerable<CropDefinition> newCrops)
         {
             crops = new List<CropDefinition>(newCrops);
