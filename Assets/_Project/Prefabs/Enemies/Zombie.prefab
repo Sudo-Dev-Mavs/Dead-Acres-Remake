@@ -281,6 +281,7 @@ MonoBehaviour:
   faction: 1
   baseMaxHealth: 60
   session: {fileID: 11400000, guid: dc42dfcab587b2dad88762cb966e50c0, type: 2}
+  armor: 0
   maxHitFraction: 0
 --- !u!114 &9125047318082723617
 MonoBehaviour:

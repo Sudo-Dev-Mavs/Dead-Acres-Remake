@@ -1,5 +1,5 @@
 ﻿<Solution>
   <Project Path="DeadAcres.Runtime.csproj" />
-  <Project Path="DeadAcres.Editor.csproj" />
   <Project Path="DeadAcres.Tests.EditMode.csproj" />
+  <Project Path="DeadAcres.Editor.csproj" />
 </Solution>
