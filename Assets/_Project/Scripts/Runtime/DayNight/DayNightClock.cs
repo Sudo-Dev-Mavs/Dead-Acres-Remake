@@ -112,7 +112,7 @@ namespace DeadAcres.DayNight
             DayNumber++;
             NightCompleted?.Invoke(new NightResult(finishedNight, timedOut && !waveStatus.IsWaveCleared));
 
-            // Un oyente de NightCompleted (p. ej. victoria en la noche 5) puede haber parado el reloj.
+            // Un oyente de NightCompleted (p. ej. victoria en la última noche) puede haber parado el reloj.
             if (IsRunning)
             {
                 EnterPhase(GamePhase.Dawn);

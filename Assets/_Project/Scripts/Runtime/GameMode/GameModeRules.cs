@@ -12,7 +12,7 @@ namespace DeadAcres.GameMode
     }
 
     /// <summary>
-    /// Reglas de un modo de juego. Campaña: 100/100 y 5 noches. Endless: 500/500 y noches infinitas.
+    /// Reglas de un modo de juego. Campaña: 100/100 y 10 noches. Endless: 500/500 y noches infinitas.
     /// </summary>
     [CreateAssetMenu(menuName = "Dead Acres/Config/Game Mode Rules", fileName = "GameMode_")]
     public sealed class GameModeRules : ScriptableObject

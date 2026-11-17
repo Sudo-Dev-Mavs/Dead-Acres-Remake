@@ -53,6 +53,9 @@ namespace DeadAcres.EditorTools
             public List<KeyValuePair<ItemDefinition, int>> StartingItems;
         }
 
+        /// <summary>Noches que hay que superar para ganar una campaña (Campaña y One Life).</summary>
+        private const int CampaignNights = 10;
+
         [MenuItem("Dead Acres/Generar datos por defecto")]
         public static void GenerateFromMenu()
         {
@@ -90,7 +93,7 @@ namespace DeadAcres.EditorTools
             };
 
             var campaign = EditorPaths.LoadOrCreate<GameModeRules>($"{Root}/GameModes/GameMode_Campaign.asset");
-            campaign.Configure("Campaña", plants: 100, objects: 100, nights: 5);
+            campaign.Configure("Campaña", plants: 100, objects: 100, nights: CampaignNights);
             EditorUtility.SetDirty(campaign);
 
             var endless = EditorPaths.LoadOrCreate<GameModeRules>($"{Root}/GameModes/GameMode_Endless.asset");
@@ -100,7 +103,7 @@ namespace DeadAcres.EditorTools
             // Una vida: como la campaña, pero el jugador y la caravana caen de un golpe y perder
             // borra la partida guardada.
             var oneLife = EditorPaths.LoadOrCreate<GameModeRules>($"{Root}/GameModes/GameMode_OneLife.asset");
-            oneLife.Configure("One Life", plants: 100, objects: 100, nights: 5);
+            oneLife.Configure("One Life", plants: 100, objects: 100, nights: CampaignNights);
             oneLife.ConfigureOneLife(true);
             EditorUtility.SetDirty(oneLife);
             campaign.ConfigureOneLife(false);
@@ -132,7 +135,7 @@ namespace DeadAcres.EditorTools
             data.Waves.ConfigureStrong(fromNight: 2, perNight: 1, maxCount: 8);
 
             // Cada noche los zombis tienen un 20 % más de vida y pegan un 15 % más que la primera
-            // (noche 5: 108 de vida y 12,8 de daño el normal; 432 y 32 el fuerte).
+            // (noche 10, la última de la campaña: 168 de vida y 18,8 de daño el normal; 672 y 47 el fuerte).
             data.Waves.ConfigureGrowth(healthPerNight: 0.2f, damagePerNight: 0.15f);
             EditorUtility.SetDirty(data.Waves);
 

@@ -37,7 +37,7 @@ Opciones (en el menú principal y en la pausa): volumen general, de efectos y de
 
 Menú principal: el panel va a la izquierda y detrás se ve una partida de demostración (caravana, muros, torretas, huerto y zombis que llegan y caen). Tiene tres botones: **Jugar**, **Opciones** y **Salir**. Jugar va por páginas, todas con "Volver": modo (Campaña, Endless, One Life o Cargar partida) → dificultad (Fácil, Media, Difícil, Infierno) → ranura de guardado.
 
-Modos: en **Campaña** se gana al superar la quinta noche; **Endless** no tiene final; **One Life** es una campaña en la que el jugador y la caravana tienen 1 de vida (cualquier golpe acaba la partida) y perder borra la partida guardada.
+Modos: en **Campaña** se gana al superar la décima noche; **Endless** no tiene final; **One Life** es una campaña en la que el jugador y la caravana tienen 1 de vida (cualquier golpe acaba la partida) y perder borra la partida guardada.
 
 Guardado: hay **5 ranuras en total**, para todos los modos. Al empezar una partida eliges la ranura y, si quieres, le pones nombre; si la ranura ya tenía una partida, el menú avisa de que se sobrescribirá y pide un segundo clic. La partida se guarda sola en su ranura cada amanecer a partir del segundo día (día, oro, inventario, parcelas y cultivos, todo lo colocado, animales, vida, autos ya registrados). "Cargar partida" retoma desde ese amanecer; lo hecho después se pierde. Los archivos son `save_slot_1.json` a `save_slot_5.json` en `Application.persistentDataPath`. No se guardan el estado de las puertas ni el producto a medias de los animales. Si se da Play directamente en la escena de juego (sin pasar por el menú) no hay ranura y no se guarda.
 
@@ -49,7 +49,7 @@ Se puede arar, plantar y colocar en todo el suelo, salvo en una franja de 3 bloq
 
 Para cosechar hace falta la hoz dentada: sin ella en la mano no se puede. De noche los cultivos crecen a una décima de la velocidad del día.
 
-De noche llegan zombis desde todas las direcciones. Van a por la caravana, se desvían a por el jugador, los animales y las torretas si los tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la quinta noche. Al amanecer, los zombis que queden se queman.
+De noche llegan zombis desde todas las direcciones. Van a por la caravana, se desvían a por el jugador, los animales y las torretas si los tienen cerca y rompen los muros que les cortan el paso. Se pierde si cae la caravana o el jugador; en Campaña se gana al superar la décima noche. Al amanecer, los zombis que queden se queman.
 
 El día dura 2 minutos. La noche dura como mucho 5: el reloj nunca se detiene a esperar a que mates al último. Si despejas la oleada antes de los 2 minutos, llega un grupo pequeño de refuerzo (hasta dos por noche) y lo que queda de noche pasa al triple de velocidad; si la despejas después, amanece en el acto. Los zombis que sigan vivos al amanecer empiezan a arder: se alejan de la granja y desaparecen al llegar al borde, salvo que te tengan cerca, en cuyo caso te atacan hasta que mueran ellos o tú. Con la partida terminada, Enter la reinicia.
 
