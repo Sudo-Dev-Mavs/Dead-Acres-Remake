@@ -14,6 +14,7 @@ using DeadAcres.Mods;
 using DeadAcres.Player;
 using DeadAcres.Saving;
 using DeadAcres.UI;
+using DeadAcres.World;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -100,6 +101,8 @@ namespace DeadAcres.EditorTools
             RenderSettings.ambientLight = new Color(0.62f, 0.66f, 0.72f);
 
             CreateGround(groundMaterial);
+            CreateForest();
+            CreateMapBarrier();
             Health rvHealth = CreateProps(propMaterial, data);
 
             var systems = new GameObject("GameSystems");
@@ -207,6 +210,7 @@ namespace DeadAcres.EditorTools
             RenderSettings.ambientLight = new Color(0.36f, 0.38f, 0.48f);
 
             CreateGround(EditorPaths.LoadOrCreateMaterial("Greybox_Ground", new Color(0.33f, 0.55f, 0.27f)));
+            CreateForest();
             Material propMaterial = EditorPaths.LoadOrCreateMaterial("Greybox_Prop", new Color(0.62f, 0.62f, 0.66f));
 
             var demo = new GameObject("Demo").transform;
@@ -540,6 +544,57 @@ namespace DeadAcres.EditorTools
             light.intensity = intensity;
             light.shadows = shadows;
             return light;
+        }
+
+        /// <summary>Mitad del lado del terreno: el plano mide 300 × 300 m.</summary>
+        private const float MapHalfSize = 150f;
+
+        /// <summary>Anchura del bosque que rodea el mapa, desde el borde hacia dentro.</summary>
+        private const float ForestWidth = 50f;
+
+        /// <summary>
+        /// El bosque del borde: una franja de árboles de todos los tamaños alrededor del mapa.
+        /// Se genera al arrancar la escena (ver ForestBorder); aquí solo se deja configurado.
+        /// </summary>
+        private static void CreateForest()
+        {
+            Material trunk = EditorPaths.LoadOrCreateMaterial("Greybox_ForestTrunk", new Color(0.33f, 0.23f, 0.15f));
+            var canopies = new List<Material>
+            {
+                EditorPaths.LoadOrCreateMaterial("Greybox_ForestLeavesDark", new Color(0.13f, 0.34f, 0.16f)),
+                EditorPaths.LoadOrCreateMaterial("Greybox_ForestLeaves", new Color(0.18f, 0.45f, 0.20f)),
+                EditorPaths.LoadOrCreateMaterial("Greybox_ForestLeavesLight", new Color(0.28f, 0.52f, 0.22f)),
+            };
+
+            new GameObject("Forest").AddComponent<ForestBorder>()
+                .Configure(MapHalfSize, ForestWidth, 3500, trunk, canopies);
+        }
+
+        /// <summary>
+        /// Barrera invisible justo donde empieza el bosque: cuatro muros sin dibujo que no dejan
+        /// salir de la zona jugable. Van en la capa que los rayos ignoran, para que no paren
+        /// balas ni estorben al apuntar.
+        /// </summary>
+        private static void CreateMapBarrier()
+        {
+            const float thickness = 2f;
+            const float height = 30f;
+            float limit = MapHalfSize - ForestWidth;
+            float length = limit * 2f + thickness * 2f;
+
+            var barrier = new GameObject("MapBarrier").transform;
+            AddBarrierWall(barrier, "North", new Vector3(0f, height * 0.5f, limit + thickness * 0.5f), new Vector3(length, height, thickness));
+            AddBarrierWall(barrier, "South", new Vector3(0f, height * 0.5f, -limit - thickness * 0.5f), new Vector3(length, height, thickness));
+            AddBarrierWall(barrier, "East", new Vector3(limit + thickness * 0.5f, height * 0.5f, 0f), new Vector3(thickness, height, length));
+            AddBarrierWall(barrier, "West", new Vector3(-limit - thickness * 0.5f, height * 0.5f, 0f), new Vector3(thickness, height, length));
+        }
+
+        private static void AddBarrierWall(Transform parent, string name, Vector3 center, Vector3 size)
+        {
+            var wall = new GameObject(name) { layer = 2 }; // 2 = Ignore Raycast
+            wall.transform.SetParent(parent, false);
+            wall.transform.position = center;
+            wall.AddComponent<BoxCollider>().size = size;
         }
 
         private static void CreateGround(Material material)
