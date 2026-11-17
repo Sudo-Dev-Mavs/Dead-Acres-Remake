@@ -12,7 +12,7 @@ namespace DeadAcres.GameMode
     }
 
     /// <summary>
-    /// Reglas de un modo de juego. Campaña: 100/100 y 5 noches. Endless: 500/500 y noches infinitas.
+    /// Reglas de un modo de juego. Campaña: 100/100 y 10 noches. Endless: 500/500 y noches infinitas.
     /// </summary>
     [CreateAssetMenu(menuName = "Dead Acres/Config/Game Mode Rules", fileName = "GameMode_")]
     public sealed class GameModeRules : ScriptableObject
@@ -24,7 +24,7 @@ namespace DeadAcres.GameMode
         [SerializeField, Min(1)] private int objectLimit = 100;
 
         [Tooltip("Noches a sobrevivir para ganar. 0 = Endless.")]
-        [SerializeField, Min(0)] private int nightsToWin = 5;
+        [SerializeField, Min(0)] private int nightsToWin = 10;
 
         [Tooltip("Modo de una vida: jugador y caravana con 1 de vida.")]
         [SerializeField] private bool oneLife;
