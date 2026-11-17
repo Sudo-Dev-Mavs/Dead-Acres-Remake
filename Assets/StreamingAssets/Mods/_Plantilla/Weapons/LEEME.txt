@@ -1,0 +1,16 @@
+ARMAS EXTRA  (SE CARGAN YA)
+
+Un archivo .json por arma. Aparecen en la tienda de Jack según su rareza.
+
+  id             Único dentro de tu mod, sin espacios.
+  name           Nombre que ve el jugador.
+  rarity         common, rare, ultrarare, epic o legendary.
+  price          Precio en la tienda (oro).
+  damage         Daño por bala (o por perdigón).
+  range          Alcance en metros.
+  fireInterval   Segundos entre disparos (0.1 = 10 disparos por segundo).
+  automatic      true: dispara sola con el botón mantenido.
+  pellets        Proyectiles por disparo (escopetas). 1 en las demás.
+  spread         Apertura del cono de dispersión, en grados.
+  magazine       Disparos por cargador. 0 = sin cargador.
+  reloadSeconds  Segundos que tarda en recargar.

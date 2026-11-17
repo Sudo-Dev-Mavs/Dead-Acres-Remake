@@ -1,0 +1,19 @@
+ZOMBIES  (RESERVADO: el juego todavía no lee esta carpeta)
+
+Aquí irá un archivo .json por enemigo. Formato previsto:
+
+  {
+    "id": "corredor",
+    "name": "Corredor",
+    "health": 40,
+    "damage": 6,
+    "speed": 4.0,
+    "scale": 0.9,
+    "tint": "#7A9C5B",
+    "skin": "Skins/Zombies/corredor.png",
+    "fromNight": 3
+  }
+
+Zombies: enemigos normales que se mezclan en la oleada.
+MiniBosses: uno cada varias noches, con mucha más vida.
+Bosses: el de la última noche de la campaña.

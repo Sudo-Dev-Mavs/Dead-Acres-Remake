@@ -23,9 +23,17 @@ namespace DeadAcres.Economy
 
         [SerializeField] private List<Entry> entries = new List<Entry>();
 
+        [NonSerialized] private List<ItemDefinition> runtimeItems;
+
         /// <returns>False si Jack no vende este ítem ningún día.</returns>
         public bool TryGetAvailableFromDay(ItemDefinition item, out int day)
         {
+            if (item != null && runtimeItems != null && runtimeItems.Contains(item))
+            {
+                day = 1;
+                return true;
+            }
+
             if (item != null)
             {
                 for (int i = 0; i < entries.Count; i++)
@@ -43,8 +51,24 @@ namespace DeadAcres.Economy
         }
 
         /// <summary>Añade a <paramref name="results"/> lo que Jack vende ese día, en el orden del catálogo.</summary>
+        /// <summary>Añade un ítem a la venta solo en memoria (los de los mods), desde el primer día.</summary>
+        public void RegisterRuntime(ItemDefinition item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            if (runtimeItems == null) runtimeItems = new List<ItemDefinition>();
+            if (!runtimeItems.Contains(item)) runtimeItems.Add(item);
+        }
+
+        public void ClearRuntime() => runtimeItems = null;
+
         public void GetAvailable(int dayNumber, List<ItemDefinition> results)
         {
+            if (runtimeItems != null) results.AddRange(runtimeItems);
+
             for (int i = 0; i < entries.Count; i++)
             {
                 if (entries[i].item != null && Mathf.Max(1, entries[i].availableFromDay) <= dayNumber)

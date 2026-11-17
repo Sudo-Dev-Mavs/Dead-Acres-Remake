@@ -114,6 +114,14 @@ namespace DeadAcres.Player
                 return default;
             }
 
+            // Con un arma no se trabaja la tierra, y lo colocable ya enseña su propio fantasma:
+            // en los dos casos sobra el recuadro de la celda.
+            ItemStack held = Inventory.Selected;
+            if (!held.IsEmpty && (held.Item.Kind == ItemKind.Weapon || held.Item.IsPlaceable))
+            {
+                return default;
+            }
+
             if (farm == null || !farm.TryWorldToCell(aimPoint, out Vector2Int cell))
             {
                 return default;

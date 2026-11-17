@@ -1,0 +1,14 @@
+{
+  "id": "escopeta_recortada",
+  "name": "Escopeta recortada",
+  "rarity": "rare",
+  "price": 260,
+  "damage": 15,
+  "range": 14,
+  "fireInterval": 0.3,
+  "automatic": false,
+  "pellets": 10,
+  "spread": 9,
+  "magazine": 2,
+  "reloadSeconds": 1.8
+}

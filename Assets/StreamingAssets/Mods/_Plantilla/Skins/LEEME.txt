@@ -1,0 +1,6 @@
+SKINS  (RESERVADO: el juego todavía no lee esta carpeta)
+
+Aspectos alternativos, en .png, separados por a qué se aplican:
+  Skins/Weapons   armas
+  Skins/Zombies   zombis, mini jefes y jefes
+  Skins/Player    el jugador

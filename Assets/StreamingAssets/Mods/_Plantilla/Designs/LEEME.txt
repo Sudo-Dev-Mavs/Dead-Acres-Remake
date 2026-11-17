@@ -1,0 +1,3 @@
+DISEÑOS  (RESERVADO: el juego todavía no lee esta carpeta)
+
+Temas de la interfaz: colores, fuentes y fondos de los menús y del HUD.
