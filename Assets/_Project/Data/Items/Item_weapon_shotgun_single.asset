@@ -19,7 +19,7 @@ MonoBehaviour:
   kind: 1
   maxStack: 1
   tool: 0
-  buyPrice: 225
+  buyPrice: 180
   sellPrice: 0
   weaponDamage: 14
   weaponRange: 22

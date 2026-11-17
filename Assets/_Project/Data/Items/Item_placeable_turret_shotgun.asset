@@ -19,8 +19,8 @@ MonoBehaviour:
   kind: 3
   maxStack: 99
   tool: 0
-  buyPrice: 480
-  sellPrice: 192
+  buyPrice: 385
+  sellPrice: 154
   weaponDamage: 20
   weaponRange: 60
   fireInterval: 0.25

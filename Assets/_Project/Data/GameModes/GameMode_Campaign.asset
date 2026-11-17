@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: "Campa\xF1a"
   plantLimit: 100
   objectLimit: 100
-  nightsToWin: 5
+  nightsToWin: 10
   oneLife: 0
   enemyCountGrowthPerNight: 0.12
   enemyHealthGrowthPerNight: 0.05
