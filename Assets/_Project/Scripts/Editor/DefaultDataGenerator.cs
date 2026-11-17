@@ -376,9 +376,10 @@ namespace DeadAcres.EditorTools
             // original: semillas, luces portátiles y un arma mejor.
             var carEntries = new List<LootTable.Entry>
             {
-                new LootTable.Entry(crops[0].SeedItem, 3, 6, 3f),
-                new LootTable.Entry(crops[1].SeedItem, 2, 4, 3f),
-                new LootTable.Entry(crops[2].SeedItem, 2, 3, 2f),
+                // Pocas semillas y no siempre: lo normal es comprarlas.
+                new LootTable.Entry(crops[0].SeedItem, 1, 3, 2f),
+                new LootTable.Entry(crops[1].SeedItem, 1, 2, 2f),
+                new LootTable.Entry(crops[2].SeedItem, 1, 2, 1f),
                 new LootTable.Entry(tape, 1, 2, 2f),
                 new LootTable.Entry(torch, 1, 2, 2f),
                 new LootTable.Entry(wall, 3, 6, 2f),

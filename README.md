@@ -56,7 +56,9 @@ El día dura 2 minutos. La noche dura como mucho 5: el reloj nunca se detiene a 
 
 La cripta (el edificio de piedra con luz morada, a unos 50 m de la caravana) suelta zombis fuertes desde la segunda noche: uno más cada noche. Aguantan cuatro veces más que uno normal, pegan más y son más lentos.
 
-Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y tres cosas al azar (semillas, cinta, antorchas, muros, alguna luz). En toda la partida sale como mucho un arma entre los cinco autos, nunca por encima de rareza Raro, y no está asegurada: solo un auto elegido al azar puede tenerla, y le sale más o menos la mitad de las veces.
+El mapa mide 300 × 300 m. Los últimos 50 m de cada lado son un bosque espeso de árboles pequeños, medianos y grandes; una barrera invisible justo donde empieza no deja entrar, así que la zona jugable es de 200 × 200 m.
+
+Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez: oro y tres cosas al azar (cinta, antorchas, muros, alguna luz y, a veces, unas pocas semillas). En toda la partida sale como mucho un arma entre los cinco autos, nunca por encima de rareza Raro, y no está asegurada: solo un auto elegido al azar puede tenerla, y le sale más o menos la mitad de las veces.
 
 Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando). El HUD muestra las balas junto al nombre del arma.
 
@@ -115,6 +117,7 @@ Assets/_Project/
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
     Animals          ProductionTimer (puro) + Animal
     Mods             ModContentLoader (lee las carpetas Mods), ModDefinitions + ModRules (puro)
+    World            ForestLayout (puro) + ForestBorder: el bosque del borde, generado como mallas al arrancar
     Loot             LootTable (tirada con semilla), LootContainer (autos abandonados), LootDirector (cupo de armas)
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
