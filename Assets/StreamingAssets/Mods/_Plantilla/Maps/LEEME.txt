@@ -1,0 +1,4 @@
+MAPAS  (RESERVADO: el juego todavía no lee esta carpeta)
+
+Aquí irá un archivo .json por mapa: tamaño del terreno, dónde está la caravana, la cripta
+y los autos, y por dónde llegan los zombis.

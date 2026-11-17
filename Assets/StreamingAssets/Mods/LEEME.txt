@@ -1,0 +1,14 @@
+MODS DE DEAD ACRES
+
+Cada carpeta que haya aquí dentro es un mod. El juego las lee al empezar cada partida.
+Las carpetas que empiezan por guion bajo (como _Plantilla) NO se cargan: son de ejemplo.
+
+Para hacer un mod:
+  1. Copia la carpeta _Plantilla y ponle otro nombre, sin guion bajo delante.
+  2. Edita mod.json con el nombre de tu mod.
+  3. Mete tus archivos en la subcarpeta que toque.
+
+Los jugadores también pueden poner mods, sin tocar la carpeta del juego, en la carpeta
+"Mods" de sus datos de usuario (en Linux: ~/.config/unity3d/<compañía>/<juego>/Mods).
+
+Qué se carga hoy y qué está reservado para más adelante: docs/mods.md en el repositorio.

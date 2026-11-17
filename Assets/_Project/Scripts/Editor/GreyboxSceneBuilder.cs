@@ -10,6 +10,7 @@ using DeadAcres.Farming;
 using DeadAcres.Items;
 using DeadAcres.Loot;
 using DeadAcres.Match;
+using DeadAcres.Mods;
 using DeadAcres.Player;
 using DeadAcres.Saving;
 using DeadAcres.UI;
@@ -157,6 +158,9 @@ namespace DeadAcres.EditorTools
             systems.AddComponent<SaveGameController>().Configure(data.Session, cycle, data.PhaseChanged, data.Items,
                 data.Crops, world, farm, inventory, interactor.GetComponent<PlayerWallet>(), playerHealth, rvHealth,
                 match);
+
+            // Mods: armas extra leídas de las carpetas Mods al arrancar la partida.
+            systems.AddComponent<ModContentLoader>().Configure(data.Items, data.Shop);
 
             // Reparte el cupo de armas entre los autos: como mucho una en toda la partida.
             systems.AddComponent<LootDirector>();

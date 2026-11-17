@@ -4,6 +4,7 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 
 - Unity **6000.3.25f1** (6.3 LTS) con URP. El repo ya es un proyecto de Unity completo (`Assets/`, `Packages/`, `ProjectSettings/`).
 - Referencia de mecánicas observadas en el original: `docs/referencia-original.md`.
+- Estructura de carpetas y mods (qué va dónde, cómo añadir armas sin Unity): `docs/mods.md`.
 - El GDD (`gdd-vertical-slice.md`) todavía no está en el repo; conviene añadirlo en `docs/`.
 
 ## Puesta en marcha
@@ -69,7 +70,7 @@ Energía: las luces portátiles y las torretas necesitan una fuente a su alcance
 
 Torretas: normal (consume 2), doble cañón (4), escopeta (3, daña a todo lo que tenga delante), lanzallamas (4, muy corto alcance y daño continuo), francotiradora (3, largo alcance), automática (5, mucha cadencia) y eléctrica (6: el rayo salta hasta a 4 zombis más y pierde un 30 % de daño en cada salto). Repararlas con cinta cuesta además algo de oro, más cuanto mejor es la torreta. Al acercarte a una torreta aparece un cartel con su vida, su consumo y si tiene energía.
 
-Al arar, plantar o colocar, el objetivo es el punto del suelo que miras; si miras más lejos de lo que alcanzas (6 m), queda en el borde del alcance en esa dirección. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
+Con un arma en la mano no se muestra el recuadro de la celda. Al arar, plantar o colocar, el objetivo es el punto del suelo que miras; si miras más lejos de lo que alcanzas (6 m), queda en el borde del alcance en esa dirección. El martillo recoge lo colocado (si está dañado, antes hay que repararlo) y la cinta americana lo repara.
 
 Comida: con fruta, verdura o un huevo en la mano, clic izquierdo te lo comes y recuperas vida (con la vida completa no se gasta).
 
@@ -100,6 +101,7 @@ Assets/_Project/
     Building         PlacementGrid (ocupación, pura), FarmWorld, PlacementController + fantasma,
                      PowerMap (pura) + PowerSource / PowerConsumer / PoweredLight, NoBuildZone, Gate, Spinner
     Animals          ProductionTimer (puro) + Animal
+    Mods             ModContentLoader (lee las carpetas Mods), ModDefinitions + ModRules (puro)
     Loot             LootTable (tirada con semilla), LootContainer (autos abandonados), LootDirector (cupo de armas)
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView

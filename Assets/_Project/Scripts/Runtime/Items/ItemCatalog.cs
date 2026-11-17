@@ -14,6 +14,8 @@ namespace DeadAcres.Items
 
         private Dictionary<string, ItemDefinition> byId;
 
+        [System.NonSerialized] private Dictionary<string, ItemDefinition> runtimeItems;
+
         public IReadOnlyList<ItemDefinition> Items => items;
 
         public bool TryGet(string id, out ItemDefinition item)
@@ -22,6 +24,11 @@ namespace DeadAcres.Items
             {
                 item = null;
                 return false;
+            }
+
+            if (runtimeItems != null && runtimeItems.TryGetValue(id, out item))
+            {
+                return true;
             }
 
             if (byId == null)
@@ -38,6 +45,23 @@ namespace DeadAcres.Items
 
             return byId.TryGetValue(id, out item);
         }
+
+        /// <summary>
+        /// Añade un ítem solo en memoria (los de los mods): se encuentra por Id como los demás,
+        /// pero no se escribe en el asset.
+        /// </summary>
+        public void RegisterRuntime(ItemDefinition item)
+        {
+            if (item == null || string.IsNullOrEmpty(item.Id))
+            {
+                return;
+            }
+
+            if (runtimeItems == null) runtimeItems = new Dictionary<string, ItemDefinition>();
+            runtimeItems[item.Id] = item;
+        }
+
+        public void ClearRuntime() => runtimeItems = null;
 
         internal void Configure(IEnumerable<ItemDefinition> newItems)
         {

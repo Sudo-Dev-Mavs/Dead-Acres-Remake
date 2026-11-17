@@ -1,0 +1,3 @@
+AUDIO  (RESERVADO: el juego todavía no lee esta carpeta)
+
+Sonidos y música en .wav que sustituyen a los del juego por nombre (shot.wav, music_day.wav...).

@@ -1,0 +1,4 @@
+TEXTURAS  (RESERVADO: el juego todavía no lee esta carpeta)
+
+Imágenes .png que sustituyen a las del juego por nombre. Para ofrecer varias resoluciones,
+una subcarpeta por tamaño: Textures/512, Textures/1024, Textures/2048.
