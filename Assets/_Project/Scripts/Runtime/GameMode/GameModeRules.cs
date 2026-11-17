@@ -24,7 +24,7 @@ namespace DeadAcres.GameMode
         [SerializeField, Min(1)] private int objectLimit = 100;
 
         [Tooltip("Noches a sobrevivir para ganar. 0 = Endless.")]
-        [SerializeField, Min(0)] private int nightsToWin = 5;
+        [SerializeField, Min(0)] private int nightsToWin = 10;
 
         [Tooltip("Modo de una vida: jugador y caravana con 1 de vida.")]
         [SerializeField] private bool oneLife;
