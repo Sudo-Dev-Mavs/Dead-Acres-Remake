@@ -26,7 +26,7 @@ Remake en Unity del juego Dead Acres (Glowstick, 2015): granja de día y defensa
 | Hablar con Jack, recoger huevos y lana, abrir y cerrar puertas | F | X |
 | "Listo" (terminar el día) | Enter | cruceta arriba |
 | Recargar | R | Y |
-| Inventario (mover entre hotbar y mochila) | Tab | Select |
+| Inventario (arrastra los objetos entre ranuras, o clic en una y luego en otra) | Tab | Select |
 | Hotbar | 1-9 y rueda | LB / RB |
 | Pausa | Esc o P | Start |
 
@@ -71,7 +71,7 @@ Tipos de zombi (se mezclan en la oleada según avanza la partida):
 | Zombi explosivo | 4 | Al morir revienta y daña todo lo que tenga cerca, otros zombis incluidos. |
 | Demoledor | 5 | Corre y lleva un 15 % de armadura. |
 
-Mini jefes: cada 10 noches sale uno al azar, a mitad de la oleada, el doble de grande que un zombi normal. **Mutante**: mucha vida y mucho daño. **Riot Mutant**: armadura del 50 % y un escudo que alterna entre ir por delante (para los tiros de frente al cuerpo) y a un costado; la cabeza siempre queda al descubierto. **Demoledor Mutante**: 30 % de armadura, arranca rocas del suelo y te las lanza, y embiste hacia ti.
+Mini jefes: cada 10 noches sale uno al azar, a mitad de la oleada, el doble de grande que un zombi normal. **Mutante**: mucha vida y mucho daño. **Riot Mutant**: armadura del 50 % y un escudo que alterna entre ir por delante (para los tiros de frente al cuerpo, los tuyos y los de las torretas) y a un costado; la cabeza siempre queda al descubierto. **Demoledor Mutante**: 30 % de armadura, arranca rocas del suelo y te las lanza, y embiste hacia ti.
 
 El daño de tus disparos depende de dónde le des al zombi: en la cabeza hace el doble, en brazos y piernas un 40 % y en el torso el normal. Los zombis se dibujan ya con esas piezas (cabeza y brazos más claros). Las torretas y el TNT hacen siempre su daño normal.
 

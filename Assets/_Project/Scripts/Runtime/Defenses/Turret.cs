@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DeadAcres.Audio;
 using DeadAcres.Building;
 using DeadAcres.Combat;
+using DeadAcres.Enemies;
 using UnityEngine;
 
 namespace DeadAcres.Defenses
@@ -161,7 +162,7 @@ namespace DeadAcres.Defenses
                     {
                         Health hit = candidates[selected[i]];
                         ShowBeam(i, origin, hit.transform.position + Vector3.up);
-                        hit.ApplyDamage(damage);
+                        Damage(hit, origin, damage);
                     }
 
                     break;
@@ -177,8 +178,8 @@ namespace DeadAcres.Defenses
                         Health hit = candidates[selected[i]];
                         Vector3 to = hit.transform.position + Vector3.up;
                         ShowBeam(i, from, to);
+                        Damage(hit, from, TurretTargeting.GetChainDamage(damage, chainFalloff, i));
                         from = to;
-                        hit.ApplyDamage(TurretTargeting.GetChainDamage(damage, chainFalloff, i));
                     }
 
                     break;
@@ -187,11 +188,24 @@ namespace DeadAcres.Defenses
                     ShowBeam(0, origin, aimPoint);
                     for (int i = 0; i < shotsPerVolley; i++)
                     {
-                        target.ApplyDamage(damage);
+                        Damage(target, origin, damage);
                     }
 
                     break;
             }
+        }
+
+        // Un escudo antidisturbios por delante para el disparo que le llega de frente, venga de
+        // donde venga: de la torreta o, en la cadena eléctrica, del zombi anterior.
+        private static void Damage(Health hit, Vector3 shotOrigin, float amount)
+        {
+            if (hit.TryGetComponent(out ZombieShield shield)
+                && shield.Blocks(hit.transform.position - shotOrigin, HitZone.Torso))
+            {
+                return;
+            }
+
+            hit.ApplyDamage(amount);
         }
 
         // Deja en las listas solo los candidatos de la última búsqueda que sigan vivos.
