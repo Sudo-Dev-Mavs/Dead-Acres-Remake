@@ -60,6 +60,19 @@ Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez
 
 Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando). El HUD muestra las balas junto al nombre del arma.
 
+Tipos de zombi (se mezclan en la oleada según avanza la partida):
+
+| Tipo | Desde la noche | Qué hace |
+|---|---|---|
+| Zombi | 1 | El normal. |
+| Corredor | 2 | Corre y tiene un 20 % más de vida. |
+| Swat | 3 | Armadura: recibe la mitad del daño en todo menos la cabeza. |
+| Escupidor tóxico | 3 | Se planta a distancia y lanza ácido al jugador, a las torretas, a los animales o a la caravana. Se esquiva moviéndose. |
+| Zombi explosivo | 4 | Al morir revienta y daña todo lo que tenga cerca, otros zombis incluidos. |
+| Demoledor | 5 | Corre y lleva un 15 % de armadura. |
+
+Mini jefes: cada 10 noches sale uno al azar, a mitad de la oleada, el doble de grande que un zombi normal. **Mutante**: mucha vida y mucho daño. **Riot Mutant**: armadura del 50 % y un escudo que alterna entre ir por delante (para los tiros de frente al cuerpo) y a un costado; la cabeza siempre queda al descubierto. **Demoledor Mutante**: 30 % de armadura, arranca rocas del suelo y te las lanza, y embiste hacia ti.
+
 El daño de tus disparos depende de dónde le des al zombi: en la cabeza hace el doble, en brazos y piernas un 40 % y en el torso el normal. Los zombis se dibujan ya con esas piezas (cabeza y brazos más claros). Las torretas y el TNT hacen siempre su daño normal.
 
 Cada noche los zombis tienen un 20 % más de vida y pegan un 15 % más que la primera. Un solo golpe nunca quita más del 99 % de la vida máxima al jugador ni a la caravana.
@@ -106,7 +119,8 @@ Assets/_Project/
     Defenses         Turret, TntScarecrow
     Farming          FarmField + FarmCommands (puros), CropDefinition/CropCatalog, FarmArea + FarmAreaView
     Economy          Wallet + ShopCommands + ShopStock (puros), ShopCatalog, Shopkeeper (Jack)
-    Enemies          WaveRunner + WaveMath (puros), WaveConfig, WaveDirector, ZombieBrain
+    Enemies          WaveRunner + WaveMath + ZombieRoster (puros), WaveConfig, WaveDirector, ZombieBrain,
+                     ZombieAbilities (ácido, roca, embestida), ZombieProjectile, ZombieShield, ExplodeOnDeath
     Match            MatchState (puro) + MatchDirector: victoria y derrota
     Player           PlayerInputReader (Input System), FirstPersonController, PlayerInventory, PlayerWallet,
                      PlayerInteractor, PlayerWeapon, PlayerBuildTools (martillo, cinta y comer)

@@ -40,6 +40,7 @@ namespace DeadAcres.EditorTools
             public WaveConfig Waves;
             public ZombieBrain ZombiePrefab;
             public ZombieBrain StrongZombiePrefab;
+            public List<ZombieType> ZombieRoster;
             public ItemCatalog Items;
             public AudioLibrary Audio;
             public List<DifficultyProfile> Difficulties;
@@ -145,6 +146,8 @@ namespace DeadAcres.EditorTools
                 new Color(0.35f, 0.55f, 0.30f), speed: 2.2f, damage: 8f, attackInterval: 1f);
             data.StrongZombiePrefab = CreateZombiePrefab("ZombieStrong", data.Session, 240f, 2.3f, 0.45f,
                 new Color(0.45f, 0.25f, 0.50f), speed: 1.6f, damage: 20f, attackInterval: 1.2f);
+
+            data.ZombieRoster = CreateZombieRoster(data);
 
             GenerateItemsAndCrops(data);
 
@@ -753,8 +756,92 @@ namespace DeadAcres.EditorTools
         }
 
         /// <summary>Zombi provisional: cápsula verde con CharacterController, vida y cerebro.</summary>
+        /// <summary>
+        /// Los tipos de zombi de las oleadas y los mini jefes. Columnas de cada uno: vida, alto,
+        /// radio, color, velocidad, daño por golpe y segundos entre golpes. Todo es la base de la
+        /// primera noche: luego crecen un 20 % de vida y un 15 % de daño por noche.
+        /// </summary>
+        private static List<ZombieType> CreateZombieRoster(GeneratedData data)
+        {
+            GameSession session = data.Session;
+            AudioClip boom = LoadClip("explosion");
+
+            // Corredor: corre y tiene un 20 % más de vida que el normal (60).
+            ZombieBrain runner = CreateZombiePrefab("ZombieRunner", session, 72f, 1.75f, 0.30f,
+                new Color(0.70f, 0.75f, 0.25f), speed: 4.2f, damage: 7f, attackInterval: 0.9f);
+
+            // Swat: armadura del 50 % en todo menos la cabeza.
+            ZombieBrain swat = CreateZombiePrefab("ZombieSwat", session, 90f, 1.85f, 0.37f,
+                new Color(0.16f, 0.20f, 0.32f), speed: 2.0f, damage: 10f, attackInterval: 1f, armor: 0.5f);
+
+            // Escupidor tóxico: se planta a distancia y lanza ácido a lo que tenga más cerca
+            // (jugador, torreta, animal o la caravana): 9 de daño cada 2,5 s, hasta 14 m.
+            ZombieBrain spitter = CreateZombiePrefab("ZombieSpitter", session, 50f, 1.75f, 0.33f,
+                new Color(0.45f, 0.80f, 0.20f), speed: 2.0f, damage: 5f, attackInterval: 1f,
+                extras: root => root.AddComponent<ZombieAbilities>().ConfigureRanged(damage: 9f, range: 14f,
+                    interval: 2.5f, windup: 0.4f, playersOnly: false, holdAtRange: true, speed: 12f, radius: 1.2f,
+                    size: 0.3f, color: new Color(0.55f, 0.95f, 0.20f), rock: false));
+
+            // Explosivo: al morir revienta (35 de daño en 3,5 m, también a otros zombis).
+            ZombieBrain exploder = CreateZombiePrefab("ZombieExploder", session, 45f, 1.8f, 0.40f,
+                new Color(0.85f, 0.35f, 0.15f), speed: 2.6f, damage: 6f, attackInterval: 1f,
+                extras: root => root.AddComponent<ExplodeOnDeath>().Configure(3.5f, 35f, boom));
+
+            // Demoledor: corre y lleva un 15 % de armadura.
+            ZombieBrain demolisher = CreateZombiePrefab("ZombieDemolisher", session, 110f, 2.0f, 0.42f,
+                new Color(0.45f, 0.32f, 0.22f), speed: 3.8f, damage: 14f, attackInterval: 1.1f, armor: 0.15f);
+
+            // ---- Mini jefes: el doble de grandes que un zombi normal (3,6 m).
+
+            // Mutante: mucha vida y mucho daño, sin trucos.
+            ZombieBrain mutant = CreateZombiePrefab("BossMutant", session, 1200f, 3.6f, 0.70f,
+                new Color(0.50f, 0.20f, 0.55f), speed: 2.0f, damage: 35f, attackInterval: 1.3f, attackRange: 2f);
+
+            // Riot Mutant: armadura del 50 % y un escudo que alterna entre ir por delante (para
+            // los tiros de frente al cuerpo) y a un costado. La cabeza siempre queda al descubierto.
+            ZombieBrain riot = CreateZombiePrefab("BossRiotMutant", session, 900f, 3.6f, 0.70f,
+                new Color(0.12f, 0.15f, 0.25f), speed: 1.8f, damage: 28f, attackInterval: 1.3f, armor: 0.5f,
+                attackRange: 2f, extras: root =>
+                {
+                    var front = new Vector3(0f, 1.55f, 0.85f);
+                    var side = new Vector3(-0.95f, 1.55f, 0f);
+                    GameObject shield = AddBox(root, "Shield", front, new Vector3(1.5f, 2.3f, 0.12f), "RiotShield",
+                        new Color(0.55f, 0.60f, 0.65f), false);
+                    root.AddComponent<ZombieShield>().Configure(shield.transform, front, side);
+                });
+
+            // Demoledor Mutante: 30 % de armadura. Arranca una roca del suelo y se la lanza al
+            // jugador (30 de daño, hasta 25 m, cada 6 s) y embiste hacia él (60 de daño si lo arrolla).
+            ZombieBrain demolisherMutant = CreateZombiePrefab("BossDemolisherMutant", session, 1400f, 3.6f, 0.70f,
+                new Color(0.32f, 0.22f, 0.16f), speed: 2.4f, damage: 40f, attackInterval: 1.3f, armor: 0.3f,
+                attackRange: 2f, extras: root =>
+                {
+                    var abilities = root.AddComponent<ZombieAbilities>();
+                    abilities.ConfigureRanged(damage: 30f, range: 25f, interval: 6f, windup: 1.2f, playersOnly: true,
+                        holdAtRange: false, speed: 16f, radius: 2f, size: 0.9f, color: new Color(0.45f, 0.43f, 0.40f),
+                        rock: true);
+                    abilities.ConfigureCharge(speed: 9f, seconds: 1.6f, cooldown: 7f, minDistance: 6f, maxDistance: 18f,
+                        damage: 60f, hitDistance: 2.2f);
+                });
+
+            // Nombre, prefab, primera noche en la que sale y peso frente a los demás.
+            return new List<ZombieType>
+            {
+                new ZombieType("Zombi", data.ZombiePrefab, 1, 10f),
+                new ZombieType("Corredor", runner, 2, 4f),
+                new ZombieType("Swat", swat, 3, 3f),
+                new ZombieType("Escupidor tóxico", spitter, 3, 3f),
+                new ZombieType("Zombi explosivo", exploder, 4, 3f),
+                new ZombieType("Demoledor", demolisher, 5, 3f),
+                new ZombieType("Mutante", mutant, 1, 1f, true),
+                new ZombieType("Riot Mutant", riot, 1, 1f, true),
+                new ZombieType("Demoledor Mutante", demolisherMutant, 1, 1f, true),
+            };
+        }
+
         private static ZombieBrain CreateZombiePrefab(string prefabName, GameSession session, float maxHealth,
-            float height, float radius, Color color, float speed, float damage, float attackInterval)
+            float height, float radius, Color color, float speed, float damage, float attackInterval,
+            float armor = 0f, float attackRange = 1.1f, System.Action<GameObject> extras = null)
         {
             const string folder = "Assets/_Project/Prefabs/Enemies";
             EditorPaths.EnsureFolder(folder);
@@ -792,8 +879,11 @@ namespace DeadAcres.EditorTools
             root.AddComponent<HitZoneBody>().Configure(height, legsTop, headBottom, radius * 0.63f,
                 head: 2f, torso: 1f, arm: 0.4f, leg: 0.4f);
 
-            root.AddComponent<Health>().Configure(Faction.Enemy, maxHealth, session);
-            root.AddComponent<ZombieBrain>().Configure(speed, damage, attackInterval);
+            var health = root.AddComponent<Health>();
+            health.Configure(Faction.Enemy, maxHealth, session);
+            health.ConfigureArmor(armor);
+            root.AddComponent<ZombieBrain>().Configure(speed, damage, attackInterval, attackRange);
+            extras?.Invoke(root);
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{prefabName}.prefab");
             Object.DestroyImmediate(root);

@@ -22,6 +22,9 @@ namespace DeadAcres.Combat
         [SerializeField, Min(1f)] private float baseMaxHealth = 100f;
         [SerializeField] private GameSession session;
 
+        [Tooltip("Armadura: fracción del daño que no entra (0,5 = recibe la mitad).")]
+        [SerializeField, Range(0f, 0.95f)] private float armor;
+
         [Tooltip("Fracción de la vida máxima que puede quitar un solo golpe. 0 = sin tope.")]
         [SerializeField, Range(0f, 1f)] private float maxHitFraction;
 
@@ -57,14 +60,17 @@ namespace DeadAcres.Combat
         }
 
         /// <returns>Daño realmente aplicado tras la dificultad.</returns>
-        public float ApplyDamage(float rawDamage)
+        public float ApplyDamage(float rawDamage) => ApplyDamage(rawDamage, false);
+
+        /// <param name="ignoreArmor">True para golpes que se saltan la armadura (un tiro a la cabeza, el fuego).</param>
+        public float ApplyDamage(float rawDamage, bool ignoreArmor)
         {
             if (IsDead || rawDamage <= 0f)
             {
                 return 0f;
             }
 
-            float damage = rawDamage;
+            float damage = ignoreArmor ? rawDamage : rawDamage * (1f - armor);
             if (faction == Faction.PlayerSide && session != null && session.Difficulty != null)
             {
                 damage = session.Difficulty.ScaleDamageTaken(rawDamage);
@@ -124,6 +130,10 @@ namespace DeadAcres.Combat
             currentHealth = baseMaxHealth;
             HealthChanged?.Invoke(currentHealth, maxHealth);
         }
+
+        public float Armor => armor;
+
+        internal void ConfigureArmor(float fraction) => armor = Mathf.Clamp(fraction, 0f, 0.95f);
 
         internal void ConfigureHitCap(float fraction) => maxHitFraction = Mathf.Clamp01(fraction);
 

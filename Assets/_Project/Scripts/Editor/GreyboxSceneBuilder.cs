@@ -143,6 +143,9 @@ namespace DeadAcres.EditorTools
             waves.Configure(data.Waves, data.Session, data.PhaseChanged, data.NightCompleted, data.ZombiePrefab,
                 rvHealth, new List<Health> { playerHealth }, rvHealth.transform, 45f, cycle);
             waves.ConfigureCrypt(data.StrongZombiePrefab, CreateCrypt(world));
+
+            // Tipos de zombi de la oleada y un mini jefe al azar cada 10 noches.
+            waves.ConfigureRoster(data.ZombieRoster, 10);
             CreateAnimals(data);
             CreateCars(data, world);
 
