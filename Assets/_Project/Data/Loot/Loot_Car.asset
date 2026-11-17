@@ -18,17 +18,17 @@ MonoBehaviour:
   rolls: 3
   random:
   - item: {fileID: 11400000, guid: 35f32c1601244cb039076a850990f52b, type: 2}
-    min: 3
-    max: 6
-    weight: 3
-  - item: {fileID: 11400000, guid: fdce8e067be5bc6da9a005791a376bea, type: 2}
-    min: 2
-    max: 4
-    weight: 3
-  - item: {fileID: 11400000, guid: 5d0695369fcccd5409d5669006abf985, type: 2}
-    min: 2
+    min: 1
     max: 3
     weight: 2
+  - item: {fileID: 11400000, guid: fdce8e067be5bc6da9a005791a376bea, type: 2}
+    min: 1
+    max: 2
+    weight: 2
+  - item: {fileID: 11400000, guid: 5d0695369fcccd5409d5669006abf985, type: 2}
+    min: 1
+    max: 2
+    weight: 1
   - item: {fileID: 11400000, guid: 8381d649e558175c5b6a8e677b77e86b, type: 2}
     min: 1
     max: 2
