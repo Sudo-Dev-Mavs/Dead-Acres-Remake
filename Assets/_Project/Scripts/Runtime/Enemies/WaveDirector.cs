@@ -22,6 +22,13 @@ namespace DeadAcres.Enemies
         [SerializeField] private NightResultEventChannel nightCompleted;
         [SerializeField] private ZombieBrain zombiePrefab;
 
+        [Header("Tipos de zombi")]
+        [Tooltip("Tipos que se mezclan en la oleada y mini jefes. Vacío: solo el zombi normal de arriba.")]
+        [SerializeField] private List<ZombieType> roster = new List<ZombieType>();
+
+        [Tooltip("Cada cuántas noches sale un mini jefe al azar. 0 = nunca.")]
+        [SerializeField, Min(0)] private int miniBossEveryNights = 10;
+
         [Header("Cripta")]
         [Tooltip("Opcional. El zombi fuerte.")]
         [SerializeField] private ZombieBrain strongZombiePrefab;
@@ -57,6 +64,14 @@ namespace DeadAcres.Enemies
         private bool spawningReinforcements;
         private int strongCount;
         private int spawnedThisWave;
+        private readonly System.Random typeRandom = new System.Random();
+        private int currentNight = 1;
+        private ZombieType miniBossTonight;
+        private int miniBossSpawnIndex = -1;
+        private bool miniBossSpawned;
+
+        /// <summary>Acaba de aparecer el mini jefe de la noche (con su nombre).</summary>
+        public event Action<string> MiniBossIncoming;
 
         /// <summary>Empieza una noche en la que la cripta suelta este número de zombis fuertes.</summary>
         public event Action<int> StrongIncoming;
@@ -141,10 +156,26 @@ namespace DeadAcres.Enemies
                 : 0;
             spawnedThisWave = 0;
             spawningReinforcements = false;
+            currentNight = change.DayNumber;
 
-            // Los fuertes van aparte de la oleada normal, pero también hay que matarlos para
-            // que la noche cuente como despejada.
-            runner.Begin(waveCount + strongCount, config.InitialDelay, config.SpawnWindow);
+            // Cada tantas noches, un mini jefe al azar: sale a mitad de la oleada.
+            miniBossTonight = null;
+            miniBossSpawned = false;
+            miniBossSpawnIndex = -1;
+            if (ZombieRoster.IsMiniBossNight(currentNight, miniBossEveryNights))
+            {
+                int picked = ZombieRoster.PickIndex(roster, currentNight, true, typeRandom);
+                if (picked >= 0 && roster[picked].prefab != null)
+                {
+                    miniBossTonight = roster[picked];
+                    miniBossSpawnIndex = (waveCount + strongCount) / 2;
+                }
+            }
+
+            // Los fuertes y el mini jefe van aparte de la oleada normal, pero también hay que
+            // matarlos para que la noche cuente como despejada.
+            runner.Begin(waveCount + strongCount + (miniBossTonight != null ? 1 : 0), config.InitialDelay,
+                config.SpawnWindow);
             if (strongCount > 0) StrongIncoming?.Invoke(strongCount);
         }
 
@@ -185,17 +216,39 @@ namespace DeadAcres.Enemies
 
         private void Spawn()
         {
-            // Los refuerzos son siempre zombis normales.
+            // Los refuerzos son siempre zombis de la oleada normal.
             if (!spawningReinforcements)
             {
                 int index = spawnedThisWave++;
-                if (WaveMath.IsStrongSpawn(index, waveCount + strongCount, strongCount))
+                if (miniBossTonight != null && !miniBossSpawned && index == miniBossSpawnIndex)
+                {
+                    miniBossSpawned = true;
+                    SpawnOnCircle(miniBossTonight.prefab);
+                    MiniBossIncoming?.Invoke(miniBossTonight.displayName);
+                    return;
+                }
+
+                // El hueco del mini jefe no cuenta para repartir a los fuertes.
+                int waveIndex = miniBossSpawned ? index - 1 : index;
+                if (WaveMath.IsStrongSpawn(waveIndex, waveCount + strongCount, strongCount))
                 {
                     SpawnFromCrypt();
                     return;
                 }
             }
 
+            SpawnOnCircle(PickWavePrefab());
+        }
+
+        // Un tipo al azar entre los que ya pueden salir esta noche; si no hay lista, el normal.
+        private ZombieBrain PickWavePrefab()
+        {
+            int picked = ZombieRoster.PickIndex(roster, currentNight, false, typeRandom);
+            return picked >= 0 && roster[picked].prefab != null ? roster[picked].prefab : zombiePrefab;
+        }
+
+        private void SpawnOnCircle(ZombieBrain prefab)
+        {
             Vector3 center = spawnCenter != null ? spawnCenter.position : transform.position;
             float radius = spawningReinforcements ? spawnRadius * config.ReinforcementRadiusFactor : spawnRadius;
             float angle = UnityEngine.Random.value * Mathf.PI * 2f;
@@ -203,7 +256,7 @@ namespace DeadAcres.Enemies
                 center.z + Mathf.Sin(angle) * radius);
             Quaternion facing = Quaternion.LookRotation(new Vector3(center.x - position.x, 0f, center.z - position.z));
 
-            Register(Instantiate(zombiePrefab, position, facing, transform));
+            Register(Instantiate(prefab, position, facing, transform));
         }
 
         private void SpawnFromCrypt()
@@ -218,6 +271,7 @@ namespace DeadAcres.Enemies
         {
             zombie.Initialize(primaryTarget, GetNearbyTargets());
             zombie.SetDamageMultiplier(damageMultiplier);
+            zombie.SetPlayers(players);
 
             var health = zombie.GetComponent<Health>();
             health.ResetHealth(healthMultiplier);
@@ -284,6 +338,12 @@ namespace DeadAcres.Enemies
             runner.NotifyEnemyRemoved();
             ZombieKilled?.Invoke(zombie.transform.position);
             Destroy(zombie.gameObject, 0.15f);
+        }
+
+        internal void ConfigureRoster(List<ZombieType> types, int miniBossEvery)
+        {
+            roster = types ?? new List<ZombieType>();
+            miniBossEveryNights = Mathf.Max(0, miniBossEvery);
         }
 
         internal void ConfigureCrypt(ZombieBrain strongPrefab, Transform cryptDoor)

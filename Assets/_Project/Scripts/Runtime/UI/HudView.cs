@@ -91,6 +91,7 @@ namespace DeadAcres.UI
             {
                 weapon.AmmoChanged += RefreshSelectedLabel;
                 weapon.Headshot += OnHeadshot;
+                weapon.ShieldBlocked += OnShieldBlocked;
             }
             powerMap = world != null ? world.Power : null;
             if (powerMap != null) powerMap.Changed += RefreshPlantsLabel;
@@ -104,6 +105,7 @@ namespace DeadAcres.UI
             if (waves != null) waves.ReinforcementsIncoming += OnReinforcementsIncoming;
             if (buildTools != null) buildTools.Message += ShowNotice;
             if (waves != null) waves.StrongIncoming += OnStrongIncoming;
+            if (waves != null) waves.MiniBossIncoming += OnMiniBossIncoming;
             if (playerInventory != null) playerInventory.Notice += ShowNotice;
         }
 
@@ -130,6 +132,7 @@ namespace DeadAcres.UI
             {
                 weapon.AmmoChanged -= RefreshSelectedLabel;
                 weapon.Headshot -= OnHeadshot;
+                weapon.ShieldBlocked -= OnShieldBlocked;
             }
             weapon = null;
             if (powerMap != null) powerMap.Changed -= RefreshPlantsLabel;
@@ -144,6 +147,7 @@ namespace DeadAcres.UI
             if (waves != null) waves.ReinforcementsIncoming -= OnReinforcementsIncoming;
             if (buildTools != null) buildTools.Message -= ShowNotice;
             if (waves != null) waves.StrongIncoming -= OnStrongIncoming;
+            if (waves != null) waves.MiniBossIncoming -= OnMiniBossIncoming;
             if (playerInventory != null) playerInventory.Notice -= ShowNotice;
         }
 
@@ -208,6 +212,10 @@ namespace DeadAcres.UI
 
         private void OnRvHealthChanged(float current, float max) =>
             SetText(rvLabel, $"Caravana {Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}");
+
+        private void OnShieldBlocked() => ShowNotice("El escudo lo paró: apunta a la cabeza o espera a que lo baje");
+
+        private void OnMiniBossIncoming(string bossName) => ShowNotice($"¡MINI JEFE!  {bossName}");
 
         private void OnHeadshot() => ShowNotice("¡En la cabeza!  Daño ×2");
 
