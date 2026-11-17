@@ -16,5 +16,6 @@ MonoBehaviour:
   plantLimit: 500
   objectLimit: 500
   nightsToWin: 0
+  oneLife: 0
   enemyCountGrowthPerNight: 0.12
   enemyHealthGrowthPerNight: 0.05

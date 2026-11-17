@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d114d59e2b661cb7d89805cd11911c15, type: 3}
+  m_Name: GameMode_OneLife
+  m_EditorClassIdentifier: DeadAcres.Runtime::DeadAcres.GameMode.GameModeRules
+  displayName: One Life
+  plantLimit: 100
+  objectLimit: 100
+  nightsToWin: 5
+  oneLife: 1
+  enemyCountGrowthPerNight: 0.12
+  enemyHealthGrowthPerNight: 0.05
