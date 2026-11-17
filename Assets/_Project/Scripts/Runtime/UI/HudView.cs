@@ -87,7 +87,11 @@ namespace DeadAcres.UI
             limiter = world != null ? world.Limiter : null;
             if (limiter != null) limiter.CountChanged += OnPlacementCountChanged;
             weapon = interactor != null ? interactor.GetComponent<PlayerWeapon>() : null;
-            if (weapon != null) weapon.AmmoChanged += RefreshSelectedLabel;
+            if (weapon != null)
+            {
+                weapon.AmmoChanged += RefreshSelectedLabel;
+                weapon.Headshot += OnHeadshot;
+            }
             powerMap = world != null ? world.Power : null;
             if (powerMap != null) powerMap.Changed += RefreshPlantsLabel;
 
@@ -122,7 +126,11 @@ namespace DeadAcres.UI
 
             if (limiter != null) limiter.CountChanged -= OnPlacementCountChanged;
             limiter = null;
-            if (weapon != null) weapon.AmmoChanged -= RefreshSelectedLabel;
+            if (weapon != null)
+            {
+                weapon.AmmoChanged -= RefreshSelectedLabel;
+                weapon.Headshot -= OnHeadshot;
+            }
             weapon = null;
             if (powerMap != null) powerMap.Changed -= RefreshPlantsLabel;
             powerMap = null;
@@ -200,6 +208,8 @@ namespace DeadAcres.UI
 
         private void OnRvHealthChanged(float current, float max) =>
             SetText(rvLabel, $"Caravana {Mathf.CeilToInt(current)}/{Mathf.CeilToInt(max)}");
+
+        private void OnHeadshot() => ShowNotice("¡En la cabeza!  Daño ×2");
 
         private void OnStrongIncoming(int count) =>
             ShowNotice(count == 1 ? "La cripta se abre: sale un zombi fuerte" : $"La cripta se abre: salen {count} zombis fuertes");
