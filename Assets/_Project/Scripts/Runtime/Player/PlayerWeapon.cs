@@ -39,6 +39,9 @@ namespace DeadAcres.Player
         /// <summary>Se disparó. True si la bala dio a un enemigo.</summary>
         public event System.Action<bool> Fired;
 
+        /// <summary>Algún proyectil de este disparo dio en la cabeza.</summary>
+        public event System.Action Headshot;
+
         /// <summary>Cambió lo que hay que enseñar del cargador (balas, recarga, arma en la mano).</summary>
         public event System.Action AmmoChanged;
 
@@ -152,6 +155,7 @@ namespace DeadAcres.Player
 
             // Un rayo por proyectil: las escopetas reparten varios dentro de su cono.
             bool hitEnemy = false;
+            bool headshot = false;
             bool hitAnything = false;
             Vector3 lastPoint = Vector3.zero;
             for (int i = 0; i < weapon.Pellets; i++)
@@ -167,12 +171,22 @@ namespace DeadAcres.Player
                 var target = hit.collider.GetComponentInParent<Health>();
                 if (target != null && target.Faction == Faction.Enemy)
                 {
-                    target.ApplyDamage(weapon.WeaponDamage);
+                    // Según dónde dé: cabeza el doble, brazos y piernas menos, torso normal.
+                    float multiplier = 1f;
+                    if (target.TryGetComponent(out HitZoneBody body))
+                    {
+                        HitZone zone = body.GetZone(hit.point, ray);
+                        multiplier = body.GetMultiplier(zone);
+                        if (zone == HitZone.Head) headshot = true;
+                    }
+
+                    target.ApplyDamage(weapon.WeaponDamage * multiplier);
                     hitEnemy = true;
                 }
             }
 
             Fired?.Invoke(hitEnemy);
+            if (headshot) Headshot?.Invoke();
 
             // Con la última bala empieza a recargar sola.
             if (activeClip != null && activeClip.HasMagazine)

@@ -441,8 +441,11 @@ namespace DeadAcres.EditorTools
             return clip;
         }
 
-        /// <summary>Recargo sobre el precio base de armas y torretas (1,5 = un 50 % más caras).</summary>
-        private const float CombatPriceFactor = 1.5f;
+        /// <summary>
+        /// Recargo sobre el precio base de armas y torretas. Fue 1,5 (un 50 % más caras); con la
+        /// rebaja del 20 % sobre eso queda en 1,2.
+        /// </summary>
+        private const float CombatPriceFactor = 1.2f;
 
         /// <summary>Precio con el recargo, redondeado a múltiplos de 5.</summary>
         private static int WithCombatMarkup(int basePrice)
@@ -762,16 +765,32 @@ namespace DeadAcres.EditorTools
             controller.radius = radius;
             controller.center = new Vector3(0f, height * 0.5f, 0f);
 
-            // El visual no lleva collider: el del CharacterController es el que recibe los disparos.
-            GameObject body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Visual";
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            body.transform.SetParent(root.transform, false);
-            // La cápsula de Unity mide 2 de alto y 1 de ancho a escala 1.
-            body.transform.localPosition = new Vector3(0f, height * 0.5f, 0f);
-            body.transform.localScale = new Vector3(radius * 2f, height * 0.5f, radius * 2f);
-            body.GetComponent<Renderer>().sharedMaterial =
-                EditorPaths.LoadOrCreateMaterial($"Greybox_{prefabName}", color);
+            // Las piezas no llevan collider: los disparos los recibe el CharacterController, y la
+            // zona (cabeza, torso, brazo, pierna) se calcula con la misma silueta que se dibuja aquí.
+            const float legsTop = 0.45f;
+            const float headBottom = 0.83f;
+            Color skin = Color.Lerp(color, Color.white, 0.35f);
+            float legHeight = height * legsTop;
+            float torsoHeight = height * (headBottom - legsTop);
+            float headHeight = height * (1f - headBottom);
+
+            AddBox(root, "LegLeft", new Vector3(-radius * 0.32f, legHeight * 0.5f, 0f),
+                new Vector3(radius * 0.5f, legHeight, radius * 0.6f), prefabName, color, false);
+            AddBox(root, "LegRight", new Vector3(radius * 0.32f, legHeight * 0.5f, 0f),
+                new Vector3(radius * 0.5f, legHeight, radius * 0.6f), prefabName, color, false);
+            AddBox(root, "Torso", new Vector3(0f, legHeight + torsoHeight * 0.5f, 0f),
+                new Vector3(radius * 1.2f, torsoHeight, radius * 0.8f), prefabName, color, false);
+            AddBox(root, "ArmLeft", new Vector3(-radius * 0.82f, legHeight + torsoHeight * 0.5f, 0f),
+                new Vector3(radius * 0.34f, torsoHeight * 0.95f, radius * 0.45f), prefabName + "Skin", skin, false);
+            AddBox(root, "ArmRight", new Vector3(radius * 0.82f, legHeight + torsoHeight * 0.5f, 0f),
+                new Vector3(radius * 0.34f, torsoHeight * 0.95f, radius * 0.45f), prefabName + "Skin", skin, false);
+            AddBox(root, "Head", new Vector3(0f, legHeight + torsoHeight + headHeight * 0.5f, 0f),
+                new Vector3(radius * 0.95f, headHeight, radius * 0.95f), prefabName + "Skin", skin, false);
+
+            // Cabeza el doble, brazos y piernas un 40 %, torso normal. El brazo empieza donde
+            // acaba el torso dibujado (0,6 del radio) y un poco más, para no robarle tiros.
+            root.AddComponent<HitZoneBody>().Configure(height, legsTop, headBottom, radius * 0.63f,
+                head: 2f, torso: 1f, arm: 0.4f, leg: 0.4f);
 
             root.AddComponent<Health>().Configure(Faction.Enemy, maxHealth, session);
             root.AddComponent<ZombieBrain>().Configure(speed, damage, attackInterval);

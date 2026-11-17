@@ -59,6 +59,8 @@ Autos abandonados: hay cinco repartidos por el mapa. F los registra una sola vez
 
 Armas: empiezas con la pistola; el resto sale en la tienda según su rareza. Hay pistola automática, revólver Magnum .44, Uzi, cinco escopetas (monotiro, de corredera, doble cañón, semiautomática y automática), tres rifles de asalto (AK-47, M4 y SIG XM7), rifle de caza y francotirador pesado. Las automáticas disparan mientras mantienes el clic; las escopetas sueltan varios perdigones en cono. La munición es infinita, pero cada arma tiene su cargador y su tiempo de recarga: se recarga sola al vaciarse, o con R (Y en el mando). El HUD muestra las balas junto al nombre del arma.
 
+El daño de tus disparos depende de dónde le des al zombi: en la cabeza hace el doble, en brazos y piernas un 40 % y en el torso el normal. Los zombis se dibujan ya con esas piezas (cabeza y brazos más claros). Las torretas y el TNT hacen siempre su daño normal.
+
 Cada noche los zombis tienen un 20 % más de vida y pegan un 15 % más que la primera. Un solo golpe nunca quita más del 99 % de la vida máxima al jugador ni a la caravana.
 
 Defensas: antorchas (luz sin energía), luces portátiles, torretas, espantapájaros con TNT (explota al acercarse un zombi) y muros.
